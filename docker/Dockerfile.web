@@ -20,4 +20,4 @@ COPY --from=builder /app/public ./public
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 EXPOSE 3021
-CMD ["npm", "start", "--", "-p", "3021"]
+CMD ["npm", "start"]

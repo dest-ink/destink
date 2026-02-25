@@ -21,7 +21,9 @@ services:
       dockerfile: docker/Dockerfile.web
     ports:
       - "3021:3021"
-    env_file: .env.local
+    env_file:
+      - path: .env.local
+        required: false
     environment:
       DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
       PORT: "3021"
@@ -33,7 +35,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.daemon
-    env_file: .env.local
+    env_file:
+      - path: .env.local
+        required: false
     environment:
       DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
     depends_on:
