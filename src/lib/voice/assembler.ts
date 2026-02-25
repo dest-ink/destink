@@ -9,16 +9,18 @@ export interface WizardAnswer {
 }
 
 /**
- * Assembles a persona prompt from wizard Q&A answers (no AI needed).
+ * Assembles a persona description from wizard Q&A answers (no AI needed).
+ * Returns only the characteristics body — framing is added by the assembler
+ * so all profile types get a consistent outer wrapper.
  */
 export function buildPersonaFromWizard(answers: WizardAnswer[]): string {
-  if (answers.length === 0) {
-    return 'Write in a clear, direct, and engaging voice.';
-  }
   const lines = answers
     .filter(a => a.answer.trim())
     .map(a => `${a.question}: ${a.answer}`);
-  return `You are writing as a person with the following characteristics:\n\n${lines.join('\n')}\n\nWrite authentically in this voice.`;
+  if (lines.length === 0) {
+    return '';
+  }
+  return lines.join('\n');
 }
 
 /**
@@ -34,18 +36,20 @@ export async function assembleAndSavePersonaPrompt(channelId: string): Promise<s
 
   for (const profile of profiles) {
     if (profile.method === 'wizard' && profile.rawInput) {
+      // rawInput is the plain Q&A body from buildPersonaFromWizard (no outer framing)
       parts.push(profile.rawInput);
     } else if (profile.extractedProfile) {
+      // Null guards on every field — Claude may omit a field on a bad run
       const vp = profile.extractedProfile as VoiceProfile;
       parts.push([
-        `TONE: ${vp.toneDescriptors.join(', ')}`,
-        `SENTENCE STYLE: ${vp.sentencePatterns}`,
-        `RECURRING THEMES: ${vp.recurringThemes.join(', ')}`,
-        `OPINIONS: ${vp.opinionStances.join('; ')}`,
-        `AVOID: ${vp.topicsToAvoid.join(', ')}`,
-        `VOCABULARY: ${vp.vocabularyNotes}`,
-        `IDEAL READER: ${vp.idealReader}`,
-      ].join('\n'));
+        `TONE: ${(vp.toneDescriptors ?? []).join(', ')}`,
+        `SENTENCE STYLE: ${vp.sentencePatterns ?? ''}`,
+        `RECURRING THEMES: ${(vp.recurringThemes ?? []).join(', ')}`,
+        `OPINIONS: ${(vp.opinionStances ?? []).join('; ')}`,
+        `AVOID: ${(vp.topicsToAvoid ?? []).join(', ')}`,
+        `VOCABULARY: ${vp.vocabularyNotes ?? ''}`,
+        `IDEAL READER: ${vp.idealReader ?? ''}`,
+      ].filter(line => !line.endsWith(': ')).join('\n'));
     }
   }
 

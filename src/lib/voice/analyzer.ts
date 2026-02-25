@@ -42,9 +42,22 @@ export async function analyzeVoice(
     },
   });
 
+  let parsed: unknown;
   try {
-    return JSON.parse(raw) as VoiceProfile;
+    parsed = JSON.parse(raw);
   } catch {
     throw new Error(`Voice analysis returned invalid JSON: ${raw.slice(0, 200)}`);
   }
+
+  // Structural guard — wrong-shape JSON fails loudly rather than propagating a
+  // mistyped object that crashes downstream in the assembler.
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !Array.isArray((parsed as Record<string, unknown>).toneDescriptors)
+  ) {
+    throw new Error(`Voice analysis returned unexpected JSON shape: ${raw.slice(0, 200)}`);
+  }
+
+  return parsed as VoiceProfile;
 }
