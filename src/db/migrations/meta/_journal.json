@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1772061036034,
+      "tag": "0000_pink_stepford_cuckoos",
+      "breakpoints": true
+    }
+  ]
+}
