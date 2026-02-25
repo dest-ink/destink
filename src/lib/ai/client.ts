@@ -32,17 +32,23 @@ export async function callClaude(options: CallClaudeOptions): Promise<string> {
     messages: [{ role: 'user', content: prompt }],
   });
 
+  // Always log token usage — even on unexpected response types
+  try {
+    await logAiCall({
+      ...audit,
+      model,
+      promptTokens: response.usage.input_tokens,
+      completionTokens: response.usage.output_tokens,
+    });
+  } catch (err) {
+    // Audit failure must never mask a successful AI response
+    console.error('[callClaude] audit log failed:', err);
+  }
+
   const content = response.content[0];
   if (content.type !== 'text') {
     throw new Error(`Unexpected Claude response type: ${content.type}`);
   }
-
-  await logAiCall({
-    ...audit,
-    model,
-    promptTokens: response.usage.input_tokens,
-    completionTokens: response.usage.output_tokens,
-  });
 
   return content.text;
 }
