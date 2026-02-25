@@ -9,7 +9,7 @@ import {
   numeric,
 } from 'drizzle-orm/pg-core';
 
-const timestamptz = (name: string) => timestamp(name, { withTimezone: true });
+const timestamptz = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -95,8 +95,8 @@ export const publishQueue = pgTable('publish_queue', {
 
 export const researchRuns = pgTable('research_runs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  channelId: uuid('channel_id').references(() => channels.id).notNull(),
-  sourcesSearched: jsonb('sources_searched'),
+  channelId: uuid('channel_id').references(() => channels.id, { onDelete: 'cascade' }).notNull(),
+  sourcesSearched: jsonb('sources_searched').$type<ResearchSource[]>(),
   topicsFound: jsonb('topics_found').$type<TopicRecommendation[]>(),
   draftsGenerated: jsonb('drafts_generated').$type<string[]>(),
   aiModel: text('ai_model'),

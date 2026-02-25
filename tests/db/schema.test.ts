@@ -29,6 +29,8 @@ describe('database schema', () => {
   });
 
   afterAll(async () => {
+    // Clean up audit log entries created with sentinel operation value
+    await db.delete(aiAuditLog).where(eq(aiAuditLog.operation, 'test'));
     if (!testChannelId) return;
     await db.delete(drafts).where(eq(drafts.channelId, testChannelId));
     await db.delete(voiceProfiles).where(eq(voiceProfiles.channelId, testChannelId));
