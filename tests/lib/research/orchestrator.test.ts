@@ -73,14 +73,18 @@ describe('runResearch', () => {
   });
 
   it('still returns results when one adapter rejects', async () => {
-    mockSearchExa.mockRejectedValue(new Error('Exa API down'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = new Error('Exa API down');
+    mockSearchExa.mockRejectedValue(error);
     mockSearchReddit.mockResolvedValue([makeSource('https://reddit.example.com/1', 'reddit')]);
     mockMonitorSubstackFeeds.mockResolvedValue([makeSource('https://substack.example.com/1', 'substack')]);
 
     const results = await runResearch(baseConfig);
 
+    expect(consoleSpy).toHaveBeenCalledWith('[runResearch] adapter failed:', error);
     expect(results).toHaveLength(2);
     expect(results.map(r => r.source)).toEqual(expect.arrayContaining(['reddit', 'substack']));
     expect(results.map(r => r.source)).not.toContain('exa');
+    consoleSpy.mockRestore();
   });
 });
