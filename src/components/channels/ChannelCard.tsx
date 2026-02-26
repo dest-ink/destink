@@ -1,23 +1,22 @@
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import type { channels } from '@/db/schema';
 
 const PLATFORM_STYLES: Record<string, { label: string; color: string }> = {
   linkedin: { label: 'LinkedIn', color: 'bg-[#0A66C2]/10 text-[#0A66C2] border-[#0A66C2]/20' },
   substack: { label: 'Substack', color: 'bg-[#FF6719]/10 text-[#FF6719] border-[#FF6719]/20' },
 };
 
+// Use schema's inferred row type so the prop stays in sync with the DB automatically
+type ChannelRow = typeof channels.$inferSelect;
+
 interface ChannelCardProps {
-  channel: {
-    id: string;
-    name: string;
-    platform: 'linkedin' | 'substack';
-    personaPrompt: string | null;
-    updatedAt: Date;
-  };
+  channel: Pick<ChannelRow, 'id' | 'name' | 'platform' | 'personaPrompt' | 'updatedAt'>;
 }
 
 export function ChannelCard({ channel }: ChannelCardProps) {
-  const style = PLATFORM_STYLES[channel.platform];
+  // Fallback for unknown platform values added to the DB before UI is updated
+  const style = PLATFORM_STYLES[channel.platform] ?? { label: channel.platform, color: 'bg-muted text-muted-foreground border-border' };
   return (
     <Link href={`/channels/${channel.id}`}>
       <div className="group border border-border bg-card rounded-lg p-5 hover:border-primary/40 hover:bg-card/80 transition-all duration-200 cursor-pointer">

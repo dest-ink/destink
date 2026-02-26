@@ -12,6 +12,8 @@ const STEPS = [
   { question: 'Describe your ideal reader', placeholder: 'e.g. A senior engineer at a growth-stage startup who reads during lunch...' },
 ];
 
+const EMPTY_ANSWERS = () => Array(STEPS.length).fill('') as string[];
+
 interface VoiceWizardProps {
   channelId: string;
   open: boolean;
@@ -21,11 +23,24 @@ interface VoiceWizardProps {
 
 export function VoiceWizard({ channelId, open, onOpenChange, onComplete }: VoiceWizardProps) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(Array(STEPS.length).fill(''));
+  const [answers, setAnswers] = useState<string[]>(EMPTY_ANSWERS());
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
+
+  // Defer state reset until after the close animation finishes
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+    if (!nextOpen) {
+      setTimeout(() => {
+        setStep(0);
+        setAnswers(EMPTY_ANSWERS());
+        setError('');
+      }, 200);
+    }
+  };
 
   const handleNext = () => {
     if (isLast) {
@@ -37,29 +52,34 @@ export function VoiceWizard({ channelId, open, onOpenChange, onComplete }: Voice
 
   const handleSubmit = async () => {
     setLoading(true);
+    setError('');
     try {
       const wizardAnswers = STEPS.map((s, i) => ({
         question: s.question,
         answer: answers[i],
       }));
-      await fetch('/api/voice', {
+      const res = await fetch('/api/voice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channelId, method: 'wizard', wizardAnswers }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error || 'Failed to save voice profile');
+        return;
+      }
       onComplete();
       onOpenChange(false);
-      setStep(0);
-      setAnswers(Array(STEPS.length).fill(''));
     } catch (e) {
-      console.error(e);
+      console.error('[VoiceWizard] submit failed:', e);
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg bg-card border-border">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
@@ -90,11 +110,17 @@ export function VoiceWizard({ channelId, open, onOpenChange, onComplete }: Voice
             className="min-h-[120px] bg-background border-border resize-none font-sans text-sm"
             autoFocus
           />
+          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">
           {step > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setStep(s => s - 1)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={loading}
+              onClick={() => setStep(s => s - 1)}
+            >
               Back
             </Button>
           )}

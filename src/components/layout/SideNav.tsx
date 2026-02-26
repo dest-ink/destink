@@ -6,7 +6,7 @@ const links = [
   { href: '/channels', label: 'Channels', icon: '◈' },
   { href: '/drafts', label: 'Drafts', icon: '◇' },
   { href: '/queue', label: 'Queue', icon: '◉' },
-  { href: '/audit', label: 'AI Usage', icon: '◎' },
+  { href: '/audit', label: 'AI Usage', icon: '◎' }, // route is /audit, label is "AI Usage" intentionally
 ];
 
 export function SideNav() {
