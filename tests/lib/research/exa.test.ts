@@ -36,7 +36,15 @@ describe('buildExaQueries', () => {
   it('handles multiple topics', () => {
     const multiTopic = { ...baseConfig, topics: ['AI', 'startups'] };
     const queries = buildExaQueries(multiTopic);
-    expect(queries.some(q => q.includes('AI'))).toBe(true);
-    expect(queries.some(q => q.includes('startups'))).toBe(true);
+    expect(queries).toContain('latest news about AI');
+    expect(queries).toContain('AI trends 2026');
+    expect(queries).toContain('latest news about startups');
+    expect(queries).toContain('startups trends 2026');
+  });
+
+  it('returns empty array for empty topics', () => {
+    const noTopics = { ...baseConfig, topics: [] };
+    const queries = buildExaQueries(noTopics);
+    expect(queries).toHaveLength(0);
   });
 });

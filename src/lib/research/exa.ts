@@ -21,10 +21,17 @@ export function buildExaQueries(config: ResearchConfig): string[] {
 
 /**
  * Runs up to 5 Exa searches and returns deduplicated ResearchSource array.
- * Requires EXA_API_KEY env var.
+ * Requires EXA_API_KEY env var. Returns [] if key is missing or client init fails.
  */
 export async function searchExa(config: ResearchConfig): Promise<ResearchSource[]> {
-  const client = new Exa(process.env.EXA_API_KEY!);
+  let client: Exa;
+  try {
+    client = new Exa(process.env.EXA_API_KEY!);
+  } catch (err) {
+    console.error('[searchExa] failed to initialise Exa client (check EXA_API_KEY)', err);
+    return [];
+  }
+
   const queries = buildExaQueries(config);
   const sources: ResearchSource[] = [];
   const seen = new Set<string>();
@@ -42,7 +49,8 @@ export async function searchExa(config: ResearchConfig): Promise<ResearchSource[
         sources.push({
           url: r.url,
           title: r.title ?? '',
-          summary: r.highlights?.join(' ') ?? (r.text ?? '').slice(0, 500),
+          // Use || so an empty highlights array falls through to text fallback
+          summary: r.highlights?.join(' ') || (r.text ?? '').slice(0, 500),
           source: 'exa',
         });
       }
