@@ -26,7 +26,8 @@ export async function POST(
 
     if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(draft);
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/drafts/[id]/reject]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

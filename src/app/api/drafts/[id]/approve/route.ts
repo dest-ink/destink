@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/client';
-import { drafts, channels, publishQueue } from '@/db/schema';
+import { drafts, publishQueue } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(
@@ -18,12 +18,7 @@ export async function POST(
 
     if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const [channel] = await db
-      .select()
-      .from(channels)
-      .where(eq(channels.id, draft.channelId));
-
-    // Schedule immediately — Task 6.1 will replace this with a real scheduling algorithm
+    // Schedule immediately — Task 6.1 will replace this with a proper scheduling algorithm
     const scheduledFor = new Date();
 
     const [queueItem] = await db
@@ -36,8 +31,9 @@ export async function POST(
       })
       .returning();
 
-    return NextResponse.json({ draft, queueItem, channel });
-  } catch {
+    return NextResponse.json({ draft, queueItem });
+  } catch (err) {
+    console.error('[POST /api/drafts/[id]/approve]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

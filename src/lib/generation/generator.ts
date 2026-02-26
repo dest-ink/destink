@@ -95,7 +95,9 @@ export async function generateDraft(
     draft === null ||
     !Array.isArray(draft.headlineOptions) ||
     typeof draft.hook !== 'string' ||
-    typeof draft.body !== 'string'
+    typeof draft.body !== 'string' ||
+    typeof draft.cta !== 'string' ||
+    typeof draft.voiceConfidence !== 'number'
   ) {
     throw new Error(`Draft generation returned unexpected JSON shape: ${raw.slice(0, 200)}`);
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { and, eq, desc } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
 import { randomUUID } from 'crypto';
 import type { ResearchSource } from '@/db/schema';
@@ -9,25 +9,23 @@ import type { ResearchSource } from '@/db/schema';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const channelId = searchParams.get('channelId');
-  const status = (searchParams.get('status') ?? 'pending_review') as typeof drafts.$inferSelect['status'];
+  const statusParam = searchParams.get('status') as typeof drafts.$inferSelect['status'] | null;
 
   try {
-    let rows;
-    if (channelId) {
-      rows = await db
-        .select()
-        .from(drafts)
-        .where(eq(drafts.channelId, channelId))
-        .orderBy(desc(drafts.createdAt));
-    } else {
-      rows = await db
-        .select()
-        .from(drafts)
-        .where(eq(drafts.status, status))
-        .orderBy(desc(drafts.createdAt));
-    }
+    // Build conditions — both channelId and status can be applied simultaneously
+    const conditions = [];
+    if (channelId) conditions.push(eq(drafts.channelId, channelId));
+    if (statusParam) conditions.push(eq(drafts.status, statusParam));
+
+    const rows = await db
+      .select()
+      .from(drafts)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(drafts.createdAt));
+
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    console.error('[GET /api/drafts]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -103,7 +101,8 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json(draft, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/drafts]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
