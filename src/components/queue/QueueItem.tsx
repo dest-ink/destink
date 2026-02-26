@@ -37,9 +37,10 @@ interface QueueItemProps {
   item: QueueItemData;
   onRemoved: (id: string) => void;
   onRetried: (id: string) => void;
+  onPublishedNow?: (id: string) => void;
 }
 
-export function QueueItem({ item, onRemoved, onRetried }: QueueItemProps) {
+export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueItemProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,12 +61,30 @@ export function QueueItem({ item, onRemoved, onRetried }: QueueItemProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/queue?id=${item.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/queue/${item.id}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         setError(data.error ?? 'Failed to remove item');
       } else {
         onRemoved(item.id);
+      }
+    } catch {
+      setError('Network error — please try again');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePublishNow() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/queue/${item.id}/publish-now`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? 'Failed to publish');
+      } else {
+        onPublishedNow?.(item.id);
       }
     } catch {
       setError('Network error — please try again');
@@ -121,15 +140,26 @@ export function QueueItem({ item, onRemoved, onRetried }: QueueItemProps) {
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0">
           {item.status === 'queued' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRemove}
-              disabled={loading}
-              className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive hover:border-destructive/50"
-            >
-              {loading ? '…' : 'Remove'}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePublishNow}
+                disabled={loading}
+                className="text-xs h-7 px-2 text-muted-foreground hover:text-primary hover:border-primary/50"
+              >
+                {loading ? '…' : 'Publish Now'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRemove}
+                disabled={loading}
+                className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive hover:border-destructive/50"
+              >
+                Remove
+              </Button>
+            </>
           )}
           {item.status === 'failed' && (
             <Button

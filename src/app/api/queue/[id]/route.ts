@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { publishQueue } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function POST(
+export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -25,26 +25,17 @@ export async function POST(
       return NextResponse.json({ error: 'Queue item not found' }, { status: 404 });
     }
 
-    if (item.status !== 'failed') {
+    if (item.status !== 'queued') {
       return NextResponse.json(
-        { error: `Cannot retry item with status '${item.status}' — only 'failed' items can be retried` },
+        { error: `Cannot remove item with status '${item.status}' — only 'queued' items can be removed` },
         { status: 409 }
       );
     }
 
-    const [updated] = await db
-      .update(publishQueue)
-      .set({
-        status: 'queued',
-        errorMessage: null,
-        retryCount: sql`${publishQueue.retryCount} + 1`,
-      })
-      .where(eq(publishQueue.id, id))
-      .returning();
-
-    return NextResponse.json(updated);
+    await db.delete(publishQueue).where(eq(publishQueue.id, id));
+    return NextResponse.json({ success: true });
   } catch (e) {
-    console.error('[POST /api/queue/[id]/retry] failed:', e);
+    console.error('[DELETE /api/queue/[id]] failed:', e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

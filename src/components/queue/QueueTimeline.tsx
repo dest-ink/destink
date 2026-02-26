@@ -24,14 +24,28 @@ export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
     );
   }
 
+  function handlePublishedNow(id: string) {
+    // Optimistically mark as 'publishing' until the daemon processes it
+    setGroups(prev =>
+      prev.map(g => ({
+        ...g,
+        items: g.items.map(item =>
+          item.id === id ? { ...item, status: 'publishing' as const } : item
+        ),
+      }))
+    );
+  }
+
   function handleRetried(id: string) {
-    // Optimistically update the status to 'queued' and clear error
+    // Optimistically update status to 'queued' and clear error.
+    // retryCount is intentionally NOT incremented here — the server increments it atomically
+    // via SQL and owns the source of truth. The displayed count will reconcile on next reload.
     setGroups(prev =>
       prev.map(g => ({
         ...g,
         items: g.items.map(item =>
           item.id === id
-            ? { ...item, status: 'queued' as const, errorMessage: null, retryCount: item.retryCount + 1 }
+            ? { ...item, status: 'queued' as const, errorMessage: null }
             : item
         ),
       }))
@@ -70,6 +84,7 @@ export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
                 item={item}
                 onRemoved={handleRemoved}
                 onRetried={handleRetried}
+                onPublishedNow={handlePublishedNow}
               />
             ))}
           </div>

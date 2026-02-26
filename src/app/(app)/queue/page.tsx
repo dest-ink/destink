@@ -73,10 +73,16 @@ export default async function QueuePage() {
     bucketMap.get(bucket)!.push(item);
   }
 
-  // Build ordered groups (skip empty buckets)
+  // Build ordered groups (skip empty buckets).
+  // 'Past' items are reversed so the most recent failures appear first.
   const groups = BUCKET_ORDER
     .filter(label => bucketMap.has(label))
-    .map(label => ({ label, items: bucketMap.get(label)! }));
+    .map(label => ({
+      label,
+      items: label === 'Past'
+        ? [...bucketMap.get(label)!].reverse()
+        : bucketMap.get(label)!,
+    }));
 
   const totalCount = rows.length;
 
