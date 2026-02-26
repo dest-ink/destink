@@ -21,9 +21,13 @@ describe('buildSubstackFeedUrls', () => {
   });
 
   it('converts bare subdomain to Substack RSS URL', () => {
-    const urls = buildSubstackFeedUrls(baseConfig);
-    expect(urls.some(u => u.includes('lenny.substack.com'))).toBe(true);
-    expect(urls.some(u => u.endsWith('/feed'))).toBe(true);
+    const urls = buildSubstackFeedUrls({ ...baseConfig, substackFeeds: ['lenny.substack.com'] });
+    expect(urls).toEqual(['https://lenny.substack.com/feed']);
+  });
+
+  it('strips trailing slash before adding /feed', () => {
+    const urls = buildSubstackFeedUrls({ ...baseConfig, substackFeeds: ['lenny.substack.com/'] });
+    expect(urls).toEqual(['https://lenny.substack.com/feed']);
   });
 
   it('returns empty array for empty substackFeeds', () => {
@@ -36,6 +40,6 @@ describe('buildSubstackFeedUrls', () => {
       ...baseConfig,
       substackFeeds: Array.from({ length: 15 }, (_, i) => `pub${i}.substack.com`),
     };
-    expect(buildSubstackFeedUrls(manyFeeds).length).toBeLessThanOrEqual(10);
+    expect(buildSubstackFeedUrls(manyFeeds)).toHaveLength(10);
   });
 });

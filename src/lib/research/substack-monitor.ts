@@ -16,8 +16,9 @@ export function buildSubstackFeedUrls(config: ResearchConfig): string[] {
       if (feed.startsWith('http://') || feed.startsWith('https://')) {
         return feed;
       }
-      // Bare subdomain or domain — add scheme and /feed path
-      const base = feed.endsWith('/feed') ? feed : `${feed}/feed`;
+      // Bare subdomain or domain — trim trailing slashes, then add scheme and /feed path
+      const trimmed = feed.replace(/\/+$/, '');
+      const base = trimmed.endsWith('/feed') ? trimmed : `${trimmed}/feed`;
       return `https://${base}`;
     });
 }
