@@ -109,7 +109,12 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
               Sources
             </h3>
             <div className="flex flex-col gap-1.5">
-              {sources.map((src, i) => (
+              {sources.map((src, i) => {
+                // Guard against javascript: URLs stored in DB research sources
+                const safeUrl = src.url?.startsWith('http://') || src.url?.startsWith('https://')
+                  ? src.url
+                  : '#';
+                return (
                 <div key={i} className="flex items-start gap-2">
                   <Badge
                     className="shrink-0 mt-0.5 border text-[10px] font-mono capitalize bg-secondary text-muted-foreground border-border"
@@ -119,7 +124,7 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
                   </Badge>
                   <div className="min-w-0">
                     <a
-                      href={src.url}
+                      href={safeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:underline truncate block"
@@ -131,7 +136,8 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

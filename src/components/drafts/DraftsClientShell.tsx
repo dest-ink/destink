@@ -26,19 +26,27 @@ export function DraftsClientShell({ drafts, channelOptions }: DraftsClientShellP
     return drafts.filter(d => {
       if (filterChannel !== 'all' && d.channelId !== filterChannel) return false;
       if (filterContentType !== 'all' && d.contentType !== filterContentType) return false;
-      if (filterConfidence === 'low' && typeof d.voiceConfidence === 'number' && d.voiceConfidence >= 60)
-        return false;
-      if (filterConfidence === 'high' && typeof d.voiceConfidence === 'number' && d.voiceConfidence < 60)
-        return false;
+      if (filterConfidence === 'low') {
+        // Exclude drafts with no score, or score ≥ 60
+        if (typeof d.voiceConfidence !== 'number' || d.voiceConfidence >= 60) return false;
+      }
+      if (filterConfidence === 'high') {
+        // Exclude drafts with no score, or score < 60
+        if (typeof d.voiceConfidence !== 'number' || d.voiceConfidence < 60) return false;
+      }
       return true;
     });
   }, [drafts, filterChannel, filterContentType, filterConfidence]);
 
-  const selectedDraft = filtered.find(d => d.id === selectedId) ?? filtered[0] ?? null;
+  // After an action, router.refresh() removes the actioned draft from `filtered`.
+  // At that point filtered.find returns undefined and the panel shows the empty state.
+  // We intentionally do NOT fall back to filtered[0] here — auto-selecting the next draft
+  // after an action would confuse the user into thinking it was also actioned.
+  const selectedDraft = (selectedId ? filtered.find(d => d.id === selectedId) : null) ?? null;
 
   function handleActionComplete() {
-    // After approve/reject/regenerate, clear selected so the panel closes gracefully
-    setSelectedId(null);
+    // Don't eagerly clear selectedId — let router.refresh() remove the draft from the list,
+    // which will cause selectedDraft to become null naturally on the next render.
   }
 
   return (
@@ -104,6 +112,7 @@ export function DraftsClientShell({ drafts, channelOptions }: DraftsClientShellP
 
       {/* Right: detail panel */}
       <div className="flex-1 min-w-0">
+        {/* key resets DraftDetailPanel internal state (activeHeadline) when selection changes */}
         {selectedDraft ? (
           <DraftDetailPanel
             key={selectedDraft.id}

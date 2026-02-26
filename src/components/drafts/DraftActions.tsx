@@ -18,68 +18,84 @@ type ActionState = 'idle' | 'rejecting' | 'regenerating';
 export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  // isFetching tracks the in-flight fetch; isPending only covers startTransition, not the fetch itself
+  const [isFetching, setIsFetching] = useState(false);
   const [actionState, setActionState] = useState<ActionState>('idle');
   const [rejectReason, setRejectReason] = useState('');
   const [regenNote, setRegenNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const disabled = isPending || isFetching;
+
   async function handleApprove() {
+    if (disabled) return;
     setError(null);
-    const res = await fetch(`/api/drafts/${draft.id}/approve`, { method: 'POST' });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError((data as { error?: string }).error ?? 'Failed to approve draft');
-      return;
+    setIsFetching(true);
+    try {
+      const res = await fetch(`/api/drafts/${draft.id}/approve`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error ?? 'Failed to approve draft');
+        return;
+      }
+      startTransition(() => { router.refresh(); });
+      onActionComplete?.();
+    } finally {
+      setIsFetching(false);
     }
-    startTransition(() => {
-      router.refresh();
-    });
-    onActionComplete?.();
   }
 
   async function handleReject() {
+    if (disabled) return;
     setError(null);
-    const res = await fetch(`/api/drafts/${draft.id}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason: rejectReason.trim() || undefined }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError((data as { error?: string }).error ?? 'Failed to reject draft');
-      return;
+    setIsFetching(true);
+    try {
+      const res = await fetch(`/api/drafts/${draft.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: rejectReason.trim() || undefined }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error ?? 'Failed to reject draft');
+        return;
+      }
+      startTransition(() => { router.refresh(); });
+      onActionComplete?.();
+    } finally {
+      setIsFetching(false);
     }
-    startTransition(() => {
-      router.refresh();
-    });
-    onActionComplete?.();
   }
 
   async function handleRegenerate() {
+    if (disabled) return;
     setError(null);
-    const topicTitle = draft.title ?? 'Untitled';
-    const topicAngle = regenNote.trim() || 'Same angle as original';
-    const res = await fetch('/api/drafts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channelId: draft.channelId,
-        contentType: draft.contentType,
-        topicTitle,
-        topicAngle,
-        sources: draft.researchSources ?? [],
-        regenerationNote: regenNote.trim() || undefined,
-      }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError((data as { error?: string }).error ?? 'Failed to regenerate draft');
-      return;
+    setIsFetching(true);
+    try {
+      const topicTitle = draft.title ?? 'Untitled';
+      const topicAngle = regenNote.trim() || 'Same angle as original';
+      const res = await fetch('/api/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelId: draft.channelId,
+          contentType: draft.contentType,
+          topicTitle,
+          topicAngle,
+          sources: draft.researchSources ?? [],
+          regenerationNote: regenNote.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error ?? 'Failed to regenerate draft');
+        return;
+      }
+      startTransition(() => { router.refresh(); });
+      onActionComplete?.();
+    } finally {
+      setIsFetching(false);
     }
-    startTransition(() => {
-      router.refresh();
-    });
-    onActionComplete?.();
   }
 
   return (
@@ -103,16 +119,16 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
             <Button
               size="sm"
               variant="destructive"
-              disabled={isPending}
+              disabled={disabled}
               onClick={handleReject}
               className="flex-1"
             >
-              {isPending ? 'Rejecting…' : 'Confirm Reject'}
+              {disabled ? 'Rejecting…' : 'Confirm Reject'}
             </Button>
             <Button
               size="sm"
               variant="outline"
-              disabled={isPending}
+              disabled={disabled}
               onClick={() => { setActionState('idle'); setRejectReason(''); setError(null); }}
             >
               Cancel
@@ -133,16 +149,16 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
           <div className="flex gap-2">
             <Button
               size="sm"
-              disabled={isPending}
+              disabled={disabled}
               onClick={handleRegenerate}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isPending ? 'Generating…' : 'Regenerate'}
+              {disabled ? 'Generating…' : 'Regenerate'}
             </Button>
             <Button
               size="sm"
               variant="outline"
-              disabled={isPending}
+              disabled={disabled}
               onClick={() => { setActionState('idle'); setRegenNote(''); setError(null); }}
             >
               Cancel
@@ -156,16 +172,16 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
         <div className="flex gap-2 flex-wrap">
           <Button
             size="sm"
-            disabled={isPending}
+            disabled={disabled}
             onClick={handleApprove}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {isPending ? 'Approving…' : 'Approve'}
+            {disabled ? 'Approving…' : 'Approve'}
           </Button>
           <Button
             size="sm"
             variant="destructive"
-            disabled={isPending}
+            disabled={disabled}
             onClick={() => setActionState('rejecting')}
           >
             Reject
@@ -173,7 +189,7 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
           <Button
             size="sm"
             variant="outline"
-            disabled={isPending}
+            disabled={disabled}
             onClick={() => setActionState('regenerating')}
           >
             Regenerate
