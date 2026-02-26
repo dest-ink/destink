@@ -50,7 +50,7 @@ export async function searchExa(config: ResearchConfig): Promise<ResearchSource[
           url: r.url,
           title: r.title ?? '',
           // Use || so an empty highlights array falls through to text fallback
-          summary: r.highlights?.join(' ') || (r.text ?? '').slice(0, 500),
+          summary: r.highlights?.join(' ') || ((r as unknown as { text?: string }).text ?? '').slice(0, 500),
           source: 'exa',
         });
       }
