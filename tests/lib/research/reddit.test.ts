@@ -23,8 +23,8 @@ describe('buildRedditUrls', () => {
 
   it('strips the r/ prefix from subreddit names', () => {
     const urls = buildRedditUrls(baseConfig);
-    // Should produce URLs like reddit.com/r/MachineLearning/hot.json
-    expect(urls.every(u => !u.includes('r/r/'))).toBe(true);
+    expect(urls[0]).toBe('https://www.reddit.com/r/MachineLearning/hot.json?limit=10');
+    expect(urls[1]).toBe('https://www.reddit.com/r/artificial/hot.json?limit=10');
   });
 
   it('returns empty array for empty subreddits', () => {
@@ -37,6 +37,6 @@ describe('buildRedditUrls', () => {
       ...baseConfig,
       subreddits: ['r/a', 'r/b', 'r/c', 'r/d', 'r/e', 'r/f', 'r/g'],
     };
-    expect(buildRedditUrls(manySubs).length).toBeLessThanOrEqual(5);
+    expect(buildRedditUrls(manySubs)).toHaveLength(5);
   });
 });
