@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Cleanup & Foundation
 
-- [ ] **CLEAN-01**: Job scripts close DB connection pool before process.exit (pg Pool leak fix)
-- [ ] **CLEAN-02**: Stuck queue items in `publishing` status are recovered on daemon restart
+- [x] **CLEAN-01**: Job scripts close DB connection pool before process.exit (pg Pool leak fix)
+- [x] **CLEAN-02**: Stuck queue items in `publishing` status are recovered on daemon restart
 - [ ] **CLEAN-03**: Daemon handles SIGTERM for graceful shutdown in containerized environments
 - [ ] **CLEAN-04**: Publish job documents `concurrencyPolicy: Forbid` requirement
 - [ ] **CLEAN-05**: Daily summary job implemented (`src/jobs/daily-summary.ts` + npm script)
@@ -109,8 +109,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLEAN-01 | Phase 1 | Pending |
-| CLEAN-02 | Phase 1 | Pending |
+| CLEAN-01 | Phase 1 | Complete |
+| CLEAN-02 | Phase 1 | Complete |
 | CLEAN-03 | Phase 1 | Pending |
 | CLEAN-04 | Phase 1 | Pending |
 | CLEAN-05 | Phase 1 | Pending |
