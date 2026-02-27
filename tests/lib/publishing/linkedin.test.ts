@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { drafts, channels } from '@/db/schema';
 
 vi.mock('@/lib/crypto', () => ({
@@ -63,6 +63,18 @@ const VALID_CREDS = JSON.stringify({
 
 const ENC_KEY = 'a'.repeat(64);
 
+// Helper to stub fetch with a successful response
+function stubFetchSuccess(id = 'urn:li:ugcPost:12345') {
+  const mockFetch = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 201,
+    statusText: 'Created',
+    json: vi.fn().mockResolvedValue({ id }),
+  });
+  vi.stubGlobal('fetch', mockFetch);
+  return mockFetch;
+}
+
 // ─── formatForLinkedIn ───────────────────────────────────────────────────────
 
 describe('formatForLinkedIn', () => {
@@ -84,6 +96,16 @@ describe('formatForLinkedIn', () => {
   it('omits null cta', () => {
     const draft = makeDraft({ hook: 'Hook', body: 'Body', cta: null });
     expect(formatForLinkedIn(draft)).toBe('Hook\n\nBody');
+  });
+
+  it('omits empty-string sections', () => {
+    const draft = makeDraft({ hook: '', body: 'Body', cta: '' });
+    expect(formatForLinkedIn(draft)).toBe('Body');
+  });
+
+  it('omits whitespace-only sections', () => {
+    const draft = makeDraft({ hook: '   ', body: 'Body', cta: '\t' });
+    expect(formatForLinkedIn(draft)).toBe('Body');
   });
 
   it('returns empty string when all sections are null', () => {
@@ -123,6 +145,15 @@ describe('formatForLinkedIn', () => {
     expect(result.endsWith('...')).toBe(true);
     expect(result.slice(0, 2997)).toBe('a'.repeat(2997));
   });
+
+  it('truncates correctly when the cut falls within the section separator', () => {
+    // hook (2998) + '\n\n' + body => total > 3000, cut lands in the separator
+    const hook = 'h'.repeat(2998);
+    const draft = makeDraft({ hook, body: 'body text', cta: null });
+    const result = formatForLinkedIn(draft);
+    expect(result).toHaveLength(3000);
+    expect(result.endsWith('...')).toBe(true);
+  });
 });
 
 // ─── publishToLinkedIn ───────────────────────────────────────────────────────
@@ -130,8 +161,11 @@ describe('formatForLinkedIn', () => {
 describe('publishToLinkedIn', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.unstubAllGlobals();
     process.env.CREDENTIALS_ENCRYPTION_KEY = ENC_KEY;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('throws for article content type', async () => {
@@ -199,25 +233,50 @@ describe('publishToLinkedIn', () => {
     );
   });
 
-  it('returns LinkedInPublishResult with id on success', async () => {
+  it('omits statusText from error when empty (HTTP/2)', async () => {
+    mockDecrypt.mockReturnValue(VALID_CREDS);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: '',
+      json: vi.fn(),
+    }));
+    await expect(publishToLinkedIn(makeDraft(), makeChannel())).rejects.toThrow(
+      'LinkedIn API error: 429',
+    );
+  });
+
+  it('throws when API response has no string id', async () => {
     mockDecrypt.mockReturnValue(VALID_CREDS);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
-      json: vi.fn().mockResolvedValue({ id: 'urn:li:ugcPost:12345' }),
+      statusText: 'Created',
+      json: vi.fn().mockResolvedValue({ id: 12345 }), // numeric, not string
     }));
+    await expect(publishToLinkedIn(makeDraft(), makeChannel())).rejects.toThrow(
+      'LinkedIn API returned unexpected response shape',
+    );
+  });
+
+  it('propagates network-level fetch rejection', async () => {
+    mockDecrypt.mockReturnValue(VALID_CREDS);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+    await expect(publishToLinkedIn(makeDraft(), makeChannel())).rejects.toThrow(
+      'ECONNREFUSED',
+    );
+  });
+
+  it('returns LinkedInPublishResult with id on success', async () => {
+    mockDecrypt.mockReturnValue(VALID_CREDS);
+    stubFetchSuccess('urn:li:ugcPost:12345');
     const result = await publishToLinkedIn(makeDraft(), makeChannel());
     expect(result).toEqual({ id: 'urn:li:ugcPost:12345' });
   });
 
   it('calls fetch with the correct URL', async () => {
     mockDecrypt.mockReturnValue(VALID_CREDS);
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 201,
-      json: vi.fn().mockResolvedValue({ id: 'urn:li:ugcPost:abc' }),
-    });
-    vi.stubGlobal('fetch', mockFetch);
+    const mockFetch = stubFetchSuccess();
 
     await publishToLinkedIn(makeDraft(), makeChannel());
     expect(mockFetch).toHaveBeenCalledWith(
@@ -228,12 +287,7 @@ describe('publishToLinkedIn', () => {
 
   it('calls fetch with correct Authorization and protocol headers', async () => {
     mockDecrypt.mockReturnValue(VALID_CREDS);
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 201,
-      json: vi.fn().mockResolvedValue({ id: 'urn:li:ugcPost:abc' }),
-    });
-    vi.stubGlobal('fetch', mockFetch);
+    const mockFetch = stubFetchSuccess();
 
     await publishToLinkedIn(makeDraft(), makeChannel());
 
@@ -246,12 +300,7 @@ describe('publishToLinkedIn', () => {
 
   it('calls fetch with correctly shaped ugcPosts body', async () => {
     mockDecrypt.mockReturnValue(VALID_CREDS);
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 201,
-      json: vi.fn().mockResolvedValue({ id: 'urn:li:ugcPost:abc' }),
-    });
-    vi.stubGlobal('fetch', mockFetch);
+    const mockFetch = stubFetchSuccess();
 
     const draft = makeDraft({ hook: 'Hook', body: 'Body', cta: 'CTA' });
     await publishToLinkedIn(draft, makeChannel());

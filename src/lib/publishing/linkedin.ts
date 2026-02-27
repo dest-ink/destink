@@ -19,12 +19,12 @@ export interface LinkedInPublishResult {
 /**
  * Format draft content for LinkedIn publication.
  * Combines hook, body, and CTA into a single plain-text string separated by
- * blank lines. Null/empty sections are omitted.
+ * blank lines. Null/empty/whitespace-only sections are omitted.
  * Truncates to 3000 characters (LinkedIn note limit) with trailing ellipsis.
  * Pure function — useful for testing without network calls.
  */
 export function formatForLinkedIn(draft: DraftRow): string {
-  const text = [draft.hook, draft.body, draft.cta].filter(Boolean).join('\n\n');
+  const text = [draft.hook, draft.body, draft.cta].filter(s => s?.trim()).join('\n\n');
   if (text.length <= LINKEDIN_NOTE_MAX) {
     return text;
   }
@@ -35,7 +35,7 @@ export function formatForLinkedIn(draft: DraftRow): string {
  * Decode and decrypt channel credentials into LinkedInCredentials.
  * Throws if credentials are missing, malformed, or tampered.
  */
-export function parseLinkedInCredentials(channel: ChannelRow): LinkedInCredentials {
+function parseLinkedInCredentials(channel: ChannelRow): LinkedInCredentials {
   if (!channel.credentials) {
     throw new Error('LinkedIn channel has no credentials configured');
   }
@@ -125,11 +125,17 @@ export async function publishToLinkedIn(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `LinkedIn API error: ${response.status} ${response.statusText}`,
-    );
+    const statusText = response.statusText ? ` ${response.statusText}` : '';
+    throw new Error(`LinkedIn API error: ${response.status}${statusText}`);
   }
 
-  const data = (await response.json()) as { id: string };
-  return { id: data.id };
+  const data = await response.json() as unknown;
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof (data as Record<string, unknown>).id !== 'string'
+  ) {
+    throw new Error('LinkedIn API returned unexpected response shape');
+  }
+  return { id: (data as { id: string }).id };
 }
