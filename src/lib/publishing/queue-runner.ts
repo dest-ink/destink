@@ -1,12 +1,48 @@
 import { db } from '@/db/client';
 import { publishQueue, drafts, channels } from '@/db/schema';
-import { eq, lte, and } from 'drizzle-orm';
+import { eq, lte, and, lt } from 'drizzle-orm';
 import { publishToSubstack } from '@/lib/publishing/substack';
 import { publishToLinkedIn } from '@/lib/publishing/linkedin';
 
 export function getRetryDelay(retryCount: number): number {
   const delays = [5, 15, 45];
   return (delays[retryCount - 1] ?? 45) * 60 * 1000;
+}
+
+/**
+ * Resets queue items stuck in 'publishing' status back to 'queued'.
+ *
+ * Detection uses createdAt (not a processing-start timestamp, which doesn't exist
+ * on the publishQueue table). This is a conservative heuristic: items created more
+ * than 15 minutes ago AND still in 'publishing' are assumed stuck. In practice,
+ * publishes complete in seconds, so this threshold is safe.
+ *
+ * If a processingStartedAt column is added in the future, switch detection to
+ * use that column for more precise stuck-item identification.
+ *
+ * User decision: no retry limit tracking for recovery — items reset indefinitely.
+ */
+export async function recoverStuckItems(): Promise<void> {
+  const STUCK_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+  const cutoff = new Date(Date.now() - STUCK_THRESHOLD_MS);
+
+  const stuck = await db
+    .select({ id: publishQueue.id })
+    .from(publishQueue)
+    .where(
+      and(
+        eq(publishQueue.status, 'publishing'),
+        lt(publishQueue.createdAt, cutoff),
+      ),
+    );
+
+  for (const item of stuck) {
+    await db
+      .update(publishQueue)
+      .set({ status: 'queued' })
+      .where(eq(publishQueue.id, item.id));
+    console.warn(`[queue-runner] Recovered stuck item ${item.id} — reset to queued`);
+  }
 }
 
 /**
