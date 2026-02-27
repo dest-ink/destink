@@ -7,8 +7,8 @@ last_updated: "2026-02-27T08:20:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 1 of 4 (Cleanup & Foundation) — COMPLETE
-Plan: 3 of 3 in current phase
+Plan: 4 of 4 in current phase (including gap closure 01-04)
 Status: Phase complete, ready for Phase 2
-Last activity: 2026-02-27 — Completed plan 01-03: queue runner unit test suite
+Last activity: 2026-02-27 — Completed plan 01-04: gap closure for TypeScript type errors in queue-runner tests
 
 Progress: [███░░░░░░░] 30%
 
@@ -50,6 +50,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 01-cleanup-foundation P01 | 13 | 2 tasks | 4 files |
 | Phase 01-cleanup-foundation P02 | 1 | 2 tasks | 3 files |
 | Phase 01-cleanup-foundation P03 | 10 | 1 task | 2 files |
+| Phase 01-cleanup-foundation P04 | 5 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 01-cleanup-foundation]: Failed items daily count uses createdAt as time proxy since publishQueue has no updatedAt column
 - [Phase 01-cleanup-foundation]: vitest.config.ts added at project root so tests/ dir is discovered — .worktrees/build/vitest.config.ts is not used for root-level test runs
 - [Phase 01-cleanup-foundation]: mockReturnValueOnce per db.update() call required for per-invocation .set() argument introspection in queue-runner tests
+- [Phase 01-cleanup-foundation]: Use 'as unknown as TargetType' double cast for mocked DB clients with no structural overlap with the real db type (TS2352)
+- [Phase 01-cleanup-foundation]: mockResolvedValue objects must exactly match the declared return type interface (not just { ok: true })
 
 ### Pending Todos
 
@@ -81,5 +84,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 01-cleanup-foundation/01-03-PLAN.md — queue runner unit test suite. Phase 1 complete.
+Stopped at: Completed 01-cleanup-foundation/01-04-PLAN.md — gap closure for TypeScript type errors. Phase 1 fully complete (CLEAN-06 satisfied, tsc --noEmit exits 0).
 Resume file: None

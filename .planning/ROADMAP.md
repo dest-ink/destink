@@ -79,7 +79,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Cleanup & Foundation | 3/4 | Gap closure | - |
+| 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 0/TBD | Not started | - |
 | 3. Authentication & UI Polish | 0/TBD | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
