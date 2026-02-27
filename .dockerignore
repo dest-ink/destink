@@ -1,0 +1,8 @@
+.git
+.next
+node_modules
+.env.local
+.worktrees
+coverage
+*.test.ts
+*.log
