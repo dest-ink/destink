@@ -29,7 +29,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The daemon responds to SIGTERM with a graceful shutdown — in-flight publishes complete, DB connections close, no zombie processes
   4. A daily summary job runs via `npm run job:daily-summary` and logs a digest of research, drafts, and publishes
   5. Queue runner test suite passes (`tests/lib/publishing/queue-runner.test.ts`) covering normal publish, failure handling, and stuck-item recovery
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 01-01-PLAN.md — Fix pool lifecycle and add stuck item recovery (CLEAN-01, CLEAN-02)
+- [ ] 01-02-PLAN.md — Graceful daemon shutdown and daily summary (CLEAN-03, CLEAN-04, CLEAN-05)
+- [ ] 01-03-PLAN.md — Queue runner test suite (CLEAN-06)
 
 ### Phase 2: Pluggable Provider System
 **Goal**: Publishers and research adapters are drop-in modules — a contributor adds a new platform by creating one file, with no changes to core orchestration code
@@ -75,7 +78,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Cleanup & Foundation | 0/TBD | Not started | - |
+| 1. Cleanup & Foundation | 0/3 | Planned | - |
 | 2. Pluggable Provider System | 0/TBD | Not started | - |
 | 3. Authentication & UI Polish | 0/TBD | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
