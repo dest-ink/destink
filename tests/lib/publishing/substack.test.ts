@@ -86,6 +86,11 @@ describe('formatForSubstack', () => {
     const draft = makeDraft({ hook: '', body: 'Body', cta: '' });
     expect(formatForSubstack(draft)).toBe('Body');
   });
+
+  it('omits whitespace-only sections', () => {
+    const draft = makeDraft({ hook: '   ', body: 'Body', cta: '\t' });
+    expect(formatForSubstack(draft)).toBe('Body');
+  });
 });
 
 // ─── publishToSubstack ────────────────────────────────────────────────────────
@@ -93,7 +98,6 @@ describe('formatForSubstack', () => {
 describe('publishToSubstack', () => {
   // Build a fresh mock client chain before each test
   let mockPublish: ReturnType<typeof vi.fn>;
-  let mockText: ReturnType<typeof vi.fn>;
   let paragraphBuilder: { text: ReturnType<typeof vi.fn>; publish: ReturnType<typeof vi.fn> };
   let mockParagraph: ReturnType<typeof vi.fn>;
   let mockNewNote: ReturnType<typeof vi.fn>;
@@ -157,9 +161,24 @@ describe('publishToSubstack', () => {
     );
   });
 
+  it('throws when credentials are not valid JSON', async () => {
+    vi.mocked(decrypt).mockReturnValue('not-valid-json{{{');
+    await expect(publishToSubstack(makeDraft(), makeChannel())).rejects.toThrow(
+      'not valid JSON',
+    );
+  });
+
   it('throws when draft has no content', async () => {
     vi.mocked(decrypt).mockReturnValue(VALID_CREDS);
     const draft = makeDraft({ hook: null, body: null, cta: null });
+    await expect(publishToSubstack(draft, makeChannel())).rejects.toThrow(
+      'no content to publish',
+    );
+  });
+
+  it('throws when draft has only whitespace content', async () => {
+    vi.mocked(decrypt).mockReturnValue(VALID_CREDS);
+    const draft = makeDraft({ hook: '   ', body: '\t', cta: null });
     await expect(publishToSubstack(draft, makeChannel())).rejects.toThrow(
       'no content to publish',
     );
@@ -185,5 +204,13 @@ describe('publishToSubstack', () => {
     vi.mocked(decrypt).mockReturnValue(VALID_CREDS);
     const result = await publishToSubstack(makeDraft(), makeChannel());
     expect(result).toEqual({ id: 42, date: '2024-01-01T00:00:00Z' });
+  });
+
+  it('propagates ownProfile() rejection', async () => {
+    vi.mocked(decrypt).mockReturnValue(VALID_CREDS);
+    mockOwnProfile.mockRejectedValue(new Error('401 Unauthorized'));
+    await expect(publishToSubstack(makeDraft(), makeChannel())).rejects.toThrow(
+      '401 Unauthorized',
+    );
   });
 });

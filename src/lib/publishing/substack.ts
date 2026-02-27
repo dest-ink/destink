@@ -22,7 +22,7 @@ export interface SubstackPublishResult {
  * Pure function — useful for testing without network calls.
  */
 export function formatForSubstack(draft: DraftRow): string {
-  return [draft.hook, draft.body, draft.cta].filter(Boolean).join('\n\n');
+  return [draft.hook, draft.body, draft.cta].filter(s => s?.trim()).join('\n\n');
 }
 
 /**
