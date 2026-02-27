@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3021",
     "dev:daemon": "tsx watch src/daemon/index.ts",
+    "job:publish": "tsx src/jobs/publish.ts",
+    "job:research": "tsx src/jobs/research.ts",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:daemon\"",
     "build": "next build",
     "start": "next start",
@@ -35,6 +37,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "rss-parser": "^3.13.0",
+    "substack-api": "^2.2.1",
     "tailwind-merge": "^3.5.0",
     "tsx": "^4.21.0",
     "zod": "^3.25.76"

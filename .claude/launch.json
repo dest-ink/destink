@@ -2,16 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "web",
+      "name": "orbitl-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3021
-    },
-    {
-      "name": "db-studio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "db:studio"],
-      "port": 4983
     }
   ]
 }
