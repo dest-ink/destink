@@ -11,9 +11,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **CLEAN-01**: Job scripts close DB connection pool before process.exit (pg Pool leak fix)
 - [x] **CLEAN-02**: Stuck queue items in `publishing` status are recovered on daemon restart
-- [ ] **CLEAN-03**: Daemon handles SIGTERM for graceful shutdown in containerized environments
-- [ ] **CLEAN-04**: Publish job documents `concurrencyPolicy: Forbid` requirement
-- [ ] **CLEAN-05**: Daily summary job implemented (`src/jobs/daily-summary.ts` + npm script)
+- [x] **CLEAN-03**: Daemon handles SIGTERM for graceful shutdown in containerized environments
+- [x] **CLEAN-04**: Publish job documents `concurrencyPolicy: Forbid` requirement
+- [x] **CLEAN-05**: Daily summary job implemented (`src/jobs/daily-summary.ts` + npm script)
 - [ ] **CLEAN-06**: Queue runner has test coverage (`tests/lib/publishing/queue-runner.test.ts`)
 
 ### Pluggable Publishers
@@ -111,9 +111,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | CLEAN-01 | Phase 1 | Complete |
 | CLEAN-02 | Phase 1 | Complete |
-| CLEAN-03 | Phase 1 | Pending |
-| CLEAN-04 | Phase 1 | Pending |
-| CLEAN-05 | Phase 1 | Pending |
+| CLEAN-03 | Phase 1 | Complete |
+| CLEAN-04 | Phase 1 | Complete |
+| CLEAN-05 | Phase 1 | Complete |
 | CLEAN-06 | Phase 1 | Pending |
 | PUB-01 | Phase 2 | Pending |
 | PUB-02 | Phase 2 | Pending |
