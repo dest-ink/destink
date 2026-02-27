@@ -21,7 +21,7 @@ import { db } from '@/db/client';
 import { publishToSubstack } from '@/lib/publishing/substack';
 import { publishToLinkedIn } from '@/lib/publishing/linkedin';
 
-const mockDb = db as {
+const mockDb = db as unknown as {
   select: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
 };
@@ -145,7 +145,7 @@ describe('runPublishQueue', () => {
     const item = makeQueueItem();
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishSubstack.mockResolvedValue({ ok: true });
+    mockPublishSubstack.mockResolvedValue({ id: 1, date: '2026-01-01' });
 
     await runPublishQueue();
 
@@ -162,7 +162,7 @@ describe('runPublishQueue', () => {
     item.channel.platform = 'linkedin';
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishLinkedIn.mockResolvedValue({ ok: true });
+    mockPublishLinkedIn.mockResolvedValue({ id: 'li-post-1' });
 
     await runPublishQueue();
 
