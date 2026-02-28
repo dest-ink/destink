@@ -1,10 +1,7 @@
 import { db } from '@/db/client';
 import { channels, researchRuns, voiceProfiles, drafts } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { searchExa } from './exa';
-import { searchReddit } from './reddit';
-import { monitorSubstackFeeds } from './substack-monitor';
-import { brainstormTopics } from './brainstorm';
+import { runResearch } from './orchestrator';
 import { callClaude } from '@/lib/ai/client';
 import type { ResearchSource, TopicRecommendation, ResearchConfig, VoiceProfile } from '@/db/schema';
 
@@ -49,9 +46,17 @@ Sort by relevanceScore descending. Return ONLY the JSON array.`;
 /**
  * Full research pipeline for a channel:
  * 1. Loads channel + recent drafts + voice profile from DB
- * 2. Runs all four signal sources in parallel (Exa, Reddit, Substack, brainstorm)
+ * 2. Runs all registered adapters in parallel via runResearch()
+ *    (including brainstorm, Exa, Reddit, Substack, etc.)
  * 3. Asks Claude to rank and filter into topic recommendations
  * 4. Stores the research run in the DB
+ *
+ * NOTE: Per-channel adapter filtering (running only a subset of adapters for
+ * a given channel) is a future enhancement — it would require a
+ * `researchAdapterIds` field on the channel schema. For now, ALL registered
+ * adapters run for every channel. The brainstorm adapter's extended config
+ * fields (channelId, voiceProfile, recentTitles) are passed through the
+ * ResearchConfig so it has the context it needs.
  */
 export async function runResearchForChannel(channelId: string): Promise<void> {
   const [channel] = await db.select().from(channels).where(eq(channels.id, channelId));
@@ -77,15 +82,21 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
     .where(eq(voiceProfiles.channelId, channelId));
   const voiceProfile = (profile?.extractedProfile as VoiceProfile | null) ?? null;
 
-  // Gather all signals in parallel — per-source failures are handled inside each adapter
-  const [exaSources, redditSources, substackSources, brainstormSources] = await Promise.all([
-    searchExa(config),
-    searchReddit(config),
-    monitorSubstackFeeds(config),
-    brainstormTopics(config, voiceProfile, recentTitles, channelId),
-  ]);
+  // Build extended config with brainstorm context fields so the brainstorm
+  // adapter has the data it needs alongside the base research config.
+  const extendedConfig: ResearchConfig & {
+    channelId?: string;
+    voiceProfile?: VoiceProfile | null;
+    recentTitles?: string[];
+  } = {
+    ...config,
+    channelId,
+    voiceProfile,
+    recentTitles,
+  };
 
-  const allSources = [...exaSources, ...redditSources, ...substackSources, ...brainstormSources];
+  // Fan out to ALL registered adapters (Exa, Reddit, Substack, brainstorm, etc.)
+  const allSources = await runResearch(extendedConfig);
 
   // AI analysis: rank and filter sources into content opportunities
   const analysisPrompt = buildAnalysisPrompt(allSources, channel.personaPrompt ?? '', recentTitles);
