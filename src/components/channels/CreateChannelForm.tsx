@@ -31,7 +31,7 @@ export function CreateChannelForm() {
         return;
       }
       const ch = await res.json();
-      router.push(`/channels/${ch.id}`);
+      router.push('/channels');
     } catch (e) {
       console.error('[CreateChannelForm] submit failed:', e);
       setError('Something went wrong');
