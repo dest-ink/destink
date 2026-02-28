@@ -1,5 +1,5 @@
 services:
-  db:
+  postgres:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: orbitl
@@ -25,10 +25,10 @@ services:
       - path: .env.local
         required: false
     environment:
-      DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
+      DATABASE_URL: postgresql://orbitl:orbitl@postgres:5432/orbitl
       PORT: "3021"
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
   daemon:
@@ -39,9 +39,9 @@ services:
       - path: .env.local
         required: false
     environment:
-      DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
+      DATABASE_URL: postgresql://orbitl:orbitl@postgres:5432/orbitl
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
 volumes:
