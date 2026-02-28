@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T18:45:06.437Z"
+last_updated: "2026-02-28T18:51:29Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** Phase 2 — Pluggable Provider System
+**Current focus:** Phase 3 — Authentication & UI Polish
 
 ## Current Position
 
 Phase: 3 of 4 (Authentication & UI Polish) — In Progress
-Plan: 1 of 4 complete in current phase
-Status: Phase 3 Plan 1 COMPLETE — Auth.js v5 Credentials auth, setup wizard, login page, all 11 API routes protected
-Last activity: 2026-02-28 — Completed plan 03-01: Single-user authentication with Auth.js v5
+Plan: 2 of 4 complete in current phase
+Status: Phase 3 Plan 2 COMPLETE — Dark/light mode, toast system, skeleton loaders, actionable error messages
+Last activity: 2026-02-28 — Completed plan 03-02: UI design system (theming, toast, skeletons, actionable errors)
 
-Progress: [████████░░] 75% (3 of 4 phases active; Phase 3 in progress — 1/4 plans done)
+Progress: [████████░░] 75% (3 of 4 phases active; Phase 3 in progress — 2/4 plans done)
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 75% (3 of 4 phases active; Phase 3 in
 | Phase 02-pluggable-provider-system P03 | 5 | 2 tasks | 10 files |
 | Phase 02-pluggable-provider-system P04 | 10 | 2 tasks | 6 files |
 | Phase 03-authentication-ui-polish P01 | 6 | 3 tasks | 26 files |
+| Phase 03-authentication-ui-polish P02 | 4 | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,10 @@ Recent decisions affecting current work:
 - [Phase 03-authentication-ui-polish]: Auth.js v5 beta Credentials provider with JWT 30-day sessions — edge-compatible, no DB session table needed
 - [Phase 03-authentication-ui-polish]: auth() wrapper pattern for all API routes: wraps handler, checks req.auth at top for 401
 - [Phase 03-authentication-ui-polish]: Edge-safe auth config split: auth.config.ts (no DB/bcrypt) + auth.ts (full config with DB queries)
+- [Phase 03-authentication-ui-polish]: ThemeProvider uses attribute='class' with defaultTheme='system' — .dark/.light class on html, suppressHydrationWarning prevents mismatch
+- [Phase 03-authentication-ui-polish]: Mounted guard in SideNav theme toggle prevents hydration mismatch on initial render
+- [Phase 03-authentication-ui-polish]: apiError(operation, err) returns {message, status} tuple — all API catch blocks use this, zero generic 500s remain
+- [Phase 03-authentication-ui-polish]: toast.error() + setError() dual display pattern in client components — user sees error even if scrolled away from form
 
 ### Pending Todos
 
@@ -103,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03-authentication-ui-polish/03-01-PLAN.md — Auth.js v5 auth complete, setup wizard + login page + all API routes protected (AUTH-01 through AUTH-04 satisfied).
+Stopped at: Completed 03-authentication-ui-polish/03-02-PLAN.md — UI design system complete: dark/light mode, sonner toast, skeleton loaders, actionable error messages (UI-01, UI-03, UI-04 satisfied).
 Resume file: None

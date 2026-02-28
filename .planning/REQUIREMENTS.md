@@ -44,10 +44,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI Polish
 
-- [ ] **UI-01**: Distinctive, polished visual design applied across all pages (frontend-design skill)
+- [x] **UI-01**: Distinctive, polished visual design applied across all pages (frontend-design skill)
 - [ ] **UI-02**: Empty states with clear next-step calls to action on all list views
-- [ ] **UI-03**: Skeleton loading on async operations (research, generation, publishing)
-- [ ] **UI-04**: Actionable, platform-specific error messages (not generic 500s)
+- [x] **UI-03**: Skeleton loading on async operations (research, generation, publishing)
+- [x] **UI-04**: Actionable, platform-specific error messages (not generic 500s)
 - [ ] **UI-05**: Retry affordances on queue failures
 - [ ] **UI-06**: Voice confidence score badges displayed on drafts
 - [ ] **UI-07**: Headline option picker for draft generation
@@ -132,10 +132,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-02 | Phase 3 | Complete |
 | AUTH-03 | Phase 3 | Complete |
 | AUTH-04 | Phase 3 | Complete |
-| UI-01 | Phase 3 | Pending |
+| UI-01 | Phase 3 | Complete |
 | UI-02 | Phase 3 | Pending |
-| UI-03 | Phase 3 | Pending |
-| UI-04 | Phase 3 | Pending |
+| UI-03 | Phase 3 | Complete |
+| UI-04 | Phase 3 | Complete |
 | UI-05 | Phase 3 | Pending |
 | UI-06 | Phase 3 | Pending |
 | UI-07 | Phase 3 | Pending |
