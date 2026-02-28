@@ -45,14 +45,14 @@ Requirements for initial release. Each maps to roadmap phases.
 ### UI Polish
 
 - [x] **UI-01**: Distinctive, polished visual design applied across all pages (frontend-design skill)
-- [ ] **UI-02**: Empty states with clear next-step calls to action on all list views
+- [x] **UI-02**: Empty states with clear next-step calls to action on all list views
 - [x] **UI-03**: Skeleton loading on async operations (research, generation, publishing)
 - [x] **UI-04**: Actionable, platform-specific error messages (not generic 500s)
-- [ ] **UI-05**: Retry affordances on queue failures
+- [x] **UI-05**: Retry affordances on queue failures
 - [x] **UI-06**: Voice confidence score badges displayed on drafts
 - [x] **UI-07**: Headline option picker for draft generation
 - [x] **UI-08**: Research source attribution display on drafts
-- [ ] **UI-09**: Per-channel cost data visible in channel dashboard
+- [x] **UI-09**: Per-channel cost data visible in channel dashboard
 
 ### Deployment
 
@@ -133,14 +133,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-03 | Phase 3 | Complete |
 | AUTH-04 | Phase 3 | Complete |
 | UI-01 | Phase 3 | Complete |
-| UI-02 | Phase 3 | Pending |
+| UI-02 | Phase 3 | Complete |
 | UI-03 | Phase 3 | Complete |
 | UI-04 | Phase 3 | Complete |
-| UI-05 | Phase 3 | Pending |
+| UI-05 | Phase 3 | Complete |
 | UI-06 | Phase 3 | Complete |
 | UI-07 | Phase 3 | Complete |
 | UI-08 | Phase 3 | Complete |
-| UI-09 | Phase 3 | Pending |
+| UI-09 | Phase 3 | Complete |
 | DEPLOY-01 | Phase 4 | Pending |
 | DEPLOY-02 | Phase 4 | Pending |
 | DEPLOY-03 | Phase 4 | Pending |
