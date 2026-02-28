@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
-import { channels } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { channels, aiAuditLog } from '@/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 
@@ -13,7 +13,26 @@ export const GET = auth(function GET(req, ctx) {
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const [channel] = await db.select().from(channels).where(eq(channels.id, id));
       if (!channel) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-      return NextResponse.json(channel);
+
+      const [costResult] = await db
+        .select({
+          totalCost: sql<string>`coalesce(sum(${aiAuditLog.costUsd}), '0')`,
+          totalPromptTokens: sql<number>`coalesce(sum(${aiAuditLog.promptTokens}), 0)`,
+          totalCompletionTokens: sql<number>`coalesce(sum(${aiAuditLog.completionTokens}), 0)`,
+          operationCount: sql<number>`count(*)`,
+        })
+        .from(aiAuditLog)
+        .where(eq(aiAuditLog.channelId, id));
+
+      return NextResponse.json({
+        ...channel,
+        costSummary: {
+          totalCostUsd: parseFloat(costResult.totalCost),
+          totalPromptTokens: Number(costResult.totalPromptTokens),
+          totalCompletionTokens: Number(costResult.totalCompletionTokens),
+          operationCount: Number(costResult.operationCount),
+        },
+      });
     } catch (err) {
       const { message, status } = apiError('load channel details', err);
       return NextResponse.json({ error: message }, { status });

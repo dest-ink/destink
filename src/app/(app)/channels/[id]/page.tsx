@@ -1,0 +1,70 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { db } from '@/db/client';
+import { channels, aiAuditLog } from '@/db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ChannelCostSummary } from '@/components/channels/ChannelCostSummary';
+
+export const dynamic = 'force-dynamic';
+
+const PLATFORM_STYLES: Record<string, { label: string; color: string }> = {
+  linkedin: { label: 'LinkedIn', color: 'bg-[#0A66C2]/10 text-[#0A66C2] border-[#0A66C2]/20' },
+  substack: { label: 'Substack', color: 'bg-[#FF6719]/10 text-[#FF6719] border-[#FF6719]/20' },
+};
+
+interface ChannelDetailPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ChannelDetailPage({ params }: ChannelDetailPageProps) {
+  const { id } = await params;
+
+  const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+  if (!channel) notFound();
+
+  const [costResult] = await db
+    .select({
+      totalCost: sql<string>`coalesce(sum(${aiAuditLog.costUsd}), '0')`,
+      totalPromptTokens: sql<number>`coalesce(sum(${aiAuditLog.promptTokens}), 0)`,
+      totalCompletionTokens: sql<number>`coalesce(sum(${aiAuditLog.completionTokens}), 0)`,
+      operationCount: sql<number>`count(*)`,
+    })
+    .from(aiAuditLog)
+    .where(eq(aiAuditLog.channelId, id));
+
+  const costSummary = {
+    totalCostUsd: parseFloat(costResult.totalCost),
+    totalPromptTokens: Number(costResult.totalPromptTokens),
+    totalCompletionTokens: Number(costResult.totalCompletionTokens),
+    operationCount: Number(costResult.operationCount),
+  };
+
+  const platformStyle = PLATFORM_STYLES[channel.platform] ?? {
+    label: channel.platform,
+    color: 'bg-muted text-muted-foreground border-border',
+  };
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      {/* Back link */}
+      <div className="mb-6">
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2">
+          <Link href="/channels">&larr; Back to channels</Link>
+        </Button>
+      </div>
+
+      {/* Channel header */}
+      <div className="flex items-center gap-3 mb-8">
+        <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
+        <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
+          {platformStyle.label}
+        </Badge>
+      </div>
+
+      {/* Cost summary */}
+      <ChannelCostSummary costSummary={costSummary} />
+    </div>
+  );
+}
