@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T02:06:11.154Z"
+last_updated: "2026-02-27T21:16:00.000Z"
 progress:
-  total_phases: 2
-  completed_phases: 1
+  total_phases: 4
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 2 of 4 (Pluggable Provider System) — In Progress
-Plan: 3 of 4 complete in current phase
-Status: Phase 2 plan 03 complete — Four research adapters and registry singleton created
-Last activity: 2026-02-28 — Completed plan 02-03: Research adapters and adapter registry
+Phase: 2 of 4 (Pluggable Provider System) — Complete
+Plan: 4 of 4 complete in current phase
+Status: Phase 2 COMPLETE — Registry-backed orchestration wired end-to-end, both registries initialized at startup
+Last activity: 2026-02-27 — Completed plan 02-04: Integration wiring — orchestrator, engine, daemon, Next.js, channels API
 
-Progress: [███████░░░] 62%
+Progress: [██████████] 100% (Phase 2 complete)
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [███████░░░] 62%
 | Phase 02-pluggable-provider-system P01 | 3 | 2 tasks | 3 files |
 | Phase 02-pluggable-provider-system P02 | 4 | 2 tasks | 7 files |
 | Phase 02-pluggable-provider-system P03 | 5 | 2 tasks | 10 files |
+| Phase 02-pluggable-provider-system P04 | 10 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 02-pluggable-provider-system]: Brainstorm config flattening — extended ResearchConfig with optional channelId/voiceProfile/recentTitles for uniform search(config) signature across all adapters
 - [Phase 02-pluggable-provider-system]: Empty-array fallback for missing channelId — brainstorm adapter returns [] rather than throwing, keeping adapter failures non-fatal
 - [Phase 02-pluggable-provider-system]: isResearchAdapter exported as named export for external testability and inline validation use
+- [Phase 02-pluggable-provider-system]: Per-channel adapter filtering deferred — runResearch() has optional adapterIds param but engine passes none until channel schema gains researchAdapterIds field
+- [Phase 02-pluggable-provider-system]: Top-level await used in daemon for registry init — tsx supports it natively, cleaner than IIFE wrapper
+- [Phase 02-pluggable-provider-system]: Dynamic imports in instrumentation.ts — prevents server-only modules from being evaluated in Edge runtime
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 02-pluggable-provider-system/02-03-PLAN.md — four research adapters and adapter registry singleton created. Phase 2 plan 03 complete (RES-03, RES-04, RES-05, RES-06 satisfied).
+Last session: 2026-02-27
+Stopped at: Completed 02-pluggable-provider-system/02-04-PLAN.md — registry wiring complete, Phase 2 fully done. Pluggable provider system is live end-to-end (RES-02 satisfied).
 Resume file: None

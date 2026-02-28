@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Pluggable Research Adapters
 
 - [x] **RES-01**: Research adapter interface defined with TypeScript contract
-- [ ] **RES-02**: Research adapter registry with fan-out dispatch (all adapters run in parallel)
+- [x] **RES-02**: Research adapter registry with fan-out dispatch (all adapters run in parallel)
 - [x] **RES-03**: Auto-discovery of `*.adapter.ts` files in research adapters directory
 - [x] **RES-04**: Exa adapter refactored to pluggable module
 - [x] **RES-05**: Reddit adapter refactored to pluggable module
@@ -123,7 +123,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUB-06 | Phase 2 | Complete |
 | PUB-07 | Phase 2 | Complete |
 | RES-01 | Phase 2 | Complete |
-| RES-02 | Phase 2 | Pending |
+| RES-02 | Phase 2 | Complete |
 | RES-03 | Phase 2 | Complete |
 | RES-04 | Phase 2 | Complete |
 | RES-05 | Phase 2 | Complete |
