@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+import { LogOut } from 'lucide-react';
 
 const links = [
   { href: '/channels', label: 'Channels', icon: '◈' },
@@ -41,8 +43,16 @@ export function SideNav() {
         })}
       </div>
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-border flex items-center justify-between">
         <p className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">v0.1.0</p>
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Sign out"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Sign out</span>
+        </button>
       </div>
     </nav>
   );

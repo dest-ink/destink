@@ -1,0 +1,23 @@
+import { LoginForm } from './LoginForm';
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <span className="font-mono text-sm font-semibold tracking-widest uppercase text-primary">
+            Orbitl
+          </span>
+          <p className="mt-2 text-sm text-muted-foreground">Sign in to your account</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-card border border-border rounded-lg shadow p-6">
+          <h1 className="text-base font-semibold mb-5">Welcome back</h1>
+          <LoginForm />
+        </div>
+      </div>
+    </div>
+  );
+}
