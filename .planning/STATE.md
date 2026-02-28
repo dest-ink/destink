@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T01:58:18.649Z"
+last_updated: "2026-02-28T02:02:30Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 2 of 4 (Pluggable Provider System) — In Progress
-Plan: 1 of 4 complete in current phase
-Status: Phase 2 plan 01 complete — provider type contracts and registry infrastructure ready
-Last activity: 2026-02-28 — Completed plan 02-01: PublisherProvider/ResearchAdapter interfaces and generic Registry<T>
+Plan: 2 of 4 complete in current phase
+Status: Phase 2 plan 02 complete — Substack/LinkedIn providers migrated, queue-runner dispatches via registry
+Last activity: 2026-02-28 — Completed plan 02-02: Provider migration and registry-based dispatch
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [████░░░░░░] 40%
 | Phase 01-cleanup-foundation P03 | 10 | 1 task | 2 files |
 | Phase 01-cleanup-foundation P04 | 5 | 1 task | 1 file |
 | Phase 02-pluggable-provider-system P01 | 3 | 2 tasks | 3 files |
+| Phase 02-pluggable-provider-system P02 | 4 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 02-pluggable-provider-system]: Plain object interfaces — providers are POJOs satisfying TypeScript interface, not class instances
 - [Phase 02-pluggable-provider-system]: Version gating delegated to validator — Registry<T> does not check PROVIDER_API_VERSION; caller's validate() handles version checks
 - [Phase 02-pluggable-provider-system]: warn-and-continue for invalid providers — unloadable/invalid files emit console.warn and are skipped, one bad provider never blocks others
+- [Phase 02-pluggable-provider-system]: initPublisherRegistry uses process.cwd() + relative path for tsx/Next.js compatible provider directory resolution
+- [Phase 02-pluggable-provider-system]: isPublisherProvider checks apiVersion === PROVIDER_API_VERSION to reject version-mismatched providers
+- [Phase 02-pluggable-provider-system]: queue-runner throws unified "No publisher registered for platform X" — replaces per-platform if/else chains
 
 ### Pending Todos
 
@@ -88,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 02-pluggable-provider-system/02-01-PLAN.md — provider type contracts and generic Registry<T> class. Phase 2 plan 01 complete (PUB-01, PUB-07, RES-01 satisfied).
+Stopped at: Completed 02-pluggable-provider-system/02-02-PLAN.md — Substack/LinkedIn providers migrated to provider pattern, publisher registry singleton created, queue-runner registry-based dispatch wired. Phase 2 plan 02 complete (PUB-02, PUB-03, PUB-04, PUB-05, PUB-06 satisfied).
 Resume file: None

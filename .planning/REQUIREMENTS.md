@@ -19,11 +19,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Pluggable Publishers
 
 - [x] **PUB-01**: Publisher provider interface defined with TypeScript contract
-- [ ] **PUB-02**: Publisher registry with Map-based lookup by platform key
-- [ ] **PUB-03**: Auto-discovery of `*.provider.ts` files in publishers directory
-- [ ] **PUB-04**: Substack publisher refactored to provider module (reference implementation)
-- [ ] **PUB-05**: LinkedIn publisher refactored to provider module (reference implementation)
-- [ ] **PUB-06**: Runtime interface validation at startup (reject malformed providers)
+- [x] **PUB-02**: Publisher registry with Map-based lookup by platform key
+- [x] **PUB-03**: Auto-discovery of `*.provider.ts` files in publishers directory
+- [x] **PUB-04**: Substack publisher refactored to provider module (reference implementation)
+- [x] **PUB-05**: LinkedIn publisher refactored to provider module (reference implementation)
+- [x] **PUB-06**: Runtime interface validation at startup (reject malformed providers)
 - [x] **PUB-07**: PROVIDER_API_VERSION constant for compatibility gating
 
 ### Pluggable Research Adapters
@@ -116,11 +116,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLEAN-05 | Phase 1 | Complete |
 | CLEAN-06 | Phase 1 | Complete |
 | PUB-01 | Phase 2 | Complete |
-| PUB-02 | Phase 2 | Pending |
-| PUB-03 | Phase 2 | Pending |
-| PUB-04 | Phase 2 | Pending |
-| PUB-05 | Phase 2 | Pending |
-| PUB-06 | Phase 2 | Pending |
+| PUB-02 | Phase 2 | Complete |
+| PUB-03 | Phase 2 | Complete |
+| PUB-04 | Phase 2 | Complete |
+| PUB-05 | Phase 2 | Complete |
+| PUB-06 | Phase 2 | Complete |
 | PUB-07 | Phase 2 | Complete |
 | RES-01 | Phase 2 | Complete |
 | RES-02 | Phase 2 | Pending |
