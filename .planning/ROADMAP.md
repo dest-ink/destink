@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Cleanup & Foundation** - Fix four known code defects and add test coverage before any new code is written (completed 2026-02-27)
 - [x] **Phase 2: Pluggable Provider System** - Refactor publishers and research adapters into auto-discovered drop-in modules (completed 2026-02-28)
 - [x] **Phase 3: Authentication & UI Polish** - Add single-user auth and make every screen production-ready (completed 2026-02-28)
+- [ ] **Phase 3.1: Fix CronJob Registry Initialization** - INSERTED: Close deployment-blocker gaps from v1.0 audit (registry init in standalone scripts, .ts/.js discovery)
 - [ ] **Phase 4: Deployment & Observability** - Docker Compose self-hosting and AI usage dashboard
 
 ## Phase Details
@@ -70,6 +71,17 @@ Plans:
 - [x] 03-03-PLAN.md — Draft review signals: voice badge, headline picker, collapsible sources (UI-06, UI-07, UI-08)
 - [ ] 03-04-PLAN.md — Empty states, retry verification, per-channel cost data (UI-02, UI-05, UI-09)
 
+### Phase 3.1: Fix CronJob Registry Initialization
+**Goal**: Standalone CronJob scripts (`job:publish`, `job:research`) initialize provider/adapter registries before dispatching, and registry auto-discovery works with both `.ts` and compiled `.js` files
+**Depends on**: Phase 2, Phase 3
+**Requirements**: PUB-03, RES-03 (integration gap closure)
+**Gap Closure**: Closes INT-01, INT-02, and broken `job:publish` flow from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `npm run job:publish` as a standalone CronJob initializes the publisher registry before calling `runPublishQueue()` — providers are available for dispatch
+  2. `npm run job:research` as a standalone CronJob initializes the adapter registry before research dispatch — adapters are available for fan-out
+  3. Registry auto-discovery glob pattern matches both `.ts` (dev) and `.js` (production build) provider/adapter files
+**Plans**: TBD
+
 ### Phase 4: Deployment & Observability
 **Goal**: A creator can self-host the complete Orbitl stack on a single machine with one command, and monitor AI usage and cost from a dashboard
 **Depends on**: Phase 3
@@ -92,4 +104,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
 | 3. Authentication & UI Polish | 4/4 | Complete   | 2026-02-28 |
+| 3.1. Fix CronJob Registry Init | 0/TBD | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |

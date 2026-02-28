@@ -117,14 +117,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLEAN-06 | Phase 1 | Complete |
 | PUB-01 | Phase 2 | Complete |
 | PUB-02 | Phase 2 | Complete |
-| PUB-03 | Phase 2 | Complete |
+| PUB-03 | Phase 2, Phase 3.1 (gap closure) | Complete |
 | PUB-04 | Phase 2 | Complete |
 | PUB-05 | Phase 2 | Complete |
 | PUB-06 | Phase 2 | Complete |
 | PUB-07 | Phase 2 | Complete |
 | RES-01 | Phase 2 | Complete |
 | RES-02 | Phase 2 | Complete |
-| RES-03 | Phase 2 | Complete |
+| RES-03 | Phase 2, Phase 3.1 (gap closure) | Complete |
 | RES-04 | Phase 2 | Complete |
 | RES-05 | Phase 2 | Complete |
 | RES-06 | Phase 2 | Complete |
@@ -157,4 +157,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after roadmap creation — all 40 requirements mapped*
+*Last updated: 2026-02-28 — Phase 3.1 gap closure added for PUB-03, RES-03 integration wiring*
