@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T02:15:59.777Z"
+last_updated: "2026-02-28T18:45:06.437Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 9
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 2 of 4 (Pluggable Provider System) — Complete
-Plan: 4 of 4 complete in current phase
-Status: Phase 2 COMPLETE — Registry-backed orchestration wired end-to-end, both registries initialized at startup
-Last activity: 2026-02-27 — Completed plan 02-04: Integration wiring — orchestrator, engine, daemon, Next.js, channels API
+Phase: 3 of 4 (Authentication & UI Polish) — In Progress
+Plan: 1 of 4 complete in current phase
+Status: Phase 3 Plan 1 COMPLETE — Auth.js v5 Credentials auth, setup wizard, login page, all 11 API routes protected
+Last activity: 2026-02-28 — Completed plan 03-01: Single-user authentication with Auth.js v5
 
-Progress: [██████████] 100% (Phase 2 complete)
+Progress: [████████░░] 75% (3 of 4 phases active; Phase 3 in progress — 1/4 plans done)
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████████] 100% (Phase 2 complete)
 | Phase 02-pluggable-provider-system P02 | 4 | 2 tasks | 7 files |
 | Phase 02-pluggable-provider-system P03 | 5 | 2 tasks | 10 files |
 | Phase 02-pluggable-provider-system P04 | 10 | 2 tasks | 6 files |
+| Phase 03-authentication-ui-polish P01 | 6 | 3 tasks | 26 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 02-pluggable-provider-system]: Per-channel adapter filtering deferred — runResearch() has optional adapterIds param but engine passes none until channel schema gains researchAdapterIds field
 - [Phase 02-pluggable-provider-system]: Top-level await used in daemon for registry init — tsx supports it natively, cleaner than IIFE wrapper
 - [Phase 02-pluggable-provider-system]: Dynamic imports in instrumentation.ts — prevents server-only modules from being evaluated in Edge runtime
+- [Phase 03-authentication-ui-polish]: Auth.js v5 beta Credentials provider with JWT 30-day sessions — edge-compatible, no DB session table needed
+- [Phase 03-authentication-ui-polish]: auth() wrapper pattern for all API routes: wraps handler, checks req.auth at top for 401
+- [Phase 03-authentication-ui-polish]: Edge-safe auth config split: auth.config.ts (no DB/bcrypt) + auth.ts (full config with DB queries)
 
 ### Pending Todos
 
@@ -94,11 +98,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 3]: Auth implementation pattern unresolved — NextAuth vs. custom JWT vs. other. Run `/gsd:research-phase` before planning Phase 3.
 - [Phase 2]: `platformEnum` Postgres enum expansion requires a DB schema migration for new platforms — noted but migration strategy for community providers is a v2+ concern.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 02-pluggable-provider-system/02-04-PLAN.md — registry wiring complete, Phase 2 fully done. Pluggable provider system is live end-to-end (RES-02 satisfied).
+Last session: 2026-02-28
+Stopped at: Completed 03-authentication-ui-polish/03-01-PLAN.md — Auth.js v5 auth complete, setup wizard + login page + all API routes protected (AUTH-01 through AUTH-04 satisfied).
 Resume file: None

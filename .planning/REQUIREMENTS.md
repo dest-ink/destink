@@ -37,10 +37,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can log in with email and password
-- [ ] **AUTH-02**: User session persists across browser refresh
-- [ ] **AUTH-03**: Unauthenticated requests to API routes are rejected
-- [ ] **AUTH-04**: User can log out from any page
+- [x] **AUTH-01**: User can log in with email and password
+- [x] **AUTH-02**: User session persists across browser refresh
+- [x] **AUTH-03**: Unauthenticated requests to API routes are rejected
+- [x] **AUTH-04**: User can log out from any page
 
 ### UI Polish
 
@@ -128,10 +128,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RES-04 | Phase 2 | Complete |
 | RES-05 | Phase 2 | Complete |
 | RES-06 | Phase 2 | Complete |
-| AUTH-01 | Phase 3 | Pending |
-| AUTH-02 | Phase 3 | Pending |
-| AUTH-03 | Phase 3 | Pending |
-| AUTH-04 | Phase 3 | Pending |
+| AUTH-01 | Phase 3 | Complete |
+| AUTH-02 | Phase 3 | Complete |
+| AUTH-03 | Phase 3 | Complete |
+| AUTH-04 | Phase 3 | Complete |
 | UI-01 | Phase 3 | Pending |
 | UI-02 | Phase 3 | Pending |
 | UI-03 | Phase 3 | Pending |
