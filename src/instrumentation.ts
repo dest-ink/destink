@@ -11,9 +11,7 @@
 export async function register() {
   // Only run in Node.js runtime (not Edge)
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { initPublisherRegistry } = await import('@/lib/publishing/publisher-registry');
-    const { initAdapterRegistry } = await import('@/lib/research/adapter-registry');
-    await initPublisherRegistry();
-    await initAdapterRegistry();
+    const { initRegistries } = await import('@/lib/bootstrap');
+    await initRegistries();
   }
 }

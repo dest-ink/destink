@@ -1,10 +1,15 @@
 import { pool, db } from '@/db/client';
 import { channels } from '@/db/schema';
 import { runResearchForChannel } from '@/lib/research/engine';
+import { initRegistries } from '@/lib/bootstrap';
+import { adapterRegistry } from '@/lib/research/adapter-registry';
 
 async function main(): Promise<void> {
   const start = new Date().toISOString();
   console.log(`[job:research] Starting at ${start}`);
+
+  await initRegistries();
+  console.log(`[job:research] Registry initialized: ${adapterRegistry.keys().length} adapter(s)`);
 
   try {
     const allChannels = await db

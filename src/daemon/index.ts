@@ -11,8 +11,7 @@
 import { schedule, ScheduledTask } from 'node-cron';
 import { pool } from '@/db/client';
 import { runPublishQueue, recoverStuckItems, getRetryDelay } from '@/lib/publishing/queue-runner';
-import { initPublisherRegistry } from '@/lib/publishing/publisher-registry';
-import { initAdapterRegistry } from '@/lib/research/adapter-registry';
+import { initRegistries } from '@/lib/bootstrap';
 
 // Re-export so existing tests that import getRetryDelay from this module continue to work.
 export { getRetryDelay };
@@ -71,8 +70,7 @@ process.on('SIGINT', () => {
 
 // Initialize provider registries before first tick.
 // If initialization fails, let it crash — a daemon without registries cannot function.
-await initPublisherRegistry();
-await initAdapterRegistry();
+await initRegistries();
 
 task = schedule('* * * * *', () => {
   tick().catch(console.error);

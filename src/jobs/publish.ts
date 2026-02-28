@@ -1,9 +1,14 @@
 import { pool } from '@/db/client';
 import { runPublishQueue } from '@/lib/publishing/queue-runner';
+import { initRegistries } from '@/lib/bootstrap';
+import { publisherRegistry } from '@/lib/publishing/publisher-registry';
 
 async function main(): Promise<void> {
   const start = new Date().toISOString();
   console.log(`[job:publish] Starting at ${start}`);
+
+  await initRegistries();
+  console.log(`[job:publish] Registry initialized: ${publisherRegistry.keys().length} publisher(s)`);
 
   try {
     await runPublishQueue();
