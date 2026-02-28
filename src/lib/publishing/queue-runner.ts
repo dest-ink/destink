@@ -1,8 +1,7 @@
 import { db } from '@/db/client';
 import { publishQueue, drafts, channels } from '@/db/schema';
 import { eq, lte, and, lt } from 'drizzle-orm';
-import { publishToSubstack } from '@/lib/publishing/substack';
-import { publishToLinkedIn } from '@/lib/publishing/linkedin';
+import { publisherRegistry } from '@/lib/publishing/publisher-registry';
 
 export function getRetryDelay(retryCount: number): number {
   const delays = [5, 15, 45];
@@ -83,13 +82,11 @@ export async function runPublishQueue(): Promise<void> {
     try {
       let platformResponse: unknown;
 
-      if (item.channel.platform === 'substack') {
-        platformResponse = await publishToSubstack(item.draft, item.channel);
-      } else if (item.channel.platform === 'linkedin') {
-        platformResponse = await publishToLinkedIn(item.draft, item.channel);
-      } else {
-        throw new Error(`Unknown platform '${item.channel.platform}'`);
+      const provider = publisherRegistry.get(item.channel.platform);
+      if (!provider) {
+        throw new Error(`No publisher registered for platform '${item.channel.platform}'`);
       }
+      platformResponse = await provider.publish(item.draft, item.channel);
 
       await db
         .update(publishQueue)

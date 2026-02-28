@@ -8,25 +8,21 @@ vi.mock('@/db/client', () => ({
   },
 }));
 
-vi.mock('@/lib/publishing/substack', () => ({
-  publishToSubstack: vi.fn(),
-}));
-
-vi.mock('@/lib/publishing/linkedin', () => ({
-  publishToLinkedIn: vi.fn(),
+vi.mock('@/lib/publishing/publisher-registry', () => ({
+  publisherRegistry: {
+    get: vi.fn(),
+  },
 }));
 
 import { runPublishQueue, recoverStuckItems, getRetryDelay } from '@/lib/publishing/queue-runner';
 import { db } from '@/db/client';
-import { publishToSubstack } from '@/lib/publishing/substack';
-import { publishToLinkedIn } from '@/lib/publishing/linkedin';
+import { publisherRegistry } from '@/lib/publishing/publisher-registry';
 
 const mockDb = db as unknown as {
   select: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
 };
-const mockPublishSubstack = vi.mocked(publishToSubstack);
-const mockPublishLinkedIn = vi.mocked(publishToLinkedIn);
+const mockRegistryGet = vi.mocked(publisherRegistry.get);
 
 // ─── Helper factories ─────────────────────────────────────────────────────────
 
@@ -80,6 +76,22 @@ function mockUpdate(times = 5) {
 function getUpdateSetArgs() {
   return (mockDb.update.mock.results as Array<{ value: { set: ReturnType<typeof vi.fn> } }>)
     .map(r => r.value.set.mock.calls[0][0]);
+}
+
+/**
+ * Create a mock PublisherProvider with a publish function.
+ */
+function makeMockProvider(publishResult: unknown) {
+  return {
+    name: 'mock',
+    platform: 'mock',
+    displayName: 'Mock',
+    description: 'Mock provider',
+    apiVersion: 1,
+    configSchema: [],
+    publish: vi.fn().mockResolvedValue(publishResult),
+    formatDraft: vi.fn(),
+  };
 }
 
 // ─── Test fixture ─────────────────────────────────────────────────────────────
@@ -145,14 +157,16 @@ describe('runPublishQueue', () => {
     const item = makeQueueItem();
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishSubstack.mockResolvedValue({ id: 1, date: '2026-01-01' });
+    const mockProvider = makeMockProvider({ id: 1, date: '2026-01-01' });
+    mockRegistryGet.mockReturnValue(mockProvider);
 
     await runPublishQueue();
 
     // update called for: status→publishing, status→published, draft→published
     expect(mockDb.update).toHaveBeenCalledTimes(3);
-    expect(mockPublishSubstack).toHaveBeenCalledTimes(1);
-    expect(mockPublishSubstack).toHaveBeenCalledWith(item.draft, item.channel);
+    expect(mockRegistryGet).toHaveBeenCalledWith('substack');
+    expect(mockProvider.publish).toHaveBeenCalledTimes(1);
+    expect(mockProvider.publish).toHaveBeenCalledWith(item.draft, item.channel);
     consoleSpy.mockRestore();
   });
 
@@ -162,13 +176,14 @@ describe('runPublishQueue', () => {
     item.channel.platform = 'linkedin';
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishLinkedIn.mockResolvedValue({ id: 'li-post-1' });
+    const mockProvider = makeMockProvider({ id: 'li-post-1' });
+    mockRegistryGet.mockReturnValue(mockProvider);
 
     await runPublishQueue();
 
-    expect(mockPublishLinkedIn).toHaveBeenCalledTimes(1);
-    expect(mockPublishLinkedIn).toHaveBeenCalledWith(item.draft, item.channel);
-    expect(mockPublishSubstack).not.toHaveBeenCalled();
+    expect(mockRegistryGet).toHaveBeenCalledWith('linkedin');
+    expect(mockProvider.publish).toHaveBeenCalledTimes(1);
+    expect(mockProvider.publish).toHaveBeenCalledWith(item.draft, item.channel);
     consoleSpy.mockRestore();
   });
 
@@ -177,7 +192,9 @@ describe('runPublishQueue', () => {
     const item = makeQueueItem({ retryCount: 0 });
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishSubstack.mockRejectedValue(new Error('API timeout'));
+    const mockProvider = makeMockProvider(null);
+    mockProvider.publish.mockRejectedValue(new Error('API timeout'));
+    mockRegistryGet.mockReturnValue(mockProvider);
 
     await runPublishQueue();
 
@@ -202,7 +219,9 @@ describe('runPublishQueue', () => {
     const item = makeQueueItem({ retryCount: 3 });
     mockSelectWithJoins([item]);
     mockUpdate();
-    mockPublishSubstack.mockRejectedValue(new Error('Persistent failure'));
+    const mockProvider = makeMockProvider(null);
+    mockProvider.publish.mockRejectedValue(new Error('Persistent failure'));
+    mockRegistryGet.mockReturnValue(mockProvider);
 
     await runPublishQueue();
 
@@ -225,8 +244,7 @@ describe('runPublishQueue', () => {
     await runPublishQueue();
 
     expect(mockDb.update).not.toHaveBeenCalled();
-    expect(mockPublishSubstack).not.toHaveBeenCalled();
-    expect(mockPublishLinkedIn).not.toHaveBeenCalled();
+    expect(mockRegistryGet).not.toHaveBeenCalled();
   });
 
   it('throws for unknown platform and records error status', async () => {
@@ -236,6 +254,8 @@ describe('runPublishQueue', () => {
     item.channel.platform = 'twitter' as never;
     mockSelectWithJoins([item]);
     mockUpdate();
+    // Registry returns undefined for unknown platform
+    mockRegistryGet.mockReturnValue(undefined);
 
     await runPublishQueue();
 
