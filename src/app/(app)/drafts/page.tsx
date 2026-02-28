@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
+import { Button } from '@/components/ui/button';
 import { eq, desc } from 'drizzle-orm';
 import { DraftsClientShell } from '@/components/drafts/DraftsClientShell';
 import type { DraftWithChannel } from '@/components/drafts/DraftCard';
@@ -79,12 +81,14 @@ export default async function DraftsPage() {
       {/* Empty state */}
       {!fetchError && rows.length === 0 && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="font-mono text-5xl text-muted-foreground/20 mb-4">◇</p>
-            <h2 className="text-base font-medium text-muted-foreground mb-1">No pending drafts</h2>
-            <p className="text-sm text-muted-foreground/60">
-              Drafts will appear here once the generation pipeline runs.
+          <div className="text-center px-4">
+            <h2 className="text-lg font-semibold text-foreground mb-2">No drafts yet</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Drafts are generated from research on your channels. Run research on a channel to create your first draft.
             </p>
+            <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link href="/channels">Go to channels</Link>
+            </Button>
           </div>
         </div>
       )}

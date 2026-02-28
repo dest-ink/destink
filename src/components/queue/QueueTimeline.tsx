@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { QueueItem } from './QueueItem';
 import type { QueueItemData } from './QueueItem';
+import { Button } from '@/components/ui/button';
 
 interface GroupedItems {
   label: string;
@@ -55,11 +57,13 @@ export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
   if (groups.length === 0) {
     return (
       <div className="border border-dashed border-border rounded-lg py-20 text-center">
-        <p className="font-mono text-4xl text-muted-foreground/30 mb-4">◉</p>
-        <h2 className="text-base font-medium text-muted-foreground mb-1">Nothing scheduled</h2>
-        <p className="text-sm text-muted-foreground/60">
-          Approved drafts will appear here once they are added to the queue.
+        <h2 className="text-lg font-semibold text-foreground mb-2">Nothing in the queue</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Approved drafts are scheduled for publication here. Approve a draft to add it to the queue.
         </p>
+        <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Link href="/drafts">Review drafts</Link>
+        </Button>
       </div>
     );
   }

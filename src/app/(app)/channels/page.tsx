@@ -42,13 +42,12 @@ export default async function ChannelsPage() {
       {/* Channel grid or empty state */}
       {!fetchError && rows.length === 0 && (
         <div className="border border-dashed border-border rounded-lg py-20 text-center">
-          <p className="font-mono text-4xl text-muted-foreground/30 mb-4">◈</p>
-          <h2 className="text-base font-medium text-muted-foreground mb-1">No channels yet</h2>
-          <p className="text-sm text-muted-foreground/60 mb-6">
-            Add a LinkedIn profile or Substack publication to get started.
+          <h2 className="text-lg font-semibold text-foreground mb-2">No channels yet</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Channels are where you publish content. Create one to get started.
           </p>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/channels/new">Create your first channel</Link>
+          <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Link href="/channels/new">Add your first channel</Link>
           </Button>
         </div>
       )}
