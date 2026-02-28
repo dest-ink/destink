@@ -63,7 +63,12 @@ Plans:
   4. Every list view (channels, drafts, queue) shows a helpful empty state with a specific next-step call to action when no items exist
   5. Draft review displays the voice confidence score, headline options picker, and research source attribution — the three key signals that distinguish Orbitl output from generic AI content
   6. Per-channel cost data is visible in the channel dashboard, and retry affordances appear on failed queue items
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 03-01-PLAN.md — Auth foundation: users table, Auth.js config, login, setup wizard, API guards, logout (AUTH-01, AUTH-02, AUTH-03, AUTH-04)
+- [ ] 03-02-PLAN.md — Design system: dark/light mode, toasts, skeleton loading (UI-01, UI-03, UI-04)
+- [ ] 03-03-PLAN.md — Draft review signals: voice badge, headline picker, collapsible sources (UI-06, UI-07, UI-08)
+- [ ] 03-04-PLAN.md — Empty states, retry verification, per-channel cost data (UI-02, UI-05, UI-09)
 
 ### Phase 4: Deployment & Observability
 **Goal**: A creator can self-host the complete Orbitl stack on a single machine with one command, and monitor AI usage and cost from a dashboard
@@ -86,5 +91,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
-| 3. Authentication & UI Polish | 0/TBD | Not started | - |
+| 3. Authentication & UI Polish | 0/4 | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
