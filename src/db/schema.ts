@@ -129,6 +129,10 @@ export interface ResearchConfig {
   contentTypeMix: { note: number; article: number };
   maxDraftsPerRun: number;
   scheduleHours: number;
+  // Optional brainstorm context (passed by engine.ts at runtime, not stored in DB)
+  channelId?: string;
+  voiceProfile?: VoiceProfile | null;
+  recentTitles?: string[];
 }
 
 export interface ScheduleConfig {
