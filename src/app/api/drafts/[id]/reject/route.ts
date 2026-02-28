@@ -1,33 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { drafts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { auth } from '@/auth';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export const POST = auth(function POST(req, ctx) {
+  if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let reason: string | undefined;
-  try {
-    const body = await req.json() as { reason?: unknown };
-    if (typeof body.reason === 'string') reason = body.reason;
-  } catch {
-    // reason is optional — missing body is fine
-  }
+  return (async () => {
+    const { id } = await (ctx?.params as Promise<{ id: string }>);
 
-  try {
-    const [draft] = await db
-      .update(drafts)
-      .set({ status: 'rejected', rejectionReason: reason ?? null, updatedAt: new Date() })
-      .where(eq(drafts.id, id))
-      .returning();
+    let reason: string | undefined;
+    try {
+      const body = await req.json() as { reason?: unknown };
+      if (typeof body.reason === 'string') reason = body.reason;
+    } catch {
+      // reason is optional — missing body is fine
+    }
 
-    if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json(draft);
-  } catch (err) {
-    console.error('[POST /api/drafts/[id]/reject]', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+    try {
+      const [draft] = await db
+        .update(drafts)
+        .set({ status: 'rejected', rejectionReason: reason ?? null, updatedAt: new Date() })
+        .where(eq(drafts.id, id))
+        .returning();
+
+      if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return NextResponse.json(draft);
+    } catch (err) {
+      console.error('[POST /api/drafts/[id]/reject]', err);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+  })();
+});

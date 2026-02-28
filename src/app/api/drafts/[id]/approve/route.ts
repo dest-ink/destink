@@ -1,39 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { drafts, publishQueue } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { auth } from '@/auth';
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export const POST = auth(function POST(req, ctx) {
+  if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  try {
-    const [draft] = await db
-      .update(drafts)
-      .set({ status: 'approved', updatedAt: new Date() })
-      .where(eq(drafts.id, id))
-      .returning();
+  return (async () => {
+    const { id } = await (ctx?.params as Promise<{ id: string }>);
 
-    if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    try {
+      const [draft] = await db
+        .update(drafts)
+        .set({ status: 'approved', updatedAt: new Date() })
+        .where(eq(drafts.id, id))
+        .returning();
 
-    // Schedule immediately — Task 6.1 will replace this with a proper scheduling algorithm
-    const scheduledFor = new Date();
+      if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const [queueItem] = await db
-      .insert(publishQueue)
-      .values({
-        draftId: draft.id,
-        channelId: draft.channelId,
-        scheduledFor,
-        status: 'queued',
-      })
-      .returning();
+      // Schedule immediately — Task 6.1 will replace this with a proper scheduling algorithm
+      const scheduledFor = new Date();
 
-    return NextResponse.json({ draft, queueItem });
-  } catch (err) {
-    console.error('[POST /api/drafts/[id]/approve]', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+      const [queueItem] = await db
+        .insert(publishQueue)
+        .values({
+          draftId: draft.id,
+          channelId: draft.channelId,
+          scheduledFor,
+          status: 'queued',
+        })
+        .returning();
+
+      return NextResponse.json({ draft, queueItem });
+    } catch (err) {
+      console.error('[POST /api/drafts/[id]/approve]', err);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+  })();
+});
