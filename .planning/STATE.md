@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T19:02:01.181Z"
+last_updated: "2026-02-28T19:50:23Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** Phase 3 — Authentication & UI Polish
+**Current focus:** Phase 3.1 — CronJob Registry Initialization Fix
 
 ## Current Position
 
-Phase: 3 of 4 (Authentication & UI Polish) — COMPLETE
-Plan: 4 of 4 complete in current phase
-Status: Phase 3 Plan 4 COMPLETE — Empty states with CTAs on all list views, channel detail page with AI cost summary
-Last activity: 2026-02-28 — Completed plan 03-04: Empty states (channels/drafts/queue), ChannelCostSummary, /channels/[id] detail page
+Phase: 3.1 of 4 (Fix CronJob Registry Initialization) — COMPLETE
+Plan: 1 of 1 complete in current phase
+Status: Phase 3.1 Plan 1 COMPLETE — Shared bootstrap module, dual-extension registry discovery, all entry points wired
+Last activity: 2026-02-28 — Completed plan 03.1-01: shared bootstrap (src/lib/bootstrap.ts), dual .ts/.js loadDirectory calls, job:publish + job:research + daemon + instrumentation wired to initRegistries()
 
-Progress: [█████████░] 88% (Phase 3 complete; 4/4 plans done — ready for Phase 4)
+Progress: [██████████] 100% (Phase 3.1 complete; 1/1 plans done — ready for Phase 4)
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████████░] 88% (Phase 3 complete; 4/4 plans done
 | Phase 03-authentication-ui-polish P02 | 4 | 3 tasks | 17 files |
 | Phase 03-authentication-ui-polish P03 | 1 | 2 tasks | 4 files |
 | Phase 03-authentication-ui-polish P04 | 10 | 2 tasks | 6 files |
+| Phase 03.1-fix-cronjob-registry-initialization P01 | 2 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase 03-authentication-ui-polish]: Direct Drizzle DB query in channel detail Server Component — avoids self-fetch anti-pattern vs calling own API route
 - [Phase 03-authentication-ui-polish]: coalesce(sum(costUsd), '0') pattern for numeric aggregation — returns string from Postgres numeric column, parsed with parseFloat()
 - [Phase 03-authentication-ui-polish]: QueueItem retry affordances (UI-05) already fully present — red Failed badge + inline Retry button + error box confirmed, no code changes needed
+- [Phase 03.1-fix-cronjob-registry-initialization]: Shared bootstrap module (src/lib/bootstrap.ts) is single entry point for initRegistries() across all process types
+- [Phase 03.1-fix-cronjob-registry-initialization]: Registry.loadDirectory() called twice per registry (.ts + .js) — Map.set is idempotent so no duplicate keys
+- [Phase 03.1-fix-cronjob-registry-initialization]: initRegistries() throws on failure — entry points without registries cannot function, crashing fast is correct
 
 ### Pending Todos
 
@@ -116,5 +120,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03-authentication-ui-polish/03-04-PLAN.md — Empty states with CTAs on all list views, ChannelCostSummary component, /channels/[id] detail page (UI-02, UI-05, UI-09 satisfied). Phase 3 complete.
+Stopped at: Completed 03.1-fix-cronjob-registry-initialization/03.1-01-PLAN.md — Shared bootstrap module, dual-extension discovery (.ts + .js), all 4 entry points wired to initRegistries() (PUB-03, RES-03 satisfied). Phase 3.1 complete.
 Resume file: None

@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Cleanup & Foundation** - Fix four known code defects and add test coverage before any new code is written (completed 2026-02-27)
 - [x] **Phase 2: Pluggable Provider System** - Refactor publishers and research adapters into auto-discovered drop-in modules (completed 2026-02-28)
 - [x] **Phase 3: Authentication & UI Polish** - Add single-user auth and make every screen production-ready (completed 2026-02-28)
-- [ ] **Phase 3.1: Fix CronJob Registry Initialization** - INSERTED: Close deployment-blocker gaps from v1.0 audit (registry init in standalone scripts, .ts/.js discovery)
+- [x] **Phase 3.1: Fix CronJob Registry Initialization** - INSERTED: Close deployment-blocker gaps from v1.0 audit (registry init in standalone scripts, .ts/.js discovery) (completed 2026-02-28)
 - [ ] **Phase 4: Deployment & Observability** - Docker Compose self-hosting and AI usage dashboard
 
 ## Phase Details
@@ -82,7 +82,7 @@ Plans:
   3. Registry auto-discovery glob pattern matches both `.ts` (dev) and `.js` (production build) provider/adapter files
 **Plans**: 1 plan
 Plans:
-- [ ] 03.1-01-PLAN.md — Shared bootstrap, dual-extension discovery, wire job scripts and daemon (PUB-03, RES-03)
+- [x] 03.1-01-PLAN.md — Shared bootstrap, dual-extension discovery, wire job scripts and daemon (PUB-03, RES-03)
 
 ### Phase 4: Deployment & Observability
 **Goal**: A creator can self-host the complete Orbitl stack on a single machine with one command, and monitor AI usage and cost from a dashboard
@@ -106,5 +106,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
 | 3. Authentication & UI Polish | 4/4 | Complete   | 2026-02-28 |
-| 3.1. Fix CronJob Registry Init | 0/1 | Not started | - |
+| 3.1. Fix CronJob Registry Init | 1/1 | Complete    | 2026-02-28 |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
