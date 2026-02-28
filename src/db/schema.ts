@@ -117,6 +117,13 @@ export const aiAuditLog = pgTable('ai_audit_log', {
   createdAt: timestamptz('created_at').defaultNow().notNull(),
 });
 
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  createdAt: timestamptz('created_at').defaultNow().notNull(),
+});
+
 // ─── JSON column types ────────────────────────────────────────────────────────
 
 export interface ResearchConfig {

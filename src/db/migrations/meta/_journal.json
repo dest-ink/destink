@@ -15,6 +15,13 @@
       "when": 1772061256973,
       "tag": "0001_dusty_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772303802594,
+      "tag": "0002_conscious_fantastic_four",
+      "breakpoints": true
     }
   ]
 }

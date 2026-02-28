@@ -26,12 +26,14 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
     "exa-js": "^2.5.0",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.30",
     "node-cron": "^4.2.1",
     "pg": "^8.19.0",
     "react": "19.2.3",
@@ -43,8 +45,14 @@
     "tsx": "^4.21.0",
     "zod": "^3.25.76"
   },
+  "overrides": {
+    "next-auth": {
+      "next": "16.1.6"
+    }
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
