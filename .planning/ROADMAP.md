@@ -80,7 +80,9 @@ Plans:
   1. `npm run job:publish` as a standalone CronJob initializes the publisher registry before calling `runPublishQueue()` — providers are available for dispatch
   2. `npm run job:research` as a standalone CronJob initializes the adapter registry before research dispatch — adapters are available for fan-out
   3. Registry auto-discovery glob pattern matches both `.ts` (dev) and `.js` (production build) provider/adapter files
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 03.1-01-PLAN.md — Shared bootstrap, dual-extension discovery, wire job scripts and daemon (PUB-03, RES-03)
 
 ### Phase 4: Deployment & Observability
 **Goal**: A creator can self-host the complete Orbitl stack on a single machine with one command, and monitor AI usage and cost from a dashboard
@@ -104,5 +106,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
 | 3. Authentication & UI Polish | 4/4 | Complete   | 2026-02-28 |
-| 3.1. Fix CronJob Registry Init | 0/TBD | Not started | - |
+| 3.1. Fix CronJob Registry Init | 0/1 | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
