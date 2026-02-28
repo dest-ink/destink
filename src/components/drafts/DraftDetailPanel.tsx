@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { DraftActions } from './DraftActions';
 import type { DraftWithChannel } from './DraftCard';
+import { VoiceConfidenceBadge } from './VoiceConfidenceBadge';
+import { HeadlinePicker } from './HeadlinePicker';
+import { SourcesSection } from './SourcesSection';
 
 interface DraftDetailPanelProps {
   draft: DraftWithChannel;
@@ -23,51 +25,27 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* Panel header */}
+      {/* Panel header with voice confidence badge */}
       <div className="px-5 py-4 border-b border-border shrink-0">
         <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
           Draft Review
         </p>
-        <p className="text-sm text-muted-foreground">
-          {draft.channelName}
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">{draft.channelName}</p>
           {typeof draft.voiceConfidence === 'number' && (
-            <span
-              className={`ml-2 font-mono text-xs ${
-                draft.voiceConfidence < 60 ? 'text-yellow-400' : 'text-muted-foreground'
-              }`}
-            >
-              Voice {draft.voiceConfidence}%
-            </span>
+            <VoiceConfidenceBadge score={draft.voiceConfidence} />
           )}
-        </p>
+        </div>
       </div>
 
       <div className="flex-1 px-5 py-4 flex flex-col gap-5 min-h-0">
-        {/* Headline options */}
+        {/* Headline picker */}
         {headlines.length > 0 && (
-          <section>
-            <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
-              Headlines
-            </h3>
-            <div className="flex flex-col gap-1.5">
-              {headlines.map((h, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveHeadline(i)}
-                  className={[
-                    'w-full text-left rounded-md px-3 py-2 text-sm transition-colors border',
-                    i === activeHeadline
-                      ? 'border-primary/50 bg-primary/5 text-foreground'
-                      : 'border-transparent hover:border-border hover:bg-secondary text-muted-foreground hover:text-foreground',
-                  ].join(' ')}
-                >
-                  <span className="font-mono text-xs text-primary/60 mr-2">{i + 1}.</span>
-                  {h}
-                </button>
-              ))}
-            </div>
-          </section>
+          <HeadlinePicker
+            headlines={headlines}
+            activeIndex={activeHeadline}
+            onSelect={setActiveHeadline}
+          />
         )}
 
         {/* Hook */}
@@ -102,44 +80,9 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
           </section>
         )}
 
-        {/* Source links */}
+        {/* Collapsible sources section */}
         {sources.length > 0 && (
-          <section>
-            <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
-              Sources
-            </h3>
-            <div className="flex flex-col gap-1.5">
-              {sources.map((src, i) => {
-                // Guard against javascript: URLs stored in DB research sources
-                const safeUrl = src.url?.startsWith('http://') || src.url?.startsWith('https://')
-                  ? src.url
-                  : '#';
-                return (
-                <div key={i} className="flex items-start gap-2">
-                  <Badge
-                    className="shrink-0 mt-0.5 border text-[10px] font-mono capitalize bg-secondary text-muted-foreground border-border"
-                    variant="outline"
-                  >
-                    {src.source}
-                  </Badge>
-                  <div className="min-w-0">
-                    <a
-                      href={safeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline truncate block"
-                    >
-                      {src.title || src.url}
-                    </a>
-                    {src.summary && (
-                      <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-2">{src.summary}</p>
-                    )}
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          </section>
+          <SourcesSection sources={sources} />
         )}
       </div>
 
