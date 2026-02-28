@@ -67,7 +67,7 @@ Plans:
 Plans:
 - [ ] 03-01-PLAN.md — Auth foundation: users table, Auth.js config, login, setup wizard, API guards, logout (AUTH-01, AUTH-02, AUTH-03, AUTH-04)
 - [ ] 03-02-PLAN.md — Design system: dark/light mode, toasts, skeleton loading (UI-01, UI-03, UI-04)
-- [ ] 03-03-PLAN.md — Draft review signals: voice badge, headline picker, collapsible sources (UI-06, UI-07, UI-08)
+- [x] 03-03-PLAN.md — Draft review signals: voice badge, headline picker, collapsible sources (UI-06, UI-07, UI-08)
 - [ ] 03-04-PLAN.md — Empty states, retry verification, per-channel cost data (UI-02, UI-05, UI-09)
 
 ### Phase 4: Deployment & Observability
@@ -91,5 +91,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
-| 3. Authentication & UI Polish | 2/4 | In Progress|  |
+| 3. Authentication & UI Polish | 3/4 | In Progress|  |
 | 4. Deployment & Observability | 0/TBD | Not started | - |

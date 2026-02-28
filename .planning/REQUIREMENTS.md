@@ -49,9 +49,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **UI-03**: Skeleton loading on async operations (research, generation, publishing)
 - [x] **UI-04**: Actionable, platform-specific error messages (not generic 500s)
 - [ ] **UI-05**: Retry affordances on queue failures
-- [ ] **UI-06**: Voice confidence score badges displayed on drafts
-- [ ] **UI-07**: Headline option picker for draft generation
-- [ ] **UI-08**: Research source attribution display on drafts
+- [x] **UI-06**: Voice confidence score badges displayed on drafts
+- [x] **UI-07**: Headline option picker for draft generation
+- [x] **UI-08**: Research source attribution display on drafts
 - [ ] **UI-09**: Per-channel cost data visible in channel dashboard
 
 ### Deployment
@@ -137,9 +137,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-03 | Phase 3 | Complete |
 | UI-04 | Phase 3 | Complete |
 | UI-05 | Phase 3 | Pending |
-| UI-06 | Phase 3 | Pending |
-| UI-07 | Phase 3 | Pending |
-| UI-08 | Phase 3 | Pending |
+| UI-06 | Phase 3 | Complete |
+| UI-07 | Phase 3 | Complete |
+| UI-08 | Phase 3 | Complete |
 | UI-09 | Phase 3 | Pending |
 | DEPLOY-01 | Phase 4 | Pending |
 | DEPLOY-02 | Phase 4 | Pending |
