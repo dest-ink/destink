@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { publishQueue } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -46,7 +47,8 @@ export const POST = auth(function POST(_req, ctx) {
       return NextResponse.json(updated);
     } catch (e) {
       console.error('[POST /api/queue/[id]/retry] failed:', e);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('retry publication', e);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

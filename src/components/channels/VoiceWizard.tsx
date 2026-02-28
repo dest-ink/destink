@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,14 +66,18 @@ export function VoiceWizard({ channelId, open, onOpenChange, onComplete }: Voice
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error || 'Failed to save voice profile');
+        const msg = (data as { error?: string }).error || 'Failed to save voice profile';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       onComplete();
       onOpenChange(false);
     } catch (e) {
       console.error('[VoiceWizard] submit failed:', e);
-      setError('Something went wrong. Please try again.');
+      const msg = 'Something went wrong. Please try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

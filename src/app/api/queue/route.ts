@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { publishQueue, drafts, channels } from '@/db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 const VALID_STATUSES = ['queued', 'publishing', 'published', 'failed'] as const;
 type QueueStatus = typeof VALID_STATUSES[number];
@@ -59,7 +60,8 @@ export const GET = auth(function GET(req) {
       return NextResponse.json(rows);
     } catch (e) {
       console.error('[GET /api/queue] failed:', e);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('load queue', e);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

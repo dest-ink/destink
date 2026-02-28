@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { drafts } from '@/db/schema';
@@ -35,7 +36,9 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
       const res = await fetch(`/api/drafts/${draft.id}/approve`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Failed to approve draft');
+        const msg = (data as { error?: string }).error ?? 'Failed to approve draft';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       startTransition(() => { router.refresh(); });
@@ -57,7 +60,9 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Failed to reject draft');
+        const msg = (data as { error?: string }).error ?? 'Failed to reject draft';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       startTransition(() => { router.refresh(); });
@@ -88,7 +93,9 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? 'Failed to regenerate draft');
+        const msg = (data as { error?: string }).error ?? 'Failed to regenerate draft';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       startTransition(() => { router.refresh(); });

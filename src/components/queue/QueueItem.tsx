@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -64,12 +65,16 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
       const res = await fetch(`/api/queue/${item.id}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? 'Failed to remove item');
+        const msg = data.error ?? 'Failed to remove item';
+        setError(msg);
+        toast.error(msg);
       } else {
         onRemoved(item.id);
       }
     } catch {
-      setError('Network error — please try again');
+      const msg = 'Network error — please try again';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -82,12 +87,16 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
       const res = await fetch(`/api/queue/${item.id}/publish-now`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? 'Failed to publish');
+        const msg = data.error ?? 'Failed to publish';
+        setError(msg);
+        toast.error(msg);
       } else {
         onPublishedNow?.(item.id);
       }
     } catch {
-      setError('Network error — please try again');
+      const msg = 'Network error — please try again';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -100,12 +109,16 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
       const res = await fetch(`/api/queue/${item.id}/retry`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? 'Failed to retry item');
+        const msg = data.error ?? 'Failed to retry item';
+        setError(msg);
+        toast.error(msg);
       } else {
         onRetried(item.id);
       }
     } catch {
-      setError('Network error — please try again');
+      const msg = 'Network error — please try again';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

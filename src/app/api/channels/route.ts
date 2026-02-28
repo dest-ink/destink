@@ -4,6 +4,7 @@ import { channels } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 import { publisherRegistry } from '@/lib/publishing/publisher-registry';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -12,8 +13,9 @@ export const GET = auth(function GET(req) {
     try {
       const rows = await db.select().from(channels).orderBy(desc(channels.createdAt));
       return NextResponse.json(rows);
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('load channels', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });
@@ -42,8 +44,9 @@ export const POST = auth(function POST(req) {
         scheduleConfig: body.scheduleConfig ?? null,
       }).returning();
       return NextResponse.json(channel, { status: 201 });
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('create channel', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

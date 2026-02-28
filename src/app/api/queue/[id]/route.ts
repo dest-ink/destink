@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { publishQueue } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -37,7 +38,8 @@ export const DELETE = auth(function DELETE(_req, ctx) {
       return NextResponse.json({ success: true });
     } catch (e) {
       console.error('[DELETE /api/queue/[id]] failed:', e);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('remove from queue', e);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

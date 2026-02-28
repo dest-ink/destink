@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { drafts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 export const POST = auth(function POST(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -29,7 +30,8 @@ export const POST = auth(function POST(req, ctx) {
       return NextResponse.json(draft);
     } catch (err) {
       console.error('[POST /api/drafts/[id]/reject]', err);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('reject draft', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

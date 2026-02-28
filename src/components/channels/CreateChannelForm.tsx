@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,14 +28,18 @@ export function CreateChannelForm() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to create channel');
+        const msg = data.error || 'Failed to create channel';
+        setError(msg);
+        toast.error(msg);
         return;
       }
       const ch = await res.json();
       router.push('/channels');
     } catch (e) {
       console.error('[CreateChannelForm] submit failed:', e);
-      setError('Something went wrong');
+      const msg = 'Something went wrong';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

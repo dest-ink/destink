@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { channels } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 export const GET = auth(function GET(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -13,8 +14,9 @@ export const GET = auth(function GET(req, ctx) {
       const [channel] = await db.select().from(channels).where(eq(channels.id, id));
       if (!channel) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       return NextResponse.json(channel);
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('load channel details', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });
@@ -40,8 +42,9 @@ export const PATCH = auth(function PATCH(req, ctx) {
         .returning();
       if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       return NextResponse.json(updated);
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('update channel', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });
@@ -54,8 +57,9 @@ export const DELETE = auth(function DELETE(_req, ctx) {
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       await db.delete(channels).where(eq(channels.id, id));
       return new NextResponse(null, { status: 204 });
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('delete channel', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

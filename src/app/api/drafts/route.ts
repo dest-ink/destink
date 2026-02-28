@@ -6,6 +6,7 @@ import { generateDraft } from '@/lib/generation/generator';
 import { randomUUID } from 'crypto';
 import type { ResearchSource } from '@/db/schema';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,7 +31,8 @@ export const GET = auth(function GET(req) {
       return NextResponse.json(rows);
     } catch (err) {
       console.error('[GET /api/drafts]', err);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('load drafts', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });
@@ -111,7 +113,8 @@ export const POST = auth(function POST(req) {
       return NextResponse.json(draft, { status: 201 });
     } catch (err) {
       console.error('[POST /api/drafts]', err);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const { message, status } = apiError('generate draft', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });

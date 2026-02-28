@@ -9,6 +9,7 @@ import {
 } from '@/lib/voice/assembler';
 import { randomUUID } from 'crypto';
 import { auth } from '@/auth';
+import { apiError } from '@/lib/errors';
 
 export const POST = auth(function POST(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,8 +72,9 @@ export const POST = auth(function POST(req) {
       }
 
       return NextResponse.json({ error: `Unknown method: ${method}` }, { status: 400 });
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (err) {
+      const { message, status } = apiError('train voice profile', err);
+      return NextResponse.json({ error: message }, { status });
     }
   })();
 });
