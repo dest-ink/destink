@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-27T08:20:00.000Z"
+last_updated: "2026-02-28T01:58:18.649Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 8
+  completed_plans: 5
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** Phase 1 — Cleanup & Foundation
+**Current focus:** Phase 2 — Pluggable Provider System
 
 ## Current Position
 
-Phase: 1 of 4 (Cleanup & Foundation) — COMPLETE
-Plan: 4 of 4 in current phase (including gap closure 01-04)
-Status: Phase complete, ready for Phase 2
-Last activity: 2026-02-27 — Completed plan 01-04: gap closure for TypeScript type errors in queue-runner tests
+Phase: 2 of 4 (Pluggable Provider System) — In Progress
+Plan: 1 of 4 complete in current phase
+Status: Phase 2 plan 01 complete — provider type contracts and registry infrastructure ready
+Last activity: 2026-02-28 — Completed plan 02-01: PublisherProvider/ResearchAdapter interfaces and generic Registry<T>
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 01-cleanup-foundation P02 | 1 | 2 tasks | 3 files |
 | Phase 01-cleanup-foundation P03 | 10 | 1 task | 2 files |
 | Phase 01-cleanup-foundation P04 | 5 | 1 task | 1 file |
+| Phase 02-pluggable-provider-system P01 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 01-cleanup-foundation]: mockReturnValueOnce per db.update() call required for per-invocation .set() argument introspection in queue-runner tests
 - [Phase 01-cleanup-foundation]: Use 'as unknown as TargetType' double cast for mocked DB clients with no structural overlap with the real db type (TS2352)
 - [Phase 01-cleanup-foundation]: mockResolvedValue objects must exactly match the declared return type interface (not just { ok: true })
+- [Phase 02-pluggable-provider-system]: Plain object interfaces — providers are POJOs satisfying TypeScript interface, not class instances
+- [Phase 02-pluggable-provider-system]: Version gating delegated to validator — Registry<T> does not check PROVIDER_API_VERSION; caller's validate() handles version checks
+- [Phase 02-pluggable-provider-system]: warn-and-continue for invalid providers — unloadable/invalid files emit console.warn and are skipped, one bad provider never blocks others
 
 ### Pending Todos
 
@@ -83,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 01-cleanup-foundation/01-04-PLAN.md — gap closure for TypeScript type errors. Phase 1 fully complete (CLEAN-06 satisfied, tsc --noEmit exits 0).
+Last session: 2026-02-28
+Stopped at: Completed 02-pluggable-provider-system/02-01-PLAN.md — provider type contracts and generic Registry<T> class. Phase 2 plan 01 complete (PUB-01, PUB-07, RES-01 satisfied).
 Resume file: None
