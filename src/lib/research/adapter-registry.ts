@@ -47,11 +47,8 @@ export async function initAdapterRegistry(): Promise<void> {
   const validate = (mod: unknown): ResearchAdapter | null =>
     isResearchAdapter(mod) ? mod : null;
 
-  // Load TypeScript source files (development)
+  // Development: tsx runs .ts source files directly.
   await adapterRegistry.loadDirectory(adaptersDir, '.adapter.ts', validate);
-
-  // Note: For production builds, adapters compile to .js. If the registry is
-  // initialized in a compiled context, also load .adapter.js files.
-  // The Registry.loadDirectory() freezes after the first call, so production
-  // deployments should override adaptersDir to point at the compiled output.
+  // Production: compiled .js output.
+  await adapterRegistry.loadDirectory(adaptersDir, '.adapter.js', validate);
 }

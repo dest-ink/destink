@@ -54,12 +54,18 @@ export const publisherRegistry = new Registry<PublisherProvider>(p => p.platform
  */
 export async function initPublisherRegistry(): Promise<void> {
   const providersDir = path.resolve(process.cwd(), 'src/lib/publishing/providers');
-  // Accept .provider.ts (tsx/ts-node) and .provider.js (compiled output)
-  // The Registry.loadDirectory suffix matching uses endsWith(), so we call it
-  // twice to cover both extension variants.
+  // Development: tsx runs .ts source files directly.
   await publisherRegistry.loadDirectory(
     providersDir,
     '.provider.ts',
+    (mod) => (isPublisherProvider(mod) ? mod : null),
+  );
+  // Production builds compile .ts to .js — scan both extensions.
+  // Registry.loadDirectory() does not check frozen flag internally,
+  // so sequential calls are safe (Map.set is idempotent by key).
+  await publisherRegistry.loadDirectory(
+    providersDir,
+    '.provider.js',
     (mod) => (isPublisherProvider(mod) ? mod : null),
   );
 }
