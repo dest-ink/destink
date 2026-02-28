@@ -45,7 +45,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The queue runner dispatches to the correct publisher by looking up `channel.platform` in the registry — no platform-specific `if/else` chains remain in `queue-runner.ts`
   4. The research orchestrator fans out to all registered adapters via `registry.getAll()` — no hardcoded adapter imports remain in `orchestrator.ts`
   5. A provider with a missing required interface method is rejected at startup with a clear error, not silently loaded and broken at publish time
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 02-01-PLAN.md — Provider contracts and generic Registry class (PUB-01, PUB-07, RES-01)
+- [ ] 02-02-PLAN.md — Publisher providers, registry, and queue-runner dispatch (PUB-02, PUB-03, PUB-04, PUB-05, PUB-06)
+- [ ] 02-03-PLAN.md — Research adapters and adapter registry (RES-03, RES-04, RES-05, RES-06)
+- [ ] 02-04-PLAN.md — Integration wiring: orchestrator, engine, daemon, instrumentation, channels API (RES-02)
 
 ### Phase 3: Authentication & UI Polish
 **Goal**: The application requires login before any data is accessible, and every screen is polished enough to hand to a real user
@@ -80,6 +85,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Foundation | 4/4 | Complete   | 2026-02-27 |
-| 2. Pluggable Provider System | 0/TBD | Not started | - |
+| 2. Pluggable Provider System | 0/4 | Not started | - |
 | 3. Authentication & UI Polish | 0/TBD | Not started | - |
 | 4. Deployment & Observability | 0/TBD | Not started | - |
