@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { channels } from '@/db/schema';
 import { desc } from 'drizzle-orm';
+import { publisherRegistry } from '@/lib/publishing/publisher-registry';
 
 export async function GET() {
   try {
@@ -18,8 +19,12 @@ export async function POST(req: NextRequest) {
     if (!body.name || !body.platform) {
       return NextResponse.json({ error: 'name and platform are required' }, { status: 400 });
     }
-    if (!['linkedin', 'substack'].includes(body.platform)) {
-      return NextResponse.json({ error: 'platform must be linkedin or substack' }, { status: 400 });
+    if (!publisherRegistry.has(body.platform)) {
+      const available = publisherRegistry.keys().join(', ');
+      return NextResponse.json(
+        { error: `Unknown platform '${body.platform}'. Available: ${available}` },
+        { status: 400 },
+      );
     }
     const [channel] = await db.insert(channels).values({
       name: body.name,

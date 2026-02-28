@@ -8,9 +8,11 @@
  *   Deployment, set `concurrencyPolicy: Forbid` to prevent overlapping runs.
  */
 
-import { schedule } from 'node-cron';
+import { schedule, ScheduledTask } from 'node-cron';
 import { pool } from '@/db/client';
 import { runPublishQueue, recoverStuckItems, getRetryDelay } from '@/lib/publishing/queue-runner';
+import { initPublisherRegistry } from '@/lib/publishing/publisher-registry';
+import { initAdapterRegistry } from '@/lib/research/adapter-registry';
 
 // Re-export so existing tests that import getRetryDelay from this module continue to work.
 export { getRetryDelay };
@@ -18,6 +20,9 @@ export { getRetryDelay };
 // Module-level lock: prevents overlapping runs within the same process.
 let isProcessing = false;
 let isShuttingDown = false;
+
+// Cron task handle — set during startup, used by shutdown().
+let task: ScheduledTask;
 
 async function tick() {
   if (isShuttingDown || isProcessing) {
@@ -36,10 +41,6 @@ async function tick() {
     isProcessing = false;
   }
 }
-
-const task = schedule('* * * * *', () => {
-  tick().catch(console.error);
-});
 
 async function shutdown(signal: string): Promise<void> {
   console.log(`[daemon] ${signal} received — initiating graceful shutdown`);
@@ -66,6 +67,15 @@ process.on('SIGTERM', () => {
 });
 process.on('SIGINT', () => {
   shutdown('SIGINT').catch(console.error);
+});
+
+// Initialize provider registries before first tick.
+// If initialization fails, let it crash — a daemon without registries cannot function.
+await initPublisherRegistry();
+await initAdapterRegistry();
+
+task = schedule('* * * * *', () => {
+  tick().catch(console.error);
 });
 
 console.log('[daemon] Publish loop started — checking queue every minute');
