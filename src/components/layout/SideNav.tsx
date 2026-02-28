@@ -2,7 +2,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { LogOut } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 
 const links = [
   { href: '/channels', label: 'Channels', icon: '◈' },
@@ -13,6 +15,15 @@ const links = [
 
 export function SideNav() {
   const path = usePathname();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  function toggleTheme() {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }
+
   return (
     <nav className="w-52 shrink-0 border-r border-border flex flex-col bg-card">
       {/* Logo */}
@@ -45,14 +56,29 @@ export function SideNav() {
       {/* Footer */}
       <div className="px-4 py-3 border-t border-border flex items-center justify-between">
         <p className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">v0.1.0</p>
-        <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Sign out"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Sign out</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {mounted && (
+            <button
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-3.5 h-3.5" />
+              ) : (
+                <Moon className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Sign out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign out</span>
+          </button>
+        </div>
       </div>
     </nav>
   );
