@@ -1,0 +1,90 @@
+# Orbitl Helm Chart Values
+# Override any of these values in your own values.yaml or via --set flags.
+
+# Web service (Next.js application)
+web:
+  image:
+    repository: orbitl-web
+    tag: latest
+  replicas: 1
+  port: 3021
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Daemon service (background job processor with node-cron)
+daemon:
+  image:
+    repository: orbitl-daemon
+    tag: latest
+  replicas: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Jobs image used by CronJobs and migration hook
+jobs:
+  image:
+    repository: orbitl-jobs
+    tag: latest
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# Scheduled CronJobs (set enabled: false to disable individual jobs)
+cronJobs:
+  publish:
+    schedule: "*/5 * * * *"
+    enabled: true
+  research:
+    schedule: "0 2 * * *"
+    enabled: true
+  dailySummary:
+    schedule: "0 8 * * *"
+    enabled: true
+
+# Bundled PostgreSQL (set enabled: false and configure externalDatabase to use an external DB)
+postgresql:
+  enabled: true
+  image: postgres:17-alpine
+  storageSize: 5Gi
+  user: orbitl
+  password: orbitl
+  database: orbitl
+
+# External database (used when postgresql.enabled is false)
+externalDatabase:
+  url: ""
+
+# Ingress configuration (disabled by default)
+ingress:
+  enabled: false
+  host: ""
+  tls: false
+  clusterIssuer: "letsencrypt-prod"
+
+# Environment variables — populate all values before deploying
+# These are stored in a Kubernetes Secret and injected into all service containers.
+env:
+  ANTHROPIC_API_KEY: ""
+  ENCRYPTION_KEY: ""
+  EXA_API_KEY: ""
+  REDDIT_CLIENT_ID: ""
+  REDDIT_CLIENT_SECRET: ""
+  LINKEDIN_CLIENT_ID: ""
+  LINKEDIN_CLIENT_SECRET: ""
+  LINKEDIN_REDIRECT_URI: ""
+  NEXT_PUBLIC_APP_URL: ""
+  AUTH_SECRET: ""
