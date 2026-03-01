@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-4 + 3.1 (shipped 2026-03-01)
 - ✅ **v1.1 Research Overhaul** — Phases 8-11 (shipped 2026-03-01)
+- **v1.2 Content Pipeline Automation** — Phases 12-15 (in progress)
 
 ## Phases
 
@@ -25,16 +26,29 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
 
 </details>
 
-### ✅ v1.1 Research Overhaul (Shipped 2026-03-01)
-
-**Milestone Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
+<details>
+<summary>✅ v1.1 Research Overhaul (Phases 8-11) — SHIPPED 2026-03-01</summary>
 
 - [x] **Phase 8: Research Schema & Migration** - New tables + data migration from per-channel configs
 - [x] **Phase 9: Research API & Progress Infrastructure** - CRUD routes, SSE endpoint, orchestrator progress events
 - [x] **Phase 10: Research Page UI** - Sidebar nav, list page, create/edit forms, live run panel
 - [x] **Phase 11: Channel Page Cleanup** - Remove Research Config tab, update channel overview
 
+</details>
+
+### v1.2 Content Pipeline Automation (In Progress)
+
+**Milestone Goal:** Wire up the full research-to-publish pipeline -- research runs generate drafts (manually or on a schedule), all drafts go through approval, and config fields are cleaned up so the UX makes sense.
+
+- [ ] **Phase 12: Config Cleanup** - Move, rename, and remove confusing config fields before building on them
+- [ ] **Phase 13: Draft Generation** - Engine that turns research results into drafts, plus manual trigger UI
+- [ ] **Phase 14: Automation Config** - Schema and UI for scheduling research runs with auto-draft toggle
+- [ ] **Phase 15: Automation Worker** - Cron worker that executes scheduled research runs and generates drafts
+
 ## Phase Details
+
+<details>
+<summary>✅ v1.1 Research Overhaul — Phase Details</summary>
 
 ### Phase 8: Research Schema & Migration
 **Goal**: Standalone researcher entities exist in the database with a many-to-many channel relationship, and existing per-channel configs are migrated
@@ -82,7 +96,7 @@ Plans:
 - [x] 10-01: Sidebar nav + list page + create/edit + run panel
 
 ### Phase 11: Channel Page Cleanup
-**Goal**: Channel detail page no longer has a Research Config tab — research is managed from /research
+**Goal**: Channel detail page no longer has a Research Config tab -- research is managed from /research
 **Depends on**: Phase 10
 **Requirements**: CLEAN-01, CLEAN-02
 **Success Criteria** (what must be TRUE):
@@ -93,7 +107,70 @@ Plans:
 Plans:
 - [x] 11-01: Remove Research Config tab + update OverviewTab
 
+</details>
+
+### Phase 12: Config Cleanup
+**Goal**: Config fields are reorganized so draft generation and automation settings live in the right place with clear labels
+**Depends on**: v1.1 complete
+**Requirements**: CFG-01, CFG-02, CFG-03
+**Success Criteria** (what must be TRUE):
+  1. maxDraftsPerRun no longer appears in the researcher's source config form -- it lives in a draft generation or automation settings area
+  2. The former notePercent field is labeled "Note vs Article %" with a description explaining the difference between notes and articles
+  3. scheduleHours no longer exists in the researcher source config (field removed from schema and UI)
+  4. Existing researcher configs with these fields still work after migration (no data loss)
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: TBD
+
+### Phase 13: Draft Generation
+**Goal**: Research runs can produce drafts -- either automatically after a run completes or manually via a button -- respecting channel links and content type settings
+**Depends on**: Phase 12
+**Requirements**: DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04, DRAFT-05, DRAFT-06
+**Success Criteria** (what must be TRUE):
+  1. User can click "Generate Drafts" on a completed research run and see drafts created from the top-ranked topics
+  2. When auto-draft is enabled, completing a research run automatically generates drafts without user intervention
+  3. Generated drafts respect the contentTypeMix setting -- the ratio of notes to articles matches the configured percentage
+  4. Drafts are only created for channels linked to the researcher that produced the run (not all channels)
+  5. The research run record shows which draft IDs were generated from it (draftsGenerated field populated)
+  6. Every generated draft has pending_review status -- no draft skips the approval queue
+**Plans**: TBD
+
+Plans:
+- [ ] 13-01: TBD
+
+### Phase 14: Automation Config
+**Goal**: Users can configure when research runs happen automatically and whether those runs generate drafts, all in a dedicated automation settings area separate from research source config
+**Depends on**: Phase 13
+**Requirements**: AUTO-01, AUTO-02, AUTO-03, AUTO-05
+**Success Criteria** (what must be TRUE):
+  1. User can set an automation schedule for a researcher using a cron expression or interval picker
+  2. User can toggle auto-draft generation on or off per automation schedule
+  3. User can set max drafts per scheduled run in the automation config (not in source config)
+  4. Automation settings live in their own section or page, visually and structurally separate from the researcher's source/topic config
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD
+
+### Phase 15: Automation Worker
+**Goal**: Scheduled research runs execute automatically at the configured times and generate drafts when auto-draft is enabled
+**Depends on**: Phase 14
+**Requirements**: AUTO-04
+**Success Criteria** (what must be TRUE):
+  1. A researcher with an automation schedule runs research automatically at the scheduled time without user interaction
+  2. When auto-draft is enabled on the schedule, drafts are generated after the automated research run completes
+  3. When auto-draft is disabled on the schedule, the research run completes but no drafts are created
+  4. Automated runs appear in the research run history the same way manual runs do
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 12 → 13 → 14 → 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -106,6 +183,10 @@ Plans:
 | 9. Research API & Progress Infrastructure | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
+| 12. Config Cleanup | v1.2 | 0/? | Not started | - |
+| 13. Draft Generation | v1.2 | 0/? | Not started | - |
+| 14. Automation Config | v1.2 | 0/? | Not started | - |
+| 15. Automation Worker | v1.2 | 0/? | Not started | - |
 
 ---
 *Full v1.0 details: .planning/milestones/v1.0-ROADMAP.md*

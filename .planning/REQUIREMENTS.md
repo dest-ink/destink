@@ -1,7 +1,7 @@
 # Requirements: Orbitl
 
 **Defined:** 2026-03-01
-**Core Value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
+**Core Value:** Automated, high-quality content that sounds like the creator wrote it -- from research to published post, hands-off except for final approval.
 
 ## v1.1 Requirements
 
@@ -75,10 +75,10 @@ Deferred to v1.3+. Tracked but not in current roadmap.
 
 ### Twitter Content Generation (from scrapped v1.1)
 
-- **GEN-01**: User can generate a tweet draft (hook/body/CTA, ≤280 chars per segment) from channel research
+- **GEN-01**: User can generate a tweet draft (hook/body/CTA, <=280 chars per segment) from channel research
 - **GEN-02**: Tweet generation uses voice-adapted conciseness
 - **GEN-03**: User can generate a thread from an approved long-form draft
-- **GEN-04**: Generated threads follow hook → value tweets → CTA structure (5-10 tweets)
+- **GEN-04**: Generated threads follow hook -> value tweets -> CTA structure (5-10 tweets)
 - **GEN-05**: User can pick from 3 alternate opening hook options for generated threads
 
 ### Twitter Draft Review (from scrapped v1.1)
@@ -111,8 +111,8 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Multi-tenant researcher sharing | Single-user self-hosted tool — no sharing model needed |
-| Research scheduling (auto-run) | ~~Deferred from v1.1~~ → Now in scope for v1.2 (AUTO-01 through AUTO-05) |
+| Multi-tenant researcher sharing | Single-user self-hosted tool -- no sharing model needed |
+| Research scheduling (auto-run) | ~~Deferred from v1.1~~ -> Now in scope for v1.2 (AUTO-01 through AUTO-05) |
 | Research result caching/dedup | Over-engineering for v1.1; add if duplicates become a problem |
 
 ## Traceability
@@ -136,12 +136,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-04 | Phase 9 | Done |
 | CLEAN-01 | Phase 11 | Done |
 | CLEAN-02 | Phase 11 | Done |
+| CFG-01 | Phase 12 | Pending |
+| CFG-02 | Phase 12 | Pending |
+| CFG-03 | Phase 12 | Pending |
+| DRAFT-01 | Phase 13 | Pending |
+| DRAFT-02 | Phase 13 | Pending |
+| DRAFT-03 | Phase 13 | Pending |
+| DRAFT-04 | Phase 13 | Pending |
+| DRAFT-05 | Phase 13 | Pending |
+| DRAFT-06 | Phase 13 | Pending |
+| AUTO-01 | Phase 14 | Pending |
+| AUTO-02 | Phase 14 | Pending |
+| AUTO-03 | Phase 14 | Pending |
+| AUTO-05 | Phase 14 | Pending |
+| AUTO-04 | Phase 15 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 15 total
-- Mapped to phases: 15
-- Completed: 15
+- v1.1 requirements: 15 total, 15 completed
+- v1.2 requirements: 14 total, 0 completed
+- Mapped to phases: 29/29
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 — v1.2 requirements added (14 new)*
+*Last updated: 2026-03-01 -- v1.2 traceability added (14 requirements mapped to phases 12-15)*
