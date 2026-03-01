@@ -80,7 +80,6 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
         channelId={channel.id}
         costSummary={costSummary}
         personaPrompt={channel.personaPrompt}
-        researchConfig={channel.researchConfig ?? null}
         lastResearchRun={lastResearchRun}
       />
     </div>
