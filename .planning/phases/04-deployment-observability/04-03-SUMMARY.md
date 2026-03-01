@@ -86,7 +86,7 @@ completed: 2026-02-28
 1. **Task 1: Chart metadata, values, and helper templates** - `ef12149` (chore)
 2. **Task 2: Deployment, Service, Job, CronJob, Ingress, and Secret templates** - `c7ab878` (feat)
 
-**Plan metadata:** (docs commit — pending)
+**Plan metadata:** `9281031` (docs: complete Helm chart plan)
 
 ## Files Created/Modified
 
