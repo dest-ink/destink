@@ -4,10 +4,10 @@ import { publishQueue } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { publishSingleItem } from '@/lib/publishing/publish-single-item';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Stub: marks the item as 'publishing'. Actual publisher integration is wired in Tasks 7.1/7.2.
 export const POST = auth(function POST(_req, ctx) {
   if (!_req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -40,6 +40,11 @@ export const POST = auth(function POST(_req, ctx) {
         .set({ status: 'publishing' })
         .where(eq(publishQueue.id, id))
         .returning();
+
+      // Fire and forget — publish in background, return immediately
+      publishSingleItem(id).catch(err =>
+        console.error(`[publish-now] publishSingleItem failed for ${id}:`, err)
+      );
 
       return NextResponse.json(updated);
     } catch (e) {
