@@ -8,6 +8,7 @@ import { LogOut, Sun, Moon } from 'lucide-react';
 
 const links = [
   { href: '/channels', label: 'Channels', icon: '◈' },
+  { href: '/research', label: 'Research', icon: '◆' },
   { href: '/drafts', label: 'Drafts', icon: '◇' },
   { href: '/queue', label: 'Queue', icon: '◉' },
   { href: '/audit', label: 'AI Usage', icon: '◎' }, // route is /audit, label is "AI Usage" intentionally
