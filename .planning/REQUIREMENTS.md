@@ -69,30 +69,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TWIT-01 | — | Pending |
-| TWIT-02 | — | Pending |
-| TWIT-03 | — | Pending |
-| TWIT-04 | — | Pending |
-| TWIT-05 | — | Pending |
-| GEN-01 | — | Pending |
-| GEN-02 | — | Pending |
-| GEN-03 | — | Pending |
-| GEN-04 | — | Pending |
-| GEN-05 | — | Pending |
-| REVIEW-01 | — | Pending |
-| REVIEW-02 | — | Pending |
-| REVIEW-03 | — | Pending |
-| DEBT-01 | — | Pending |
-| DEBT-02 | — | Pending |
-| DEBT-03 | — | Pending |
-| DEBT-04 | — | Pending |
-| DEBT-05 | — | Pending |
+| TWIT-01 | Phase 6 | Pending |
+| TWIT-02 | Phase 6 | Pending |
+| TWIT-03 | Phase 6 | Pending |
+| TWIT-04 | Phase 6 | Pending |
+| TWIT-05 | Phase 6 | Pending |
+| GEN-01 | Phase 6 | Pending |
+| GEN-02 | Phase 6 | Pending |
+| GEN-03 | Phase 6 | Pending |
+| GEN-04 | Phase 6 | Pending |
+| GEN-05 | Phase 6 | Pending |
+| REVIEW-01 | Phase 7 | Pending |
+| REVIEW-02 | Phase 7 | Pending |
+| REVIEW-03 | Phase 7 | Pending |
+| DEBT-01 | Phase 5 | Pending |
+| DEBT-02 | Phase 5 | Pending |
+| DEBT-03 | Phase 5 | Pending |
+| DEBT-04 | Phase 5 | Pending |
+| DEBT-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial definition*
+*Last updated: 2026-02-28 — traceability complete after roadmap creation*

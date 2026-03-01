@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Twitter/X & Cleanup
-status: defining_requirements
+status: roadmap_created
 last_updated: "2026-02-28T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,19 +18,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** Defining requirements for v1.1
+**Current focus:** Phase 5 — Foundation (DB Migration + Tech Debt)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-28 — Milestone v1.1 started
+Phase: 5 of 7 (Foundation — DB Migration + Tech Debt)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-28 — v1.1 roadmap created (3 phases, 18 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0% (v1.1)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
+- Total plans completed: 0 (v1.1)
 - Average duration: —
 - Total execution time: —
 
@@ -45,22 +47,6 @@ Last activity: 2026-02-28 — Milestone v1.1 started
 - Trend: —
 
 *Updated after each plan completion*
-| Phase 01-cleanup-foundation P01 | 13 | 2 tasks | 4 files |
-| Phase 01-cleanup-foundation P02 | 1 | 2 tasks | 3 files |
-| Phase 01-cleanup-foundation P03 | 10 | 1 task | 2 files |
-| Phase 01-cleanup-foundation P04 | 5 | 1 task | 1 file |
-| Phase 02-pluggable-provider-system P01 | 3 | 2 tasks | 3 files |
-| Phase 02-pluggable-provider-system P02 | 4 | 2 tasks | 7 files |
-| Phase 02-pluggable-provider-system P03 | 5 | 2 tasks | 10 files |
-| Phase 02-pluggable-provider-system P04 | 10 | 2 tasks | 6 files |
-| Phase 03-authentication-ui-polish P01 | 6 | 3 tasks | 26 files |
-| Phase 03-authentication-ui-polish P02 | 4 | 3 tasks | 17 files |
-| Phase 03-authentication-ui-polish P03 | 1 | 2 tasks | 4 files |
-| Phase 03-authentication-ui-polish P04 | 10 | 2 tasks | 6 files |
-| Phase 03.1-fix-cronjob-registry-initialization P01 | 2 | 2 tasks | 7 files |
-| Phase 04-deployment-observability P01 | 8 | 2 tasks | 6 files |
-| Phase 04-deployment-observability P03 | 2 | 2 tasks | 12 files |
-| Phase 04-deployment-observability P02 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -69,60 +55,11 @@ Last activity: 2026-02-28 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap]: 4-phase structure derived from requirements — Cleanup → Provider System → Auth+UI → Deployment+Observability
-- [Roadmap]: Research recommends `/gsd:research-phase` before planning Phase 3 (Auth) — pattern choice (NextAuth vs. custom JWT) not yet resolved
-- [Roadmap]: Helm chart is v1 scope (DEPLOY-05, DEPLOY-06) — research flagged it as potentially v2+, but requirements keep it in Phase 4
-- [Phase 01-cleanup-foundation]: 15-minute stuck threshold locked by user — safe because publishes complete in seconds
-- [Phase 01-cleanup-foundation]: Stuck items reset to queued indefinitely with no retry limit tracking (user decision)
-- [Phase 01-cleanup-foundation]: createdAt used as stuck-item detection proxy pending processingStartedAt column addition
-- [Phase 01-cleanup-foundation]: 25s shutdown timeout — leaves 5s buffer before Kubernetes SIGKILL at 30s
-- [Phase 01-cleanup-foundation]: Failed items daily count uses createdAt as time proxy since publishQueue has no updatedAt column
-- [Phase 01-cleanup-foundation]: vitest.config.ts added at project root so tests/ dir is discovered — .worktrees/build/vitest.config.ts is not used for root-level test runs
-- [Phase 01-cleanup-foundation]: mockReturnValueOnce per db.update() call required for per-invocation .set() argument introspection in queue-runner tests
-- [Phase 01-cleanup-foundation]: Use 'as unknown as TargetType' double cast for mocked DB clients with no structural overlap with the real db type (TS2352)
-- [Phase 01-cleanup-foundation]: mockResolvedValue objects must exactly match the declared return type interface (not just { ok: true })
-- [Phase 02-pluggable-provider-system]: Plain object interfaces — providers are POJOs satisfying TypeScript interface, not class instances
-- [Phase 02-pluggable-provider-system]: Version gating delegated to validator — Registry<T> does not check PROVIDER_API_VERSION; caller's validate() handles version checks
-- [Phase 02-pluggable-provider-system]: warn-and-continue for invalid providers — unloadable/invalid files emit console.warn and are skipped, one bad provider never blocks others
-- [Phase 02-pluggable-provider-system]: initPublisherRegistry uses process.cwd() + relative path for tsx/Next.js compatible provider directory resolution
-- [Phase 02-pluggable-provider-system]: isPublisherProvider checks apiVersion === PROVIDER_API_VERSION to reject version-mismatched providers
-- [Phase 02-pluggable-provider-system]: queue-runner throws unified "No publisher registered for platform X" — replaces per-platform if/else chains
-- [Phase 02-pluggable-provider-system]: Brainstorm config flattening — extended ResearchConfig with optional channelId/voiceProfile/recentTitles for uniform search(config) signature across all adapters
-- [Phase 02-pluggable-provider-system]: Empty-array fallback for missing channelId — brainstorm adapter returns [] rather than throwing, keeping adapter failures non-fatal
-- [Phase 02-pluggable-provider-system]: isResearchAdapter exported as named export for external testability and inline validation use
-- [Phase 02-pluggable-provider-system]: Per-channel adapter filtering deferred — runResearch() has optional adapterIds param but engine passes none until channel schema gains researchAdapterIds field
-- [Phase 02-pluggable-provider-system]: Top-level await used in daemon for registry init — tsx supports it natively, cleaner than IIFE wrapper
-- [Phase 02-pluggable-provider-system]: Dynamic imports in instrumentation.ts — prevents server-only modules from being evaluated in Edge runtime
-- [Phase 03-authentication-ui-polish]: Auth.js v5 beta Credentials provider with JWT 30-day sessions — edge-compatible, no DB session table needed
-- [Phase 03-authentication-ui-polish]: auth() wrapper pattern for all API routes: wraps handler, checks req.auth at top for 401
-- [Phase 03-authentication-ui-polish]: Edge-safe auth config split: auth.config.ts (no DB/bcrypt) + auth.ts (full config with DB queries)
-- [Phase 03-authentication-ui-polish]: ThemeProvider uses attribute='class' with defaultTheme='system' — .dark/.light class on html, suppressHydrationWarning prevents mismatch
-- [Phase 03-authentication-ui-polish]: Mounted guard in SideNav theme toggle prevents hydration mismatch on initial render
-- [Phase 03-authentication-ui-polish]: apiError(operation, err) returns {message, status} tuple — all API catch blocks use this, zero generic 500s remain
-- [Phase 03-authentication-ui-polish]: toast.error() + setError() dual display pattern in client components — user sees error even if scrolled away from form
-- [Phase 03-authentication-ui-polish]: VoiceConfidenceBadge color thresholds: green (>=80), yellow (60-79), red (<60) — glanceable quality signal
-- [Phase 03-authentication-ui-polish]: Radio indicator uses styled div elements in HeadlinePicker — no native input[type=radio] needed, consistent with button patterns
-- [Phase 03-authentication-ui-polish]: Native HTML details/summary for SourcesSection — no JS state required, CSS group-open handles arrow rotation
-- [Phase 03-authentication-ui-polish]: Direct Drizzle DB query in channel detail Server Component — avoids self-fetch anti-pattern vs calling own API route
-- [Phase 03-authentication-ui-polish]: coalesce(sum(costUsd), '0') pattern for numeric aggregation — returns string from Postgres numeric column, parsed with parseFloat()
-- [Phase 03-authentication-ui-polish]: QueueItem retry affordances (UI-05) already fully present — red Failed badge + inline Retry button + error box confirmed, no code changes needed
-- [Phase 03.1-fix-cronjob-registry-initialization]: Shared bootstrap module (src/lib/bootstrap.ts) is single entry point for initRegistries() across all process types
-- [Phase 03.1-fix-cronjob-registry-initialization]: Registry.loadDirectory() called twice per registry (.ts + .js) — Map.set is idempotent so no duplicate keys
-- [Phase 03.1-fix-cronjob-registry-initialization]: initRegistries() throws on failure — entry points without registries cannot function, crashing fast is correct
-- [Phase 04-deployment-observability]: Migrate service uses Dockerfile.jobs (full npm ci) not Dockerfile.web (standalone strips modules) — simpler and guaranteed drizzle-kit access
-- [Phase 04-deployment-observability]: No middleware.ts exists at Next.js root — /api/health is unauthenticated by default without exclusion rules needed
-- [Phase 04-deployment-observability]: AUTH_SECRET added to .env.example — required by Auth.js v5, was missing from example file
-- [Phase 04-deployment-observability]: All compose services use .env (not .env.local) — production convention, local dev convention aligns
-- [Phase 04-deployment-observability P03]: Migration Job uses web image (not jobs image) — web image has drizzle-kit and migration files; command override keeps migrate-job.yaml simple
-- [Phase 04-deployment-observability P03]: orbitl.databaseUrl helper in _helpers.tpl — single source of truth for DB connection string, handles bundled vs external postgres toggle
-- [Phase 04-deployment-observability P03]: Daemon Deployment has no readiness/liveness probe — daemon is a background process, rely on restart policy not HTTP health check
-- [Phase 04-deployment-observability P03]: Ingress defaults to ingressClassName: traefik — k3s standard ingress controller, correct default for target deployment platform
-- [Phase 04-deployment-observability]: leftJoin channels to aiAuditLog for inline name resolution in groupBy query — avoids N+1, single query per page load
-- [Phase 04-deployment-observability]: Null channelId rows display as 'Unattributed' in AuditTabs — system-level AI calls without channel attribution
-- [Phase 04-deployment-observability]: AuditTabs is 'use client' (Radix Tabs requires client); AuditSummaryCards stays server component — data fetching stays in server page
-- [Phase 04-deployment-observability P04]: Two-phase TLS setup in k3s guide — initial helm install without TLS, then helm upgrade after cert-manager/ClusterIssuer ready
-- [Phase 04-deployment-observability P04]: imagePullPolicy: Never for locally-imported k3s images — prevents k8s attempting remote pull of locally-built images
-- [Phase 04-deployment-observability P04]: DISABLE_INTERNAL_CRON env var documented as escape hatch for daemon node-cron vs k8s CronJob double-scheduling
+- [Roadmap v1.1]: 3-phase structure — Foundation → Twitter Publisher + Content Generation → Thread Review UI
+- [Roadmap v1.1]: Tech debt in Phase 5 before Twitter work — publish-now stub and retry bug cause queue correctness failures that affect Twitter more than Substack (duplicate tweets, permanently-stuck items)
+- [Roadmap v1.1]: DISABLE_INTERNAL_CRON must ship in Phase 5 — duplicate tweets from daemon + k8s CronJob are highly visible; unacceptable before Twitter goes live
+- [Roadmap v1.1]: Thread storage as JSON.stringify(string[]) in drafts.body with contentType='tweet' — no new table required
+- [Roadmap v1.1]: OAuth 1.0a (not PKCE) for Twitter — 4 static credentials, no expiry, no redirect/callback complexity
 
 ### Pending Todos
 
@@ -130,10 +67,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 2]: `platformEnum` Postgres enum expansion requires a DB schema migration for new platforms — noted but migration strategy for community providers is a v2+ concern.
+- [Phase 6]: X API free tier monthly write cap (currently ~500/month) — a 10-tweet thread consumes 10 writes; one active channel can exhaust the free tier. Verify current limit at docs.x.com before shipping channel UI copy.
+- [Phase 6]: Twitter character counting for emoji and non-BMP Unicode differs from JS .length — conservative 270-char server-side limit provides buffer; acceptable for v1.1; refine in v1.2 if failures observed.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 04-deployment-observability/04-04-PLAN.md — docs/k3s-deployment.md (400 lines), step-by-step k3s deployment guide covering prerequisites, docker image build/import, Helm install, TLS with cert-manager/Let's Encrypt, upgrading, troubleshooting (DEPLOY-06 satisfied). v1.0 milestone all requirements complete.
+Last session: 2026-02-28
+Stopped at: Roadmap created for v1.1. 3 phases defined, 18/18 requirements mapped. Ready to plan Phase 5.
 Resume file: None
