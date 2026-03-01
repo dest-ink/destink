@@ -8,7 +8,7 @@
     "job:publish": "tsx --env-file=.env src/jobs/publish.ts",
     "job:daily-summary": "tsx --env-file=.env src/jobs/daily-summary.ts",
     "job:research": "tsx --env-file=.env src/jobs/research.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:daemon\"",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:daemon\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -47,9 +47,9 @@
     "tsx": "^4.21.0",
     "zod": "^3.25.76"
   },
-  "overrides": {
-    "next-auth": {
-      "next": "16.1.6"
+  "pnpm": {
+    "overrides": {
+      "next-auth>next": "16.1.6"
     }
   },
   "devDependencies": {

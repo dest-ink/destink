@@ -47,7 +47,12 @@ export function ResearchConfigForm({ channelId, config }: ResearchConfigFormProp
       const res = await fetch(`/api/channels/${channelId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ researchConfig: form }),
+        body: JSON.stringify({
+          researchConfig: {
+            ...form,
+            searchQueryTemplates: form.searchQueryTemplates.filter(Boolean),
+          },
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -99,7 +104,7 @@ export function ResearchConfigForm({ channelId, config }: ResearchConfigFormProp
         <p className="text-xs text-muted-foreground">One per line. Use {'{topic}'} as placeholder.</p>
         <Textarea
           value={form.searchQueryTemplates.join('\n')}
-          onChange={e => update('searchQueryTemplates', e.target.value.split('\n').filter(Boolean))}
+          onChange={e => update('searchQueryTemplates', e.target.value.split('\n'))}
           placeholder={"latest news about {topic}\n{topic} trends 2026"}
           className="min-h-[72px] bg-card border-border font-mono text-sm"
         />

@@ -50,5 +50,18 @@ export async function callClaude(options: CallClaudeOptions): Promise<string> {
     throw new Error(`Unexpected Claude response type: ${content.type}`);
   }
 
-  return content.text;
+  return stripCodeFences(content.text);
+}
+
+/** Strip markdown code fences (```json ... ```) that models sometimes add. */
+function stripCodeFences(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('```')) {
+    const firstNewline = trimmed.indexOf('\n');
+    if (firstNewline === -1) return trimmed;
+    const body = trimmed.slice(firstNewline + 1);
+    const lastFence = body.lastIndexOf('```');
+    return (lastFence !== -1 ? body.slice(0, lastFence) : body).trim();
+  }
+  return trimmed;
 }

@@ -38,9 +38,12 @@ export async function searchExa(config: ResearchConfig): Promise<ResearchSource[
 
   for (const query of queries.slice(0, 5)) {
     try {
-      const result = await client.searchAndContents(query, {
+      const result = await client.search(query, {
+        type: 'auto',
         numResults: 3,
-        highlights: true,
+        contents: {
+          highlights: { maxCharacters: 4000 },
+        },
         excludeDomains: config.excludedDomains ?? [],
       });
       for (const r of result.results) {
