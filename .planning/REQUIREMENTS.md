@@ -60,13 +60,13 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DEPLOY-02**: Dockerfile for daemon service
 - [x] **DEPLOY-03**: Docker Compose with PostgreSQL, migration service, web, daemon
 - [x] **DEPLOY-04**: Health checks (pg_isready for DB, liveness/readiness for services)
-- [ ] **DEPLOY-05**: Helm chart (Chart.yaml, values.yaml, templates for web/daemon/CronJobs)
+- [x] **DEPLOY-05**: Helm chart (Chart.yaml, values.yaml, templates for web/daemon/CronJobs)
 - [ ] **DEPLOY-06**: k3s deployment guide (`docs/k3s-deployment.md`)
 
 ### Observability
 
-- [ ] **OBS-01**: AI usage/audit dashboard page (`/audit`) with token usage and cost aggregation
-- [ ] **OBS-02**: Audit API route for dashboard data
+- [x] **OBS-01**: AI usage/audit dashboard page (`/audit`) with token usage and cost aggregation
+- [x] **OBS-02**: Audit API route for dashboard data
 
 ## v2 Requirements
 
@@ -141,14 +141,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-07 | Phase 3 | Complete |
 | UI-08 | Phase 3 | Complete |
 | UI-09 | Phase 3 | Complete |
-| DEPLOY-01 | Phase 4 | Pending |
-| DEPLOY-02 | Phase 4 | Pending |
-| DEPLOY-03 | Phase 4 | Pending |
-| DEPLOY-04 | Phase 4 | Pending |
-| DEPLOY-05 | Phase 4 | Pending |
+| DEPLOY-01 | Phase 4 | Complete |
+| DEPLOY-02 | Phase 4 | Complete |
+| DEPLOY-03 | Phase 4 | Complete |
+| DEPLOY-04 | Phase 4 | Complete |
+| DEPLOY-05 | Phase 4 | Complete |
 | DEPLOY-06 | Phase 4 | Pending |
-| OBS-01 | Phase 4 | Pending |
-| OBS-02 | Phase 4 | Pending |
+| OBS-01 | Phase 4 | Complete |
+| OBS-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 40 total

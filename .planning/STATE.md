@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T19:58:15Z"
+last_updated: "2026-03-01T02:40:38.134Z"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 4
-  total_plans: 16
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 16
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** Phase 3.1 — CronJob Registry Initialization Fix
+**Current focus:** Phase 4 — Deployment & Observability
 
 ## Current Position
 
 Phase: 4 of 4 (Deployment & Observability) — IN PROGRESS
-Plan: 1 of 4 complete in current phase
-Status: Phase 4 Plan 1 COMPLETE — Next.js standalone output, migration-gated compose stack, /api/health endpoint
-Last activity: 2026-03-01 — Completed plan 04-01: next.config.ts standalone output, Dockerfile.web rewrite, Dockerfile.daemon fix, /api/health route, migrate service, service_completed_successfully gates, web healthcheck, .env convention
+Plan: 3 of 4 complete in current phase
+Status: Phase 4 Plan 3 COMPLETE — Helm chart (web, daemon, migration hook, 3x CronJobs, secret, ingress)
+Last activity: 2026-02-28 — Completed plan 04-03: deploy/helm/orbitl/ with Chart.yaml, values.yaml, _helpers.tpl, and 9 Kubernetes resource templates (2 Deployments, 1 Service, 1 Job hook, 3 CronJobs, 1 Secret, 1 Ingress)
 
-Progress: [██████████] 25% (Phase 4: 1/4 plans done)
+Progress: [████████░░] 75% (Phase 4: 3/4 plans done)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Progress: [██████████] 25% (Phase 4: 1/4 plans done)
 | Phase 03-authentication-ui-polish P04 | 10 | 2 tasks | 6 files |
 | Phase 03.1-fix-cronjob-registry-initialization P01 | 2 | 2 tasks | 7 files |
 | Phase 04-deployment-observability P01 | 8 | 2 tasks | 6 files |
+| Phase 04-deployment-observability P03 | 2 | 2 tasks | 12 files |
+| Phase 04-deployment-observability P02 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +115,13 @@ Recent decisions affecting current work:
 - [Phase 04-deployment-observability]: No middleware.ts exists at Next.js root — /api/health is unauthenticated by default without exclusion rules needed
 - [Phase 04-deployment-observability]: AUTH_SECRET added to .env.example — required by Auth.js v5, was missing from example file
 - [Phase 04-deployment-observability]: All compose services use .env (not .env.local) — production convention, local dev convention aligns
+- [Phase 04-deployment-observability P03]: Migration Job uses web image (not jobs image) — web image has drizzle-kit and migration files; command override keeps migrate-job.yaml simple
+- [Phase 04-deployment-observability P03]: orbitl.databaseUrl helper in _helpers.tpl — single source of truth for DB connection string, handles bundled vs external postgres toggle
+- [Phase 04-deployment-observability P03]: Daemon Deployment has no readiness/liveness probe — daemon is a background process, rely on restart policy not HTTP health check
+- [Phase 04-deployment-observability P03]: Ingress defaults to ingressClassName: traefik — k3s standard ingress controller, correct default for target deployment platform
+- [Phase 04-deployment-observability]: leftJoin channels to aiAuditLog for inline name resolution in groupBy query — avoids N+1, single query per page load
+- [Phase 04-deployment-observability]: Null channelId rows display as 'Unattributed' in AuditTabs — system-level AI calls without channel attribution
+- [Phase 04-deployment-observability]: AuditTabs is 'use client' (Radix Tabs requires client); AuditSummaryCards stays server component — data fetching stays in server page
 
 ### Pending Todos
 
@@ -124,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 04-deployment-observability/04-01-PLAN.md — Next.js standalone output, Dockerfile.web rewrite, migrate service, service_completed_successfully gates, /api/health endpoint (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04 satisfied). Phase 4 Plan 1 complete.
+Last session: 2026-02-28
+Stopped at: Completed 04-deployment-observability/04-03-PLAN.md — Helm chart with Chart.yaml, values.yaml, _helpers.tpl, Secret, 2 Deployments, Service, migration Job hook, 3 CronJobs with Forbid concurrency, conditional Ingress (DEPLOY-05 satisfied). Phase 4 Plan 3 complete.
 Resume file: None
