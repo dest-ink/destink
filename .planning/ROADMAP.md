@@ -96,7 +96,7 @@ Plans:
   5. A `docs/k3s-deployment.md` guide walks through deploying to k3s from scratch
 **Plans**: 4 plans
 Plans:
-- [ ] 04-01-PLAN.md — Docker Compose production: standalone Dockerfiles, migration service, health checks (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04)
+- [x] 04-01-PLAN.md — Docker Compose production: standalone Dockerfiles, migration service, health checks (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04)
 - [ ] 04-02-PLAN.md — Audit dashboard: summary cards, by-channel and by-operation breakdown tabs (OBS-01, OBS-02)
 - [ ] 04-03-PLAN.md — Helm chart: web, daemon, migration hook, CronJobs, ingress, secrets (DEPLOY-05)
 - [ ] 04-04-PLAN.md — k3s deployment guide (DEPLOY-06)
@@ -112,4 +112,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Pluggable Provider System | 4/4 | Complete   | 2026-02-28 |
 | 3. Authentication & UI Polish | 4/4 | Complete   | 2026-02-28 |
 | 3.1. Fix CronJob Registry Init | 1/1 | Complete    | 2026-02-28 |
-| 4. Deployment & Observability | 0/4 | Not started | - |
+| 4. Deployment & Observability | 1/4 | In progress | - |

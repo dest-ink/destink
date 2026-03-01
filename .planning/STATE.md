@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T19:55:54.599Z"
+last_updated: "2026-02-28T19:58:15Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 16
+  completed_plans: 14
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 3.1 of 4 (Fix CronJob Registry Initialization) — COMPLETE
-Plan: 1 of 1 complete in current phase
-Status: Phase 3.1 Plan 1 COMPLETE — Shared bootstrap module, dual-extension registry discovery, all entry points wired
-Last activity: 2026-02-28 — Completed plan 03.1-01: shared bootstrap (src/lib/bootstrap.ts), dual .ts/.js loadDirectory calls, job:publish + job:research + daemon + instrumentation wired to initRegistries()
+Phase: 4 of 4 (Deployment & Observability) — IN PROGRESS
+Plan: 1 of 4 complete in current phase
+Status: Phase 4 Plan 1 COMPLETE — Next.js standalone output, migration-gated compose stack, /api/health endpoint
+Last activity: 2026-03-01 — Completed plan 04-01: next.config.ts standalone output, Dockerfile.web rewrite, Dockerfile.daemon fix, /api/health route, migrate service, service_completed_successfully gates, web healthcheck, .env convention
 
-Progress: [██████████] 100% (Phase 3.1 complete; 1/1 plans done — ready for Phase 4)
+Progress: [██████████] 25% (Phase 4: 1/4 plans done)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████████] 100% (Phase 3.1 complete; 1/1 plans d
 | Phase 03-authentication-ui-polish P03 | 1 | 2 tasks | 4 files |
 | Phase 03-authentication-ui-polish P04 | 10 | 2 tasks | 6 files |
 | Phase 03.1-fix-cronjob-registry-initialization P01 | 2 | 2 tasks | 7 files |
+| Phase 04-deployment-observability P01 | 8 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,10 @@ Recent decisions affecting current work:
 - [Phase 03.1-fix-cronjob-registry-initialization]: Shared bootstrap module (src/lib/bootstrap.ts) is single entry point for initRegistries() across all process types
 - [Phase 03.1-fix-cronjob-registry-initialization]: Registry.loadDirectory() called twice per registry (.ts + .js) — Map.set is idempotent so no duplicate keys
 - [Phase 03.1-fix-cronjob-registry-initialization]: initRegistries() throws on failure — entry points without registries cannot function, crashing fast is correct
+- [Phase 04-deployment-observability]: Migrate service uses Dockerfile.jobs (full npm ci) not Dockerfile.web (standalone strips modules) — simpler and guaranteed drizzle-kit access
+- [Phase 04-deployment-observability]: No middleware.ts exists at Next.js root — /api/health is unauthenticated by default without exclusion rules needed
+- [Phase 04-deployment-observability]: AUTH_SECRET added to .env.example — required by Auth.js v5, was missing from example file
+- [Phase 04-deployment-observability]: All compose services use .env (not .env.local) — production convention, local dev convention aligns
 
 ### Pending Todos
 
@@ -119,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 03.1-fix-cronjob-registry-initialization/03.1-01-PLAN.md — Shared bootstrap module, dual-extension discovery (.ts + .js), all 4 entry points wired to initRegistries() (PUB-03, RES-03 satisfied). Phase 3.1 complete.
+Last session: 2026-03-01
+Stopped at: Completed 04-deployment-observability/04-01-PLAN.md — Next.js standalone output, Dockerfile.web rewrite, migrate service, service_completed_successfully gates, /api/health endpoint (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04 satisfied). Phase 4 Plan 1 complete.
 Resume file: None

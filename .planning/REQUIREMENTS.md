@@ -56,10 +56,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Deployment
 
-- [ ] **DEPLOY-01**: Dockerfile for web service (Next.js standalone output, Debian slim)
-- [ ] **DEPLOY-02**: Dockerfile for daemon service
-- [ ] **DEPLOY-03**: Docker Compose with PostgreSQL, migration service, web, daemon
-- [ ] **DEPLOY-04**: Health checks (pg_isready for DB, liveness/readiness for services)
+- [x] **DEPLOY-01**: Dockerfile for web service (Next.js standalone output, Debian slim)
+- [x] **DEPLOY-02**: Dockerfile for daemon service
+- [x] **DEPLOY-03**: Docker Compose with PostgreSQL, migration service, web, daemon
+- [x] **DEPLOY-04**: Health checks (pg_isready for DB, liveness/readiness for services)
 - [ ] **DEPLOY-05**: Helm chart (Chart.yaml, values.yaml, templates for web/daemon/CronJobs)
 - [ ] **DEPLOY-06**: k3s deployment guide (`docs/k3s-deployment.md`)
 
