@@ -61,7 +61,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DEPLOY-03**: Docker Compose with PostgreSQL, migration service, web, daemon
 - [x] **DEPLOY-04**: Health checks (pg_isready for DB, liveness/readiness for services)
 - [x] **DEPLOY-05**: Helm chart (Chart.yaml, values.yaml, templates for web/daemon/CronJobs)
-- [ ] **DEPLOY-06**: k3s deployment guide (`docs/k3s-deployment.md`)
+- [x] **DEPLOY-06**: k3s deployment guide (`docs/k3s-deployment.md`)
 
 ### Observability
 
@@ -146,7 +146,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEPLOY-03 | Phase 4 | Complete |
 | DEPLOY-04 | Phase 4 | Complete |
 | DEPLOY-05 | Phase 4 | Complete |
-| DEPLOY-06 | Phase 4 | Pending |
+| DEPLOY-06 | Phase 4 | Complete |
 | OBS-01 | Phase 4 | Complete |
 | OBS-02 | Phase 4 | Complete |
 
@@ -157,4 +157,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-28 — Phase 3.1 gap closure added for PUB-03, RES-03 integration wiring*
+*Last updated: 2026-03-01 — DEPLOY-06 complete: k3s deployment guide delivered in Phase 4 Plan 04 — all 40 v1 requirements satisfied*

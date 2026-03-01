@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: 4 of 4 (Deployment & Observability) — IN PROGRESS
-Plan: 4 of 4 plans executed (02 completed out of order — all 4 plans now done)
-Status: Phase 4 Plan 02 COMPLETE — /audit page with summary cards, by-channel + by-operation tabs (OBS-01, OBS-02 satisfied)
-Last activity: 2026-03-01 — Completed plan 04-02: /audit server component, AuditSummaryCards, AuditTabs with null→"Unattributed" handling
+Phase: 4 of 4 (Deployment & Observability) — COMPLETE
+Plan: 4 of 4 plans executed (all complete)
+Status: Phase 4 Plan 04 COMPLETE — docs/k3s-deployment.md step-by-step k3s deployment guide with TLS, cert-manager, image import, helm install, troubleshooting (DEPLOY-06 satisfied)
+Last activity: 2026-03-01 — Completed plan 04-04: k3s deployment guide, 400 lines, all 9 sections
 
-Progress: [██████████] 100% (Phase 4: all 4 plans done — 01, 02, 03, 04 complete)
+Progress: [██████████] 100% (All phases complete — v1.0 milestone satisfied)
 
 ## Performance Metrics
 
@@ -122,6 +122,9 @@ Recent decisions affecting current work:
 - [Phase 04-deployment-observability]: leftJoin channels to aiAuditLog for inline name resolution in groupBy query — avoids N+1, single query per page load
 - [Phase 04-deployment-observability]: Null channelId rows display as 'Unattributed' in AuditTabs — system-level AI calls without channel attribution
 - [Phase 04-deployment-observability]: AuditTabs is 'use client' (Radix Tabs requires client); AuditSummaryCards stays server component — data fetching stays in server page
+- [Phase 04-deployment-observability P04]: Two-phase TLS setup in k3s guide — initial helm install without TLS, then helm upgrade after cert-manager/ClusterIssuer ready
+- [Phase 04-deployment-observability P04]: imagePullPolicy: Never for locally-imported k3s images — prevents k8s attempting remote pull of locally-built images
+- [Phase 04-deployment-observability P04]: DISABLE_INTERNAL_CRON env var documented as escape hatch for daemon node-cron vs k8s CronJob double-scheduling
 
 ### Pending Todos
 
@@ -134,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 04-deployment-observability/04-02-PLAN.md — /audit page with summary cards (cost, tokens, calls), AuditSummaryCards + AuditTabs components, by-channel groupBy with leftJoin, by-operation groupBy, null channelId→"Unattributed" (OBS-01, OBS-02 satisfied). Phase 4 all plans complete.
+Stopped at: Completed 04-deployment-observability/04-04-PLAN.md — docs/k3s-deployment.md (400 lines), step-by-step k3s deployment guide covering prerequisites, docker image build/import, Helm install, TLS with cert-manager/Let's Encrypt, upgrading, troubleshooting (DEPLOY-06 satisfied). v1.0 milestone all requirements complete.
 Resume file: None
