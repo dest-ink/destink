@@ -34,9 +34,36 @@ Requirements for v1.1 milestone (Research Overhaul). Each maps to roadmap phases
 - [x] **CLEAN-01**: Research Config tab is removed from channel detail page
 - [x] **CLEAN-02**: Channel overview links to /research instead of showing run button
 
+## v1.2 Requirements
+
+Requirements for v1.2 milestone (Content Pipeline Automation). Each maps to roadmap phases.
+
+### Draft Generation
+
+- [ ] **DRAFT-01**: User can click "Generate Drafts" on a research run to create drafts from the top-ranked topics
+- [ ] **DRAFT-02**: Research engine auto-generates drafts after a run completes, respecting maxDraftsPerRun setting
+- [ ] **DRAFT-03**: Draft generation uses contentTypeMix (note vs article ratio) to determine content types
+- [ ] **DRAFT-04**: Drafts are only created for channels linked to the researcher
+- [ ] **DRAFT-05**: The draftsGenerated field on research runs is populated with generated draft IDs
+- [ ] **DRAFT-06**: All generated drafts are created with pending_review status (approval always required)
+
+### Automation
+
+- [ ] **AUTO-01**: User can configure an automation schedule for a researcher (cron expression or interval)
+- [ ] **AUTO-02**: User can toggle auto-draft generation on/off per automation schedule
+- [ ] **AUTO-03**: User can set max drafts per scheduled run in the automation config
+- [ ] **AUTO-04**: Scheduled research runs execute automatically via cron/worker and generate drafts when enabled
+- [ ] **AUTO-05**: Automation config is separate from research source config (own settings section/page)
+
+### Config Cleanup
+
+- [ ] **CFG-01**: maxDraftsPerRun moved from research source config to draft generation / automation settings
+- [ ] **CFG-02**: notePercent renamed to "Note vs Article %" with clear description of what notes and articles are
+- [ ] **CFG-03**: scheduleHours removed from research source config (replaced by automation config)
+
 ## Future Requirements
 
-Deferred to v1.2+. Tracked but not in current roadmap.
+Deferred to v1.3+. Tracked but not in current roadmap.
 
 ### Twitter/X Publisher (from scrapped v1.1)
 
@@ -85,7 +112,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Feature | Reason |
 |---------|--------|
 | Multi-tenant researcher sharing | Single-user self-hosted tool — no sharing model needed |
-| Research scheduling (auto-run) | Manual trigger with live progress is the v1.1 UX; scheduling is v1.2 |
+| Research scheduling (auto-run) | ~~Deferred from v1.1~~ → Now in scope for v1.2 (AUTO-01 through AUTO-05) |
 | Research result caching/dedup | Over-engineering for v1.1; add if duplicates become a problem |
 
 ## Traceability
@@ -117,4 +144,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 — all 15 requirements implemented*
+*Last updated: 2026-03-01 — v1.2 requirements added (14 new)*
