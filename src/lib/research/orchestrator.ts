@@ -1,6 +1,7 @@
 import { adapterRegistry } from '@/lib/research/adapter-registry';
 import type { ResearchAdapter } from '@/lib/providers/types';
 import type { ResearchConfig, ResearchSource } from '@/db/schema';
+import type { OnProgress } from './progress';
 
 /**
  * Runs research adapters in parallel using Promise.allSettled.
@@ -9,10 +10,13 @@ import type { ResearchConfig, ResearchSource } from '@/db/schema';
  *
  * Logs any rejected adapters, combines fulfilled results into a single
  * flat array, and deduplicates by URL (keeping first occurrence).
+ *
+ * When `onProgress` is provided, emits adapter-start/result/error events.
  */
 export async function runResearch(
   config: ResearchConfig,
   adapterIds?: string[],
+  onProgress?: OnProgress,
 ): Promise<ResearchSource[]> {
   const adapters: ResearchAdapter[] = adapterIds
     ? adapterIds
@@ -20,7 +24,30 @@ export async function runResearch(
         .filter((a): a is ResearchAdapter => a !== undefined)
     : adapterRegistry.getAll();
 
-  const results = await Promise.allSettled(adapters.map((a) => a.search(config)));
+  // Run each adapter with progress tracking
+  const results = await Promise.allSettled(
+    adapters.map(async (a) => {
+      onProgress?.({ type: 'adapter-start', adapterId: a.id, adapterName: a.displayName });
+      try {
+        const sources = await a.search(config);
+        onProgress?.({
+          type: 'adapter-result',
+          adapterId: a.id,
+          adapterName: a.displayName,
+          sourceCount: sources.length,
+        });
+        return sources;
+      } catch (err) {
+        onProgress?.({
+          type: 'adapter-error',
+          adapterId: a.id,
+          adapterName: a.displayName,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
+    }),
+  );
 
   const combined: ResearchSource[] = [];
 

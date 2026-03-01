@@ -1,9 +1,23 @@
 import { db } from '@/db/client';
-import { channels, researchRuns, voiceProfiles, drafts } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import {
+  channels,
+  researchers,
+  researcherChannels,
+  researchRuns,
+  voiceProfiles,
+  drafts,
+} from '@/db/schema';
+import { eq, desc, inArray } from 'drizzle-orm';
 import { runResearch } from './orchestrator';
 import { callClaude } from '@/lib/ai/client';
-import type { ResearchSource, TopicRecommendation, ResearchConfig, VoiceProfile } from '@/db/schema';
+import type {
+  ResearchSource,
+  TopicRecommendation,
+  ResearchConfig,
+  ResearchSourceConfig,
+  VoiceProfile,
+} from '@/db/schema';
+import type { OnProgress } from './progress';
 
 /**
  * Builds the prompt used to ask Claude to rank and filter research sources
@@ -44,19 +58,150 @@ Sort by relevanceScore descending. Return ONLY the JSON array.`;
 }
 
 /**
- * Full research pipeline for a channel:
+ * Build a ResearchConfig from a researcher's topics/keywords/sourceConfig,
+ * enriched with runtime context for the brainstorm adapter.
+ */
+function buildResearchConfig(
+  researcher: { topics: string[]; keywords: string[]; sourceConfig: ResearchSourceConfig },
+  channelId: string,
+  voiceProfile: VoiceProfile | null,
+  recentTitles: string[],
+): ResearchConfig {
+  return {
+    topics: researcher.topics,
+    keywords: researcher.keywords,
+    subreddits: researcher.sourceConfig.subreddits,
+    substackFeeds: researcher.sourceConfig.substackFeeds,
+    searchQueryTemplates: researcher.sourceConfig.searchQueryTemplates,
+    excludedDomains: researcher.sourceConfig.excludedDomains,
+    contentTypeMix: researcher.sourceConfig.contentTypeMix,
+    maxDraftsPerRun: researcher.sourceConfig.maxDraftsPerRun,
+    scheduleHours: researcher.sourceConfig.scheduleHours,
+    channelId,
+    voiceProfile,
+    recentTitles,
+  };
+}
+
+/**
+ * Run research for a standalone researcher entity.
+ * Creates a research run per linked channel, using the researcher's config.
+ * Emits progress events for SSE streaming.
+ */
+export async function runResearchForResearcher(
+  researcherId: string,
+  onProgress?: OnProgress,
+): Promise<void> {
+  // Load the researcher
+  const [researcher] = await db
+    .select()
+    .from(researchers)
+    .where(eq(researchers.id, researcherId));
+  if (!researcher) {
+    throw new Error(`Researcher ${researcherId} not found`);
+  }
+
+  // Load linked channels
+  const links = await db
+    .select({ channelId: researcherChannels.channelId })
+    .from(researcherChannels)
+    .where(eq(researcherChannels.researcherId, researcherId));
+
+  if (links.length === 0) {
+    throw new Error(`Researcher "${researcher.name}" has no linked channels`);
+  }
+
+  const channelIds = links.map((l) => l.channelId);
+  const linkedChannels = await db
+    .select()
+    .from(channels)
+    .where(inArray(channels.id, channelIds));
+
+  // For each linked channel, run the full pipeline
+  for (const channel of linkedChannels) {
+    // Get recent titles for this channel
+    const recentDrafts = await db
+      .select({ title: drafts.title })
+      .from(drafts)
+      .where(eq(drafts.channelId, channel.id))
+      .orderBy(desc(drafts.createdAt))
+      .limit(10);
+    const recentTitles = recentDrafts.map((d) => d.title ?? '').filter(Boolean);
+
+    // Get voice profile
+    const [profile] = await db
+      .select()
+      .from(voiceProfiles)
+      .where(eq(voiceProfiles.channelId, channel.id));
+    const voiceProfile = (profile?.extractedProfile as VoiceProfile | null) ?? null;
+
+    // Build config from researcher + channel context
+    const config = buildResearchConfig(
+      researcher as { topics: string[]; keywords: string[]; sourceConfig: ResearchSourceConfig },
+      channel.id,
+      voiceProfile,
+      recentTitles,
+    );
+
+    // Run all adapters with progress
+    const allSources = await runResearch(config, undefined, onProgress);
+
+    // AI analysis: rank and filter
+    const analysisPrompt = buildAnalysisPrompt(
+      allSources,
+      channel.personaPrompt ?? '',
+      recentTitles,
+    );
+    const raw = await callClaude({
+      model: 'claude-haiku-4-5-20251001',
+      system: 'You are a content strategist. Return only valid JSON.',
+      prompt: analysisPrompt,
+      maxTokens: 2048,
+      audit: { operation: 'topic_ranking', channelId: channel.id },
+    });
+
+    let topics: TopicRecommendation[];
+    try {
+      topics = JSON.parse(raw) as TopicRecommendation[];
+    } catch {
+      onProgress?.({ type: 'run-error', error: `Claude returned invalid JSON: ${raw.slice(0, 200)}` });
+      throw new Error(`[runResearchForResearcher] Claude returned invalid JSON: ${raw.slice(0, 200)}`);
+    }
+
+    onProgress?.({ type: 'topic-ranking', topicCount: topics.length });
+
+    // Persist the research run
+    const [run] = await db
+      .insert(researchRuns)
+      .values({
+        channelId: channel.id,
+        researcherId,
+        sourcesSearched: allSources,
+        topicsFound: topics,
+        aiModel: 'claude-haiku-4-5-20251001',
+        tokensUsed: 0,
+      })
+      .returning();
+
+    onProgress?.({
+      type: 'run-complete',
+      runId: run.id,
+      topicCount: topics.length,
+      sourceCount: allSources.length,
+    });
+
+    console.log(
+      `[research] Researcher ${researcherId} → channel ${channel.id}: ${topics.length} topics, run ${run.id}`,
+    );
+  }
+}
+
+/**
+ * Full research pipeline for a channel (legacy — used by CronJob).
  * 1. Loads channel + recent drafts + voice profile from DB
  * 2. Runs all registered adapters in parallel via runResearch()
- *    (including brainstorm, Exa, Reddit, Substack, etc.)
  * 3. Asks Claude to rank and filter into topic recommendations
  * 4. Stores the research run in the DB
- *
- * NOTE: Per-channel adapter filtering (running only a subset of adapters for
- * a given channel) is a future enhancement — it would require a
- * `researchAdapterIds` field on the channel schema. For now, ALL registered
- * adapters run for every channel. The brainstorm adapter's extended config
- * fields (channelId, voiceProfile, recentTitles) are passed through the
- * ResearchConfig so it has the context it needs.
  */
 export async function runResearchForChannel(channelId: string): Promise<void> {
   const [channel] = await db.select().from(channels).where(eq(channels.id, channelId));
