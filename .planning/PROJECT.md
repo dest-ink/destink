@@ -41,7 +41,20 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 
 ### Active
 
-(None yet — define with `/gsd:new-milestone`)
+#### Current Milestone: v1.1 Twitter/X & Cleanup
+
+**Goal:** Add Twitter/X as a publishing platform with short-form content support and thread generation, while cleaning up v1.0 tech debt.
+
+**Target features:**
+- Twitter/X publisher provider (OAuth 2.0, tweet and thread posting)
+- Short-form content type (tweets as a distinct draft format)
+- Thread generation from long-form drafts
+- Tweet-appropriate voice adaptation (concise style within character limits)
+- Fix publish-now stub (actually dispatch to publisher)
+- Fix retry bug (reset retryCount on retry)
+- Implement DISABLE_INTERNAL_CRON env var in daemon
+- Scheduler timezone support (window hours)
+- Actionable error messages in CreateChannelForm
 
 ### Out of Scope
 
@@ -90,4 +103,4 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 | Next.js standalone output for Docker | Minimal ~150MB production image vs ~1GB with full node_modules | ✓ Good |
 
 ---
-*Last updated: 2026-03-01 after v1.0 milestone*
+*Last updated: 2026-02-28 after v1.1 milestone start*
