@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 11 of 11 (Channel Page Cleanup)
 Plan: All complete
 Status: Milestone complete
-Last activity: 2026-03-01 — v1.1 Research Overhaul shipped (4 phases, 15/15 requirements)
+Last activity: 2026-03-01 - Completed quick task 001: Split research page into configuration and runs with full run visibility
 
 Progress: [██████████] 100% (v1.1)
 
@@ -72,6 +72,12 @@ None.
 ### Blockers/Concerns
 
 None — milestone complete.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Split research page into configuration and runs with full run visibility | 2026-03-01 | b82dcb1 | [001-research-runs-page](./quick/001-research-runs-page/) |
 
 ## Session Continuity
 
