@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 4 of 4 (Deployment & Observability) — IN PROGRESS
-Plan: 3 of 4 complete in current phase
-Status: Phase 4 Plan 3 COMPLETE — Helm chart (web, daemon, migration hook, 3x CronJobs, secret, ingress)
-Last activity: 2026-02-28 — Completed plan 04-03: deploy/helm/orbitl/ with Chart.yaml, values.yaml, _helpers.tpl, and 9 Kubernetes resource templates (2 Deployments, 1 Service, 1 Job hook, 3 CronJobs, 1 Secret, 1 Ingress)
+Plan: 4 of 4 plans executed (02 completed out of order — all 4 plans now done)
+Status: Phase 4 Plan 02 COMPLETE — /audit page with summary cards, by-channel + by-operation tabs (OBS-01, OBS-02 satisfied)
+Last activity: 2026-03-01 — Completed plan 04-02: /audit server component, AuditSummaryCards, AuditTabs with null→"Unattributed" handling
 
-Progress: [████████░░] 75% (Phase 4: 3/4 plans done)
+Progress: [██████████] 100% (Phase 4: all 4 plans done — 01, 02, 03, 04 complete)
 
 ## Performance Metrics
 
@@ -133,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 04-deployment-observability/04-03-PLAN.md — Helm chart with Chart.yaml, values.yaml, _helpers.tpl, Secret, 2 Deployments, Service, migration Job hook, 3 CronJobs with Forbid concurrency, conditional Ingress (DEPLOY-05 satisfied). Phase 4 Plan 3 complete.
+Last session: 2026-03-01
+Stopped at: Completed 04-deployment-observability/04-02-PLAN.md — /audit page with summary cards (cost, tokens, calls), AuditSummaryCards + AuditTabs components, by-channel groupBy with leftJoin, by-operation groupBy, null channelId→"Unattributed" (OBS-01, OBS-02 satisfied). Phase 4 all plans complete.
 Resume file: None
