@@ -15,6 +15,21 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jobs
+    command: npx drizzle-kit migrate
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://orbitl:orbitl@postgres:5432/orbitl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   web:
     build:
       context: .
@@ -22,7 +37,7 @@ services:
     ports:
       - "3021:3021"
     env_file:
-      - path: .env.local
+      - path: .env
         required: false
     environment:
       DATABASE_URL: postgresql://orbitl:orbitl@postgres:5432/orbitl
@@ -30,19 +45,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3021/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   daemon:
     build:
       context: .
       dockerfile: docker/Dockerfile.daemon
     env_file:
-      - path: .env.local
+      - path: .env
         required: false
     environment:
       DATABASE_URL: postgresql://orbitl:orbitl@postgres:5432/orbitl
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
