@@ -1,243 +1,246 @@
-# Feature Research
+# Feature Landscape: v1.1 Twitter/X & Cleanup
 
-**Domain:** Pluggable self-hosted content generation and publishing automation
-**Researched:** 2026-02-26
-**Confidence:** MEDIUM — drawn from competitor analysis (Buffer, Postiz, Mixpost, Ghost, n8n, Activepieces), ecosystem surveys, and published best-practice articles. No direct user research or instrumented data.
-
----
-
-## Context: What Already Exists
-
-Orbitl's current build (Phase 1-7 complete) already ships:
-- Channel management with voice/persona config
-- Multi-source research (Exa, Reddit, Substack)
-- AI draft generation via Claude with voice confidence scoring
-- Draft review UI with approve/reject/edit
-- Publish queue with timeline view
-- Scheduling with configurable windows
-- Background daemon publish loop
-- Substack + LinkedIn publishers
-- AI audit logging (token usage + cost)
-
-This milestone adds: pluggable provider system, polished UI, Docker/Helm deployment. The research question is: what does "pluggable + polished" mean in this domain, and what separates table stakes from differentiators?
+**Domain:** Twitter/X publishing, short-form content generation, thread decomposition, tech debt fixes
+**Researched:** 2026-02-28
+**Confidence:** HIGH (Twitter/X API mechanics verified against docs.x.com and node-twitter-api-v2 library; patterns confirmed against multiple sources)
 
 ---
 
-## Feature Landscape
+## Context: Building On v1.0
 
-### Table Stakes (Users Expect These)
+Orbitl v1.0 ships: channel management, voice pipeline, multi-source research, AI draft generation, draft review UI, publish queue, daemon loop, Substack + LinkedIn publishers, auth, Docker Compose, Helm, AI audit dashboard.
 
-Features users assume exist. Missing these = product feels incomplete or untrustworthy.
+The existing `PublisherProvider` interface (`/src/lib/providers/types.ts`) defines:
+- `publish(draft, channel): Promise<unknown>`
+- `formatDraft(draft, channel): string`
+- `configSchema: ConfigField[]` — drives dynamic credential forms
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Multi-platform publishing (2+ platforms) | Every scheduling tool supports multiple channels; single-platform feels like a proof-of-concept | MEDIUM | Substack + LinkedIn already exist; pluggable system extends this |
-| Draft preview before publish | Users won't approve what they can't see rendered | LOW | Show formatted preview matching target platform's layout |
-| Publish status visibility | Users need to know if a post succeeded, failed, or is pending | LOW | Already exists via queue; surface failures prominently in UI |
-| Retry failed publishes | Network/API failures happen; users expect to retry without recreating | LOW | Exponential backoff exists; UI must expose retry action |
-| Credential storage (encrypted) | Users will not enter API keys that aren't encrypted at rest | LOW | Already implemented via AES-256 |
-| Scheduling with timezone support | Publishing at "9am" means 9am in the user's timezone, not UTC | LOW | Critical for Substack/newsletter audiences; easy to overlook |
-| Content edit before approval | AI drafts are never perfect; editing must be trivial | LOW | Already exists; polish means the editor must be rich enough |
-| Queue management (reorder, delete, pause) | Users change their minds; a locked queue is frustrating | MEDIUM | Timeline view exists; drag-to-reorder and cancel actions needed |
-| Basic error messages that explain failures | "Error 500" is useless; "LinkedIn token expired — reconnect" is actionable | LOW | Platform-specific error translation in publisher providers |
-| Empty states with next-step guidance | New users with no channels or drafts need to know what to do | LOW | Critical for first-run experience; currently likely missing |
-| Loading feedback on async operations | Research and generation take time; users need progress indicators | LOW | Skeleton screens + progress states for research/generation flows |
-| Authentication (single-user minimum) | Self-hosted tool with no auth is a security gap for any network-accessible deployment | MEDIUM | Currently no auth; must ship before public deployment recommendation |
-| Data export / backup | Self-hosted users own their data and expect to be able to extract it | MEDIUM | Export drafts, channel configs, audit logs as JSON/CSV |
+The existing `contentTypeEnum` has `note | article`. The existing `platformEnum` has `linkedin | substack`.
 
-### Differentiators (Competitive Advantage)
+v1.1 adds: Twitter/X publisher, a new `tweet` content type, thread generation from long-form, tweet voice adaptation, and five tech debt fixes. Research below covers only the new scope.
 
-Features that set Orbitl apart. Not assumed, but valued. Aligned with Orbitl's core value: "automated, high-quality content that sounds like the creator wrote it."
+---
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Drop-in pluggable provider system | Contributors can add a new platform by dropping one file — lower barrier than any competitor | HIGH | Core milestone feature; needs well-documented interface contract + reference implementations |
-| Voice confidence score surfaced in UI | Users can see HOW well the AI matched their voice, not just a draft | LOW | Already computed (0-100); just needs UI treatment — badge, tooltip, explanation |
-| Per-channel AI cost tracking | Creators know exactly what each channel costs per post/month — builds trust | LOW | Audit log exists; aggregate and surface per-channel in dashboard |
-| Research source transparency | Show users WHERE the AI found ideas — not a black box | LOW | Sources stored in research runs; surface them in draft review |
-| Pluggable research adapters (not just publishers) | Users can add custom signal sources (RSS feeds, custom APIs, newsletters) | HIGH | Same pattern as publisher providers; consistent extensibility model |
-| Voice profile analysis from writing samples | Teach the AI your voice from real examples — not style dropdowns | HIGH | Already built; differentiator vs. tools with generic "professional/casual" toggles |
-| Regeneration with notes | "Make it less formal" feedback loop without starting over | LOW | API parameter exists; needs clear UI affordance in draft review |
-| AI usage dashboard (aggregate view) | Total spend, cost per draft, cost per channel, trend over time | MEDIUM | Audit log has raw data; dashboard is the aggregation + visualization layer |
-| Daily/weekly summary job | Automated digest: what was researched, what was drafted, what was published | MEDIUM | Listed as active requirement; differentiates from one-shot tools |
-| Multiple headline options | AI suggests 3-5 headlines; user picks — feels collaborative, not dictatorial | LOW | Already generated (headlineOptions[]); just needs picker UI component |
-| Self-hosted with full data ownership | No SaaS lock-in; credentials, drafts, and publishing history stay on your machine | LOW | Architectural — Docker Compose deployment makes this real for users |
-| Helm chart for teams | Scale beyond single machine without rebuilding infrastructure | HIGH | Kubernetes deployment option; meaningful for power users |
+## Twitter/X Publisher — Table Stakes
 
-### Anti-Features (Commonly Requested, Often Problematic)
+Features that must exist for the Twitter/X provider to feel complete and trustworthy.
 
-Features that seem good but create scope creep, maintenance burden, or contradict the product's positioning.
+| Feature | Why Expected | Complexity | Dependency on Existing |
+|---------|--------------|------------|------------------------|
+| Single tweet posting | Core publishing primitive — any platform integration must post | LOW | Implement `PublisherProvider.publish()` for twitter platform; pluggable system handles the rest |
+| Thread posting (reply chain) | Threads are the primary long-form native format on X; omitting them means the publisher can only post 280 chars — useless for long-form repurposing | MEDIUM | Requires sequential `POST /2/tweets` calls with `reply.in_reply_to_tweet_id` chaining; twitter-api-v2 `tweetThread()` handles this natively |
+| OAuth credential storage (encrypted) | Users expect API keys to be encrypted at rest; already established expectation from LinkedIn | LOW | Existing `credentials` column with AES-256 encryption handles this; just configure the right `configSchema` fields |
+| Character limit enforcement | 280 chars per tweet is a hard platform constraint; exceeding it = API error | LOW | Must validate in `formatDraft()` and in draft generation prompt; thread tweets truncate/split at 280 |
+| Thread tweet numbering (optional) | Common convention: "1/" prefix or "1/7" marker; users expect some thread structure signal | LOW | Add as a formatting option in the provider; default on |
+| Platform error translation | "401 Unauthorized" → "Twitter credentials expired — re-enter API keys" | LOW | Same pattern as LinkedIn; translate API errors in the `publish()` method |
+| Tweet-format draft generation | Short-form drafts need a different structure: hook → insight → CTA, not article structure | MEDIUM | New `contentType: 'tweet'` enum value + new generation prompt variant; uses existing voice pipeline |
+
+---
+
+## Twitter/X Publisher — Differentiators
+
+| Feature | Value Proposition | Complexity | Dependency on Existing |
+|---------|-------------------|------------|------------------------|
+| Thread generation from approved long-form draft | Repurpose existing approved article/note drafts into a tweet thread — no new research required | HIGH | Post-approval action on existing `drafts` table; calls AI with thread decomposition prompt; creates new draft of type `tweet` linked to source draft |
+| Tweet voice adaptation (concise register) | The voice pipeline builds a persona for long-form; tweets require a conciseness adaptation — shorter sentences, declarative phrasing, no hedging | MEDIUM | Extend `personaPrompt` assembly in voice pipeline to include tweet-specific style instructions when `contentType === 'tweet'`; same underlying VoiceProfile |
+| Thread preview in draft review | Users need to see the thread card-by-card before approving — not as a single blob of text | MEDIUM | New draft review UI component for `tweet` content type; renders thread as a card list with character counts per tweet |
+| "Generate thread from this draft" action | One-click repurposing from the draft review page for approved long-form content | LOW | UI button on approved long-form drafts; triggers server action → AI thread decomposition → new draft |
+
+---
+
+## Twitter/X Publisher — Anti-Features
 
 | Anti-Feature | Why Requested | Why Problematic | Alternative |
 |--------------|---------------|-----------------|-------------|
-| Social analytics / engagement metrics | "I want to see how my posts performed" | Deep analytics requires OAuth token refresh loops, platform-specific APIs, and storage — a different product; also out of scope per PROJECT.md | Link out to native platform analytics; don't own the metrics surface |
-| Real-time collaboration / multi-user editing | "My team wants to review drafts together" | Multi-user introduces auth complexity, conflict resolution, notifications, permissions — scope expands 3x; contradicts solo-creator positioning | Single-user for v1; the approval workflow IS the collaboration primitive |
-| Auto-publish without review | "Skip the approval step for high-volume content" | Risk of publishing broken AI output destroys creator trust; human-in-the-loop is the product's safety moat | Make the review UI so fast (keyboard shortcuts, bulk approve) that skipping it seems unnecessary |
-| Built-in image generation | "Generate cover images with the post" | Requires another AI provider integration (DALL-E, Stable Diffusion), media storage, and image optimization — major scope expansion | Accept user-provided images; document how to add image provider as a plugin later |
-| Comment/engagement management | "Reply to comments from one place" | Buffer's Community feature required significant engineering for a unified inbox; changes per platform API; not core to content creation | Out of scope; direct users to Buffer or native platform tools |
-| SaaS / multi-tenant hosting mode | "Host Orbitl for my clients" | Multi-tenancy requires auth overhaul, data isolation, billing, and support model changes | Self-hosted only per PROJECT.md; explicitly not building this |
-| Mobile app | "Approve drafts from my phone" | Native mobile doubles the frontend surface area; mobile-first is not the use case | Responsive web UI; PWA installable from browser if needed |
-| Built-in CMS / page editor | "Manage my whole website here" | Ghost, Wordpress, Nuxt Studio already own this space; adding it dilutes the publishing automation focus | Orbitl publishes TO platforms (Substack, LinkedIn); it is not a platform itself |
-| Automatic topic selection (fully agentic, no review) | "Just run the whole pipeline without my input" | Research → draft → publish without any human touchpoint removes the quality control that prevents generic AI content | Keep topic selection explicit; make it fast; add "auto-approve" as power-user opt-in ONLY after topic selection |
-| Per-post A/B testing | "Test two versions of a post" | Requires platform support (few have it), result tracking, and statistical analysis — not a publishing primitive | Document as a future plugin possibility; don't build now |
+| Twitter OAuth 2.0 PKCE user-auth flow | OAuth 2.0 is the "newer" standard — seems like it should be used | PKCE requires a browser redirect URI, callback handling, token storage, and refresh token management with `offline.access` scope. For a self-hosted server-side app posting on behalf of the operator (single user), OAuth 1.0a with API key + access token is materially simpler and equally supported. OAuth 2.0 PKCE adds significant auth complexity with no benefit for this use case. | OAuth 1.0a User Context: API Key, API Secret, Access Token, Access Token Secret — 4 fields, no redirect, no refresh tokens, no expiry |
+| Media / image attachment to tweets | Richer tweet posts | v1.1 media upload requires OAuth 1.0a AND separate `v1/media/upload` calls with chunked upload for video; significantly different flow from text-only posting | Document as future provider enhancement; out of scope for v1.1 |
+| Tweet analytics (impressions, engagements) | "Show me how my tweets performed" | Reading tweet metrics requires the Basic tier ($100/mo) or Pro ($5,000/mo) X API plan; Free tier is write-only. Out of scope per PROJECT.md. | Out of scope; link users to Twitter Analytics |
+| Scheduling native to X | X has a native scheduled tweet feature via the API | Orbitl already has its own scheduling system (publish queue + daemon); duplicating it in the publisher adds complexity with no benefit | Use Orbitl's existing scheduling; publish at the queued time |
+| Thread reordering/editing after generation | Edit individual tweets in a thread before publishing | The draft body for a thread is structured text (numbered tweets); editing it in the existing draft editor is sufficient for v1.1 | Standard draft editor handles the body field; the thread card preview is read-only |
+
+---
+
+## Short-Form Content Type
+
+### What "tweet" content type means for the data model
+
+The existing schema has `contentTypeEnum('content_type', ['note', 'article'])`. A `tweet` type needs to be added.
+
+**Tweet draft structure** (maps to existing `drafts` table columns):
+- `title` — null or the thread topic (not displayed on X, but used internally)
+- `hook` — the opening tweet (tweet[0]) — always present
+- `body` — tweets 1..N joined by separator (e.g. `\n---\n`) for thread; single tweet text for standalone
+- `cta` — the closing tweet or CTA text (tweet[N]) — may be same as body[last] for threads
+- `headlineOptions` — repurposed as alt opening hook options (same UX pattern)
+- `voiceConfidence` — same computation as long-form; just adapted prompts
+
+**Expected thread structure from AI generation:**
+```
+Tweet 1 (hook):  Bold claim / question / surprising stat — stops the scroll
+Tweets 2-8 (body): Each tweet is self-contained but builds on previous
+Tweet N (CTA):   Summary + action ("Save this / Follow for more / Reply with X")
+```
+
+**Constraints from research:**
+- 280 characters per tweet (hard limit)
+- Aim for 200-250 to leave room for links and reply chain context
+- 5-10 tweets is the effective range; 7 is reported as the engagement sweet spot
+- Numbering convention: "1/" or "1/7" prefix consumed by ~2-3 chars — budget accordingly
+
+### Table Stakes for Short-Form Content Type
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| `tweet` added to `contentTypeEnum` | Platform-specific content requires its own type; tweet drafts have fundamentally different structure than articles | LOW | DB migration required; add `twitter` to `platformEnum` simultaneously |
+| Tweet-specific generation prompt | 280 char tweets require completely different prompting than 800-word notes | MEDIUM | New prompt template in generation pipeline; reuses VoiceProfile but adds conciseness constraints |
+| Character count validation | Exceeding 280 chars causes API failure at publish time; must catch during generation and review | LOW | Validate in `formatDraft()`; surface per-tweet char counts in thread preview UI |
+| Thread body serialization format | Thread = ordered list of tweets stored in `body` field as text; must be a stable, parseable format | LOW | Use separator-based format (`\n---\n`) or JSON array; the publisher deserializes at publish time |
+| `twitter` channel platform | `platformEnum` currently has `linkedin | substack`; Twitter requires a new platform value | LOW | Add `twitter` to enum in DB migration |
+
+### Differentiators for Short-Form Content Type
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Thread decomposition from long-form | Repurpose approved article/note into a thread — highest-ROI content repurposing for creators | HIGH | Separate AI call with "blog-to-thread" prompt; input is the full draft body; output is numbered tweet list; stored as new tweet draft linked to source draft |
+| Voice-adapted conciseness | Same persona as long-form but with Twitter register constraints injected into system prompt | MEDIUM | Extends existing `personaPrompt` assembly; adds tweet-specific style layer: short sentences, declarative phrasing, no em-dashes, no hedging |
+| Thread card preview UI | Lets users see exactly how the thread will render before approving | MEDIUM | New draft review component for `contentType === 'tweet'`; renders each tweet as a card with char count indicator (green/yellow/red) |
+| Hook variant options | Same pattern as `headlineOptions[]` for articles — AI generates 3 alt opening tweets | LOW | Extend tweet generation to return hook variants; surface as picker in draft review |
+
+---
+
+## Tech Debt Fixes
+
+These are corrections to broken or missing behavior in v1.0, not new features.
+
+| Fix | What's Wrong | Expected Behavior | Complexity | Notes |
+|-----|-------------|-------------------|------------|-------|
+| Publish-now stub | "Publish now" button exists in queue UI but dispatches to a stub that doesn't call the publisher | Clicking "Publish now" should immediately dispatch the draft to the channel's publisher provider and mark it published | MEDIUM | Needs a server action that calls the publisher directly (same code path as daemon), bypassing the scheduled time check |
+| Retry bug (retryCount not reset) | When a failed item is retried, `retryCount` is not reset to 0 — so the retry immediately hits the max retry threshold and re-fails | On manual retry, `retryCount` must be reset to 0 and `status` set to `queued` before the daemon picks it up | LOW | One-line DB update fix in the retry action |
+| DISABLE_INTERNAL_CRON not implemented | The env var is documented but not checked; the internal Next.js cron runs even when you want the daemon to handle scheduling | When `DISABLE_INTERNAL_CRON=true`, the internal cron route should return 200 without running | LOW | Add env check at top of the cron route handler |
+| Scheduler timezone support | `ScheduleConfig.timezone` field exists in schema but the scheduling logic ignores it; all windows calculated in UTC | Window hours (startHour, endHour) must be interpreted in the channel's configured timezone, not UTC | MEDIUM | Use a timezone library (e.g. `date-fns-tz` or `Intl`) to convert window bounds before comparison; `ScheduleConfig.timezone` is already stored |
+| Actionable errors in CreateChannelForm | Form submit errors surface a generic message; users don't know if the failure was a duplicate name, missing fields, or a DB error | Each validation/constraint failure maps to a specific user-facing message ("A channel with this name already exists") | LOW | Map DB error codes and validation errors to specific messages in the form server action |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Auth (single-user)]
-    └──required by──> [Docker Compose deployment] (accessible over network, needs auth)
-    └──required by──> [Helm chart deployment] (team use requires auth)
+[twitter platform enum value]
+    └──required by──> [TwitterProvider (publisher)]
+    └──required by──> [Channel creation for Twitter]
 
-[Pluggable publisher provider interface]
-    └──required by──> [Substack provider refactor] (reference implementation)
-    └──required by──> [LinkedIn provider refactor] (reference implementation)
-    └──required by──> [Any future provider] (Twitter, Medium, Ghost, etc.)
+[tweet content type enum value]
+    └──required by──> [Tweet draft generation]
+    └──required by──> [Thread body serialization]
+    └──required by──> [Thread preview UI component]
+    └──required by──> [TwitterProvider.formatDraft()]
 
-[Pluggable research adapter interface]
-    └──required by──> [Exa adapter refactor]
-    └──required by──> [Reddit adapter refactor]
-    └──required by──> [Substack feed adapter refactor]
-    └──enhances──> [Pluggable publisher provider interface] (consistent extensibility model)
+[DB migration: add 'twitter' to platformEnum, 'tweet' to contentTypeEnum]
+    └──must precede──> ALL other v1.1 features
 
-[AI audit log (raw data)]
-    └──required by──> [AI usage dashboard] (aggregation layer)
-    └──required by──> [Per-channel cost display] (filter + sum)
-    └──required by──> [Daily summary job] (cost component)
+[TwitterProvider (publisher module)]
+    └──requires──> [tweet content type]
+    └──requires──> [OAuth 1.0a credential fields in configSchema]
+    └──requires──> [twitter-api-v2 npm package]
+    └──implements──> [existing PublisherProvider interface — no interface changes needed]
 
-[Draft generation with headlineOptions[]]
-    └──enhances──> [Headline picker UI] (surfacing existing data)
+[Tweet-specific generation prompt]
+    └──requires──> [tweet content type]
+    └──reuses──> [VoiceProfile from voice pipeline — existing]
+    └──enhances──> [voice pipeline prompt assembly]
 
-[Voice confidence score (computed)]
-    └──enhances──> [Voice confidence badge in UI] (surfacing existing data)
+[Thread generation from long-form draft]
+    └──requires──> [tweet content type]
+    └──requires──> [approved long-form draft (existing)]
+    └──requires──> [AI generation pipeline (existing)]
+    └──produces──> [new tweet draft linked to source draft]
 
-[Research sources stored in researchRuns]
-    └──enhances──> [Source transparency in draft review] (surfacing existing data)
+[Thread card preview UI]
+    └──requires──> [tweet content type]
+    └──requires──> [thread body serialization format]
+    └──extends──> [draft review page (existing)]
 
-[Queue management UI]
-    └──requires──> [Publish queue (existing)]
-    └──enhances──> [Retry failed publishes] (UI action on existing retry logic)
+[Publish-now fix]
+    └──requires──> [publisher registry (existing)]
+    └──fixes──> [existing stub in queue UI server action]
 
-[Polished UI / design system]
-    └──enhances──> ALL user-facing features (empty states, loading states, error messages)
-    └──required by──> [Meaningful first-run experience]
+[Retry bug fix]
+    └──requires──> [publish queue schema (existing)]
+    └──fixes──> [retry server action]
 
-[Docker Compose deployment]
-    └──requires──> [Dockerfiles for web and daemon]
-    └──requires──> [DB connection cleanup in jobs] (clean shutdown on container stop)
-    └──requires──> [Auth] (network-accessible; open app = open publishing)
+[Scheduler timezone fix]
+    └──requires──> [ScheduleConfig.timezone field (already in schema)]
+    └──fixes──> [daemon scheduler window calculation]
 
-[Helm chart]
-    └──requires──> [Docker Compose deployment] (Helm wraps Docker images)
-    └──requires──> [Auth]
+[DISABLE_INTERNAL_CRON fix]
+    └──requires──> [cron route handler (existing)]
+    └──fixes──> [missing env var check]
+
+[CreateChannelForm error messages]
+    └──requires──> [channel creation server action (existing)]
+    └──fixes──> [generic error handling in form]
 ```
 
-### Dependency Notes
+---
 
-- **Auth requires Docker deployment:** Without deployment, the app runs on localhost where auth is optional. Once Docker Compose makes it network-accessible, auth becomes required, not optional.
-- **Pluggable interfaces require refactored reference implementations:** The interface contract is only trustworthy once proven by two real implementations (Substack + LinkedIn). Ship both in the same milestone as the interface.
-- **AI dashboard requires no new data collection:** All data is already in `aiAuditLog`. The feature is pure aggregation and display — LOW effort for HIGH perceived value.
-- **Polished UI is a force multiplier:** Empty states, skeleton loading, and error messages affect every feature. Build them as shared components early in the UI polish phase.
+## MVP Definition for v1.1
+
+### Must Ship (core scope)
+
+- [ ] **DB migration** — add `twitter` to `platformEnum`, add `tweet` to `contentTypeEnum`
+- [ ] **TwitterProvider** — OAuth 1.0a credentials, `publish()` for single tweets and threads, `formatDraft()` with 280-char awareness
+- [ ] **Tweet content type generation prompt** — hook/body/CTA structure, 280 char per segment, voice-adapted conciseness constraints
+- [ ] **Thread generation from approved draft** — server action: input is approved draft body → AI decomposes → saves as new tweet draft
+- [ ] **Thread card preview in draft review** — renders tweet drafts as card list with per-card char count indicators
+- [ ] **Publish-now stub fix** — dispatch to publisher immediately; same code path as daemon
+- [ ] **Retry bug fix** — reset `retryCount = 0` on manual retry
+- [ ] **DISABLE_INTERNAL_CRON env var** — check at cron route entry; no-op if set
+- [ ] **Scheduler timezone fix** — apply `ScheduleConfig.timezone` to window hour calculations
+- [ ] **CreateChannelForm actionable errors** — map constraint/validation errors to specific user messages
+
+### Add If Capacity Allows
+
+- [ ] **Hook variant picker** — generate 3 alt opening tweets; surface as chip picker in thread preview (same UX as `headlineOptions[]`)
+- [ ] **"Generate thread from this" button on long-form draft review** — makes repurposing one-click rather than navigating to a new flow
+
+### Defer to v1.2+
+
+- [ ] Media attachments on tweets — requires chunked upload flow, separate from text-only scope
+- [ ] Tweet analytics (reads) — requires paid X API tier ($100+/mo); out of scope
+- [ ] Bluesky / Mastodon publisher — community can contribute via pluggable provider system
 
 ---
 
-## MVP Definition
+## Competitor Feature Analysis (Twitter/X Scope)
 
-### This Milestone: Launch With (v1 completion)
-
-Minimum scope to call v1 "done" and ship to real users:
-
-- [ ] **Pluggable publisher interface** — documented TypeScript interface; Substack + LinkedIn refactored as reference providers; auto-discovery from filesystem
-- [ ] **Pluggable research adapter interface** — same pattern; Exa/Reddit/Substack adapters refactored
-- [ ] **Authentication (single-user)** — password or token; required before Docker deployment recommendation
-- [ ] **Docker Compose deployment** — single `docker-compose up` brings up web + daemon + PostgreSQL; includes .env.example
-- [ ] **Polished UI: critical flows** — draft review, queue management, channel setup; empty states; loading states; error messages that are actionable
-- [ ] **AI usage dashboard** — aggregate spend by channel and by operation type; trend over 30 days
-- [ ] **Timezone-aware scheduling** — user configures timezone per channel; "9am" means their 9am
-- [ ] **DB connection cleanup** — clean shutdown for daemon and job runners; required for Docker
-
-### Add After Validation (v1.x)
-
-- [ ] **Headline picker UI** — surface `headlineOptions[]` as selectable chips in draft review; data already exists
-- [ ] **Voice confidence badge** — show score in draft review with tooltip explaining what it means; data already exists
-- [ ] **Research source transparency** — expandable "sources used" section in draft review
-- [ ] **Daily/weekly summary job** — automated digest email or log entry; channels + cost + published count
-- [ ] **Data export** — JSON export of drafts, channels, audit log; single-click in settings
-- [ ] **Retry UI for failed queue items** — button in queue view; backend already handles retries
-
-### Future Consideration (v2+)
-
-- [ ] **Helm chart** — defer until users actually request k3s/Kubernetes scaling
-- [ ] **Additional publisher providers** — Twitter/X, Medium, Ghost, Bluesky — let community contribute via pluggable system
-- [ ] **Additional research adapters** — RSS feeds, Hacker News, custom webhooks
-- [ ] **Multi-user auth** — if the solo-creator assumption is ever invalidated
-- [ ] **Bulk approve** — keyboard-driven approval flow for high-volume channels
-
----
-
-## Feature Prioritization Matrix
-
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Pluggable publisher provider system | HIGH | HIGH | P1 — core milestone goal |
-| Pluggable research adapter system | HIGH | HIGH | P1 — core milestone goal |
-| Authentication | HIGH | MEDIUM | P1 — required for deployment |
-| Docker Compose deployment | HIGH | MEDIUM | P1 — self-hosting is the product |
-| Polished UI (empty states, errors, loading) | HIGH | MEDIUM | P1 — determines if product feels done |
-| Timezone-aware scheduling | HIGH | LOW | P1 — correctness issue, not polish |
-| AI usage dashboard | MEDIUM | LOW | P2 — existing data, new display |
-| Headline picker UI | MEDIUM | LOW | P2 — existing data, new display |
-| Voice confidence badge | MEDIUM | LOW | P2 — existing data, new display |
-| Source transparency in draft review | MEDIUM | LOW | P2 — existing data, new display |
-| Daily summary job | MEDIUM | MEDIUM | P2 — differentiating automation |
-| Data export | MEDIUM | LOW | P2 — self-hosted user expectation |
-| Retry UI for queue failures | MEDIUM | LOW | P2 — queue exists; just needs button |
-| Helm chart | LOW | HIGH | P3 — defer until demanded |
-| Bulk approve | LOW | MEDIUM | P3 — niche use case |
-
-**Priority key:**
-- P1: Must have for v1 launch
-- P2: Should have, add in v1.x
-- P3: Nice to have, v2+ consideration
-
----
-
-## Competitor Feature Analysis
-
-| Feature | Buffer (SaaS) | Postiz (OSS) | Mixpost (OSS) | Orbitl Approach |
-|---------|---------------|--------------|---------------|-----------------|
-| Multi-platform publishing | 8 platforms | 10+ platforms | 10+ platforms | Pluggable system — community-extensible |
-| AI content generation | Basic AI assist | Basic AI assist | Basic AI assist | Full pipeline: research → ranked topics → voice-matched draft |
-| Voice / persona matching | Generic tones | Not present | Not present | Writing sample analysis → extracted persona → voice confidence score |
-| Research automation | Not present | Not present | Not present | Multi-source (Exa, Reddit, Substack, brainstorm) with topic ranking |
-| Draft review workflow | Not present | Not present | Not present | Full review UI with approve/reject/edit/regenerate |
-| Publish queue | YES | YES | YES | YES — with retry logic |
-| Scheduling | YES | YES | YES | YES — with configurable windows per channel |
-| Self-hosted | No (SaaS only) | YES | YES | YES — Docker Compose + Helm |
-| AI cost tracking | No | No | No | YES — per operation, per channel |
-| Plugin/provider system | No | Partial | No | YES — drop-in file with auto-discovery |
-| Analytics | YES (extensive) | Basic | YES | OUT OF SCOPE — publish-only |
-| Auth | OAuth + team | Single/multi | Single/multi | Single-user (v1) |
-
-**Key finding:** No competitor combines (1) AI voice cloning from writing samples + (2) research automation + (3) pluggable provider system. Buffer owns analytics/scheduling; Postiz/Mixpost own multi-platform self-hosting. Orbitl's moat is the voice-matched content pipeline with an open extension model. Protect that moat — don't diffuse focus into analytics or engagement management.
+| Feature | Buffer | Postiz (OSS) | Mixpost (OSS) | Orbitl v1.1 Approach |
+|---------|--------|--------------|---------------|----------------------|
+| Tweet scheduling | YES | YES | YES | YES — existing queue + daemon |
+| Thread scheduling | YES (unlimited length) | YES | YES | YES — sequential reply-chain posting |
+| Thread creation UI | Compose UI, tweet-by-tweet | Compose UI, tweet-by-tweet | Compose UI, tweet-by-tweet | AI-generated from research or from existing draft; thread card preview for review |
+| Long-form → thread repurposing | Manual only | Manual only | Manual only | AI-automated from approved drafts — **differentiator** |
+| Voice adaptation per platform | No | No | No | Tweet-specific register constraints in voice pipeline — **differentiator** |
+| OAuth approach | OAuth 2.0 app-managed | OAuth 2.0 | OAuth 1.0a | OAuth 1.0a (simpler, no redirect/refresh complexity) |
 
 ---
 
 ## Sources
 
-- Buffer 2025 product launches: [Everything we launched in Buffer in 2025](https://buffer.com/resources/everything-we-launched-in-buffer-in-2025/)
-- Postiz open source social scheduler comparison: [Top 12 Open Source Social Media Scheduler Tools for 2025](https://postiz.com/blog/open-source-social-media-scheduler)
-- Mixpost self-hosted social management: [Mixpost](https://mixpost.app)
-- AI content workflow stages and human-in-the-loop: [How to Build an AI Driven Content Workflow](https://www.clickrank.ai/ai-driven-content-workflow/)
-- Plugin/provider system design patterns: [Building a plugin architecture — ArjanCodes](https://arjancodes.com/blog/best-practices-for-decoupling-software-using-plugins/); [Registry Pattern — GeeksForGeeks](https://www.geeksforgeeks.org/system-design/registry-pattern/)
-- Pluggable framework patterns (2025): [Scaling Infrastructure Fast — Scaibu/Medium](https://scaibu.medium.com/scaling-infrastructure-fast-you-need-a-typed-pluggable-framework-now-a8eb7cfafe8a)
-- AI cost/token tracking landscape: [Best Tools for Monitoring LLM Costs — DEV Community](https://dev.to/kuldeep_paul/the-best-tools-for-monitoring-llm-costs-and-usage-in-2025-5f3a)
-- Awesome-selfhosted publishing category: [awesome-selfhosted](https://github.com/awesome-selfhosted/awesome-selfhosted)
-- Dashboard UI expectations 2025: [20 Principles Modern Dashboard UI/UX Design](https://medium.com/@allclonescript/20-best-dashboard-ui-ux-design-principles-you-need-in-2025-30b661f2f795)
-- Content publishing platform expectations: [The Best Content Publishing Platforms in 2025](https://storychief.io/blog/content-publishing-platforms)
-- Competitor landscape (Postiz vs Mixpost): [Mixpost vs Postiz comparison](https://openalternative.co/compare/mixpost/vs/postiz)
+- X API v2 POST /2/tweets endpoint: [Create or Edit Post — docs.x.com](https://docs.x.com/x-api/posts/create-post)
+- X API v2 authentication mapping: [v2 Authentication Mapping — docs.x.com](https://docs.x.com/fundamentals/authentication/guides/v2-authentication-mapping)
+- X API rate limits (POST /2/tweets: 100/15min per user, 10,000/24hr per app): [Rate Limits — docs.x.com](https://docs.x.com/x-api/fundamentals/rate-limits)
+- Free tier limits (1,500 tweets/month write-only): [X API Free Tier — devcommunity.x.com](https://devcommunity.x.com/t/specifics-about-the-new-free-tier-rate-limits/229761)
+- OAuth 1.0a still supported for POST /2/tweets in 2025: [Will OAuth 1.0a Continue to Be Supported? — devcommunity.x.com](https://devcommunity.x.com/t/will-oauth-1-0a-user-context-continue-to-be-supported-for-api-v2/245571)
+- node-twitter-api-v2 library (tweetThread, OAuth 2.0, token refresh): [plhery/node-twitter-api-v2 — GitHub](https://github.com/PLhery/node-twitter-api-v2)
+- node-twitter-api-v2 v2 docs (tweet, reply, tweetThread methods): [node-twitter-api-v2/doc/v2.md — GitHub](https://github.com/plhery/node-twitter-api-v2/blob/master/doc/v2.md)
+- Thread structure best practices (5-10 tweets, hook formula, CTA): [Writing Effective Twitter Threads in 2025 — usevisuals.com](https://usevisuals.com/blog/writing-effective-twitter-threads-2025)
+- Blog to thread decomposition (hook-first, semantic chunking, 280 char): [Automate Blog to Twitter Thread — analyticsvidhya.com](https://www.analyticsvidhya.com/blog/2025/01/automate-blog-to-twitter-thread/)
+- Thread scheduling — Postiz: [How to Schedule a Twitter Thread — postiz.com](https://postiz.com/blog/how-to-schedule-a-twitter-thread)
+- Thread scheduling — Buffer: [Schedule Twitter Threads — buffer.com](https://buffer.com/resources/schedule-twitter-threads/)
+- in_reply_to_tweet_id thread chaining: [X API conversation-id — docs.x.com](https://docs.x.com/x-api/fundamentals/conversation-id)
+- node-cron timezone support: [node-cron — npm](https://www.npmjs.com/package/node-cron)
 
 ---
-*Feature research for: Pluggable self-hosted content generation and publishing automation (Orbitl)*
-*Researched: 2026-02-26*
+
+*Feature research for: Orbitl v1.1 Twitter/X publisher, short-form content type, thread generation, tech debt*
+*Researched: 2026-02-28*

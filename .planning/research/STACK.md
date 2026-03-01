@@ -1,19 +1,24 @@
 # Stack Research
 
-**Domain:** Pluggable provider systems and containerized deployment for TypeScript/Next.js content generation app
-**Researched:** 2026-02-26
-**Confidence:** MEDIUM-HIGH (core patterns HIGH from official docs; Helm/k3s patterns MEDIUM from web sources)
+**Domain:** Twitter/X publisher integration, short-form content type, thread decomposition, and v1.0 tech debt fixes for an existing Next.js/TypeScript social content generator
+**Researched:** 2026-02-28
+**Confidence:** HIGH for twitter-api-v2 and schema changes; MEDIUM for timezone fix rationale; MEDIUM for API tier limits (X changes policies frequently)
 
 ---
 
 ## Context
 
 This is a subsequent-milestone research file. The existing app already has:
-Next.js 16.1.6, TypeScript 5, Drizzle ORM 0.45.1, PostgreSQL (pg 8.19.0), Tailwind CSS 4, Radix UI, Zod 3.25.x, Vitest, tsx, node-cron, Anthropic SDK.
+Next.js 16.1.6, TypeScript 5, Drizzle ORM 0.45.1, PostgreSQL (pg 8.19.0), Tailwind CSS 4, Radix UI, Zod 3.25.x, Vitest, tsx, node-cron, Anthropic Claude SDK.
 
-This research covers only the **new additions** needed for:
-1. A pluggable provider/plugin system (publisher + research adapter modules)
-2. Containerized deployment (Docker Compose for solo creators; Helm chart for k3s scaling)
+The publisher provider system is already built and working (LinkedIn, Substack). The DB schema has `platformEnum`, `contentTypeEnum`, and `draftStatusEnum` as PostgreSQL enums. The generation pipeline (`generator.ts`) handles `note` and `article` content types today.
+
+This research covers **only new additions and changes** needed for:
+1. Twitter/X publisher provider (OAuth 1.0a credentials, tweet posting, thread posting)
+2. Short-form content type (`tweet` added to `contentTypeEnum`)
+3. Thread generation from long-form drafts (new generation path in `generator.ts`)
+4. Scheduler timezone fix (existing TODO in `scheduler.ts`)
+5. v1.0 tech debt fixes (publish-now stub, retry bug, DISABLE_INTERNAL_CRON, CreateChannelForm errors)
 
 Do not re-evaluate the existing stack. The existing choices are locked.
 
@@ -21,309 +26,303 @@ Do not re-evaluate the existing stack. The existing choices are locked.
 
 ## Recommended Stack
 
-### Plugin System — Core Pattern
+### New Library: Twitter/X API Client
 
-**Verdict: Use a hand-rolled TypeScript interface + registry + filesystem scan pattern. No external plugin framework needed.**
-
-The 2025/2026 standard for TypeScript/Node.js plugin systems in apps of this scale is to implement the pattern directly using TypeScript interfaces, a central registry, and `fs.readdirSync` + dynamic `import()` for auto-discovery. Third-party plugin frameworks (Plugo, Plop, etc.) add complexity and maintenance overhead without benefit at this codebase size.
+**Verdict: `twitter-api-v2` (plhery/node-twitter-api-v2). The clear ecosystem winner — strongly typed, ships its own TypeScript definitions, handles both single-tweet and thread posting natively.**
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| TypeScript `interface` + `satisfies` | 5.x (existing) | Define the provider contract | `satisfies` operator (TS 4.9+) catches contract violations at assignment site without widening the type — better error messages than `as` casts |
-| `fs.readdirSync` (Node.js built-in) | 20.x (existing) | Scan providers directory at startup | Zero dependency; synchronous scan is fine at startup; no library needed |
-| Dynamic `import()` (ESM / CommonJS interop) | Node.js 20 | Load discovered provider modules | Native to Node 20 + TypeScript 5; works in both ESM and CJS contexts |
-| Zod 3.25.x (existing) | 3.25.x | Validate provider manifest/config objects at runtime | Already in the project; use to validate the config shape each provider exports, ensuring drop-in modules are well-formed |
+| `twitter-api-v2` | `^1.29.0` | Twitter/X API v2 client for posting tweets and threads | Only actively-maintained, fully-typed Node.js X API client. Ships its own TypeScript definitions — no `@types/*` needed. Has `client.v2.tweet()` for single tweets and `client.v2.tweetThread()` for thread arrays. OAuth 1.0a and OAuth 2.0 both supported. |
 
-**Pattern summary** (confidence: HIGH — confirmed by official TypeScript docs, Node.js docs, and Slash Engineering production example):
+**Authentication choice: OAuth 1.0a User Context (not OAuth 2.0 PKCE)**
+
+Use OAuth 1.0a because:
+- Simpler credential set: 4 static strings (`appKey`, `appSecret`, `accessToken`, `accessSecret`) stored once in the channel credentials JSON, just like the existing LinkedIn `accessToken`/`personUrn` pair
+- No token refresh needed — OAuth 1.0a tokens do not expire (OAuth 2.0 tokens expire in 2 hours and require a refresh cycle and secure token storage updates)
+- OAuth 2.0 PKCE requires an interactive browser authorization flow, which is a worse UX for a self-hosted tool where the user configures credentials once in the channel settings form
+- Both OAuth 1.0a and OAuth 2.0 support POST `/2/tweets` on the current API
+
+The four required credentials from the X Developer Portal:
+```
+API Key            → appKey
+API Secret         → appSecret
+Access Token       → accessToken
+Access Token Secret → accessSecret
+```
+
+These are stored as encrypted JSON in `channels.credentials`, consistent with the LinkedIn provider pattern.
+
+**Client initialization:**
+```typescript
+import { TwitterApi } from 'twitter-api-v2';
+
+const client = new TwitterApi({
+  appKey: creds.appKey,
+  appSecret: creds.appSecret,
+  accessToken: creds.accessToken,
+  accessSecret: creds.accessSecret,
+});
+```
+
+**Single tweet:**
+```typescript
+await client.v2.tweet({ text: 'Content here — max 280 characters' });
+```
+
+**Thread (reply chain):**
+```typescript
+// tweetThread automatically chains each tweet as a reply to the previous one
+await client.v2.tweetThread([
+  'Tweet 1 — the hook',
+  'Tweet 2 — first point',
+  'Tweet 3 — second point',
+  '4/ CTA and takeaway',
+]);
+```
+
+### Schema Changes: No New Libraries, Just Migrations
+
+Two PostgreSQL enum values need to be added. Drizzle Kit generates the correct `ALTER TYPE ... ADD VALUE` SQL automatically when the enum definition is updated in `schema.ts`.
+
+**`contentTypeEnum`** — add `'tweet'` value:
+```typescript
+// Before
+export const contentTypeEnum = pgEnum('content_type', ['note', 'article']);
+
+// After
+export const contentTypeEnum = pgEnum('content_type', ['note', 'article', 'tweet']);
+```
+
+**`platformEnum`** — add `'twitter'` value:
+```typescript
+// Before
+export const platformEnum = pgEnum('platform', ['linkedin', 'substack']);
+
+// After
+export const platformEnum = pgEnum('platform', ['linkedin', 'substack', 'twitter']);
+```
+
+**Drizzle Kit generates:**
+```sql
+ALTER TYPE "public"."content_type" ADD VALUE 'tweet';
+ALTER TYPE "public"."platform" ADD VALUE 'twitter';
+```
+
+No data migrations required — existing rows are unaffected by adding new enum values. Drizzle Kit 0.26.2+ handles `ADD VALUE` correctly (Drizzle Kit 0.31.9 is already installed, which includes this support).
+
+**ResearchConfig also needs updating** (in-code TypeScript change, no migration):
+```typescript
+// schema.ts contentTypeMix needs 'tweet' added
+contentTypeMix: { note: number; article: number; tweet: number };
+```
+
+### Scheduler Timezone Fix: Built-in `Intl` API, No New Library
+
+The existing `scheduler.ts` has an explicit TODO:
+```typescript
+// TODO: window hours are currently resolved in server local time, not cfg.timezone.
+//       Add IANA timezone arithmetic (via Intl or a date library) before production use.
+```
+
+**Verdict: Fix this with the built-in `Intl.DateTimeFormat` API. No new library needed.**
+
+Node.js 20+ ships full IANA timezone support through the V8 ICU data layer. The `Intl.DateTimeFormat` constructor accepts any IANA timezone identifier (`America/New_York`, `Europe/London`, etc.) and can extract hour and day-of-week from a UTC date in that timezone.
 
 ```typescript
-// src/lib/providers/types.ts
-export interface PublisherProvider {
-  readonly id: string;           // e.g., "substack", "linkedin"
-  readonly displayName: string;
-  readonly configSchema: z.ZodSchema;  // Zod schema for channel credentials
-  publish(draft: DraftRow, channel: ChannelRow): Promise<PublishResult>;
+// Determine what hour it is in a given IANA timezone — no library required
+function getHourInTimezone(utcDate: Date, timezone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    hour12: false,
+    timeZone: timezone,
+  }).formatToParts(utcDate);
+  return parseInt(parts.find(p => p.type === 'hour')!.value, 10);
 }
 
-// src/lib/providers/registry.ts
-export class ProviderRegistry<T extends { id: string }> {
-  private providers = new Map<string, T>();
-
-  register(provider: T): void {
-    this.providers.set(provider.id, provider);
-  }
-
-  get(id: string): T | undefined {
-    return this.providers.get(id);
-  }
-
-  all(): T[] {
-    return [...this.providers.values()];
-  }
+function getDayOfWeekInTimezone(utcDate: Date, timezone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    weekday: 'narrow',
+    timeZone: timezone,
+  }).formatToParts(utcDate);
+  // Map weekday names to getDay() convention (0=Sun)
+  const dayMap: Record<string, number> = { S: 0, M: 1, T: 2, W: 3, F: 5 };
+  // Better: use numeric day
+  return new Date(
+    new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(utcDate)
+  ).getDay();
 }
-
-// src/lib/providers/loader.ts — auto-discovery
-import { readdirSync } from 'fs';
-import { join } from 'path';
-
-export async function loadProviders<T extends { id: string }>(
-  dir: string,
-  registry: ProviderRegistry<T>,
-): Promise<void> {
-  const files = readdirSync(dir).filter(f => f.endsWith('.provider.ts') || f.endsWith('.provider.js'));
-  for (const file of files) {
-    const mod = await import(join(dir, file));
-    if (mod.default && 'id' in mod.default) {
-      registry.register(mod.default);
-    }
-  }
-}
-
-// src/lib/publishers/substack.provider.ts — drop-in file
-const substackProvider = {
-  id: 'substack',
-  displayName: 'Substack',
-  configSchema: substackConfigSchema,
-  async publish(draft, channel) { /* ... */ },
-} satisfies PublisherProvider;
-
-export default substackProvider;
 ```
 
-**Key decisions:**
-- Use `.provider.ts` file suffix convention so the scanner can find only provider files
-- `satisfies` instead of explicit type annotation — catches missing fields at the definition site
-- Registry is initialized once at app startup (in the daemon's main entry, and lazily in Next.js API routes via a module-level singleton)
-- No code in existing files needs changing to add a new provider — drop the file, done
+The cleanest production approach for this specific use case (constructing a UTC timestamp for a target hour in a given timezone) uses `Intl` to find the offset, then adjusts. The implementation is 20-30 lines of utility code in `scheduler.ts`. No npm dependency needed.
 
-### Plugin System — No External Libraries Needed
+If this timezone logic ever grows in complexity (e.g., DST edge case handling, recurring schedule generation), `@date-fns/tz@^1.4.1` or `date-fns-tz@^3.x` are the right next step — but both are overkill for fixing a single scheduling function.
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `plugo`, `live-plugin-manager`, `@node-loader/core` | Add dynamic module loading complexity, npm unpacking overhead, not maintained at scale | Native `import()` + directory scan |
-| `tsyringe`, `inversify` (DI containers) | Overkill — you don't need dependency injection; you need a simple named registry | Plain `Map<string, Provider>` registry |
-| npm-based plugin discovery (reading package.json for plugin keys) | Only needed when plugins are distributed as separate npm packages; Orbitl providers live in the same repo | Filesystem scan of `src/lib/publishers/` |
+### v1.0 Tech Debt Fixes: No New Libraries
 
-### Containerization — Docker
+All five v1.0 debt items are code-only fixes in existing files:
 
-**Verdict: Two Dockerfiles (web + daemon), one Docker Compose, `node:22-bookworm-slim` base image, Next.js `output: standalone`.**
+| Debt Item | File | Fix |
+|-----------|------|-----|
+| Publish-now stub | `app/.../publish-now/route.ts` (or similar) | Wire the route handler to call `publisherRegistry.get(platform).publish(draft, channel)` directly instead of a stub |
+| Retry bug: retryCount not reset | `src/lib/publishing/queue-runner.ts` | Add `retryCount: 0` to the UPDATE query when re-queuing a failed item for retry |
+| DISABLE_INTERNAL_CRON not implemented | `src/daemon/index.ts` | Add `if (process.env.DISABLE_INTERNAL_CRON === 'true') return;` guard at the cron registration call site |
+| Scheduler timezone TODO | `src/lib/publishing/scheduler.ts` | Replace `setHours()` based on local time with `Intl`-based UTC offset calculation (see above) |
+| CreateChannelForm actionable errors | `src/components/.../CreateChannelForm.tsx` | Surface specific validation/API error messages instead of generic failures; already using react-hook-form + Zod so error binding is straightforward |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Docker multi-stage build | N/A (Docker feature) | Separate build-time deps from runtime image | Official Next.js and Node.js recommendation; reduces final image by 60-80% |
-| `node:22-bookworm-slim` | 22.x LTS | Base image for both web and daemon containers | Slim = Debian-based (glibc-compatible, avoids Alpine musl issues with native modules), smaller than full Debian. Alpine explicitly NOT recommended by Node.js Docker team |
-| `output: standalone` (Next.js config) | Built into Next.js 16 | Produces `.next/standalone` with only necessary files + `server.js` | Official Next.js recommendation for Docker; eliminates `npm install` in the runner stage; verified in Next.js 16.1.6 docs |
-| Docker Compose v2 | 2.x | Orchestrate web + daemon + postgres services | Standard single-machine orchestration; ships with Docker Desktop and Docker Engine |
-| `.dockerignore` | N/A | Exclude `node_modules`, `.next`, `.env.*`, test files from build context | Mandatory for fast builds and preventing secret leakage |
+---
 
-**Dockerfile.web** (multi-stage pattern — confidence: HIGH from official Next.js docs and Vercel with-docker example):
+## Integration Points
 
-```dockerfile
-# Stage 1: Install dependencies
-FROM node:22-bookworm-slim AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+### Twitter Provider File
 
-# Stage 2: Build
-FROM node:22-bookworm-slim AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+The new provider follows the existing `PublisherProvider` interface exactly:
 
-# Stage 3: Runtime (uses standalone output)
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nextjs
-EXPOSE 3000
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
-```
-
-**Dockerfile.daemon** (TypeScript background worker — confidence: MEDIUM from community patterns, verified with Node docs):
-
-```dockerfile
-# Stage 1: Install dependencies
-FROM node:22-bookworm-slim AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Stage 2: Build TypeScript
-FROM node:22-bookworm-slim AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npx tsc --project tsconfig.json --outDir dist --noEmit false
-
-# Stage 3: Runtime
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 daemon
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-USER daemon
-CMD ["node", "dist/daemon/index.js"]
-```
-
-**Alternative daemon approach**: Skip tsc compilation in Docker, use `tsx` directly in the runner stage with `node_modules` copied. Simpler but ships tsx (dev dependency) to production. Acceptable for a self-hosted tool where image size is secondary to simplicity. Decision: **compile with tsc** to keep production image clean.
-
-**`next.config.ts` addition required:**
 ```typescript
-const nextConfig: NextConfig = {
-  output: 'standalone',  // ADD THIS
+// src/lib/publishing/providers/twitter.provider.ts
+import type { PublisherProvider } from '@/lib/providers/types';
+import { PROVIDER_API_VERSION } from '@/lib/providers/types';
+import { publishToTwitter, formatForTwitter } from '../twitter';
+
+const twitterProvider: PublisherProvider = {
+  name: 'twitter',
+  platform: 'twitter',          // Must match new platformEnum value
+  displayName: 'X (Twitter)',
+  description: 'Publish tweets and threads to your X account',
+  apiVersion: PROVIDER_API_VERSION,
+  configSchema: [
+    { key: 'appKey',       label: 'API Key',              type: 'secret', required: true },
+    { key: 'appSecret',    label: 'API Secret',           type: 'secret', required: true },
+    { key: 'accessToken',  label: 'Access Token',         type: 'secret', required: true },
+    { key: 'accessSecret', label: 'Access Token Secret',  type: 'secret', required: true },
+  ],
+  publish: (draft, channel) => publishToTwitter(draft, channel),
+  formatDraft: (draft, _channel) => formatForTwitter(draft),
 };
+
+export default twitterProvider;
 ```
 
-**Important caveat** (confidence: HIGH from official Next.js docs): `output: standalone` is incompatible with a custom `server.js` entry point. The `server.js` that Next.js generates in `.next/standalone` must be used as-is. This is not a problem for Orbitl since the daemon is a separate process — there is no custom Next.js server.
-
-### Containerization — Docker Compose
-
-**`docker-compose.yml` service structure** (confidence: HIGH from official Docker docs and Next.js community patterns):
-
-```yaml
-services:
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: orbitl
-      POSTGRES_USER: orbitl
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U orbitl"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile.daemon
-    command: ["node", "dist/scripts/migrate.js"]
-    environment:
-      DATABASE_URL: postgres://orbitl:${DB_PASSWORD}@postgres:5432/orbitl
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    ports:
-      - "3021:3000"
-    environment:
-      DATABASE_URL: postgres://orbitl:${DB_PASSWORD}@postgres:5432/orbitl
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY}
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-
-  daemon:
-    build:
-      context: .
-      dockerfile: Dockerfile.daemon
-    environment:
-      DATABASE_URL: postgres://orbitl:${DB_PASSWORD}@postgres:5432/orbitl
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      EXA_API_KEY: ${EXA_API_KEY}
-      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY}
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-
-volumes:
-  postgres_data:
+Then register it in `publisher-registry.ts`:
+```typescript
+const { default: twitter } = await import('./providers/twitter.provider');
+if (isPublisherProvider(twitter)) publisherRegistry.register(twitter);
 ```
 
-**Service notes:**
-- `postgres:17-alpine` is acceptable for the database (PostgreSQL Alpine images are maintained by the PostgreSQL team directly, unlike Node.js Alpine — the musl issue applies to application runtimes, not database images)
-- `migrate` runs as a one-shot service (exits after applying migrations) using `service_completed_successfully` — this is the correct Drizzle migration pattern for Docker Compose
-- `web` and `daemon` both depend on `migrate` completing, not just postgres being healthy
-- Environment variables via `.env` file — never baked into images
+### Twitter Implementation File
 
-### Containerization — Helm Chart (k3s / Kubernetes)
+```typescript
+// src/lib/publishing/twitter.ts
+import { TwitterApi } from 'twitter-api-v2';
+import { decrypt } from '@/lib/crypto';
 
-**Verdict: Write a minimal custom Helm chart. Don't use a generic community chart — they're too complex for Orbitl's simple two-container + postgres shape.**
+// 280 characters is the standard API limit for non-Premium accounts.
+// Thread tweets are each individually limited to 280 chars.
+const TWEET_MAX = 280;
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Helm | 3.x | Package Kubernetes manifests | Industry standard; k3s ships with Helm Controller; verified in k3s docs |
-| Bitnami PostgreSQL Helm chart | 18.x (as subchart dependency) | Managed PostgreSQL in-cluster | Bitnami is the reference PostgreSQL Helm chart; avoids managing statefulsets manually; chart version 18.4.0 current as of research date |
-| Custom Helm chart | — | Deploy web + daemon Deployments and Services | A custom chart keeps complexity minimal; generic Next.js charts on Artifact Hub add unnecessary layers |
+// Thread posts: format body into 280-char segments and post as tweetThread.
+// Single tweet (contentType 'tweet'): post as a single tweet using just hook.
+export function formatForTwitter(draft: DraftRow): string | string[] {
+  if (draft.contentType === 'tweet') {
+    // Short-form: hook is the tweet body (generated to be ≤280 chars)
+    return (draft.hook ?? '').slice(0, TWEET_MAX);
+  }
+  // Thread: split body into pre-chunked segments stored in body as JSON array,
+  // or fall back to naive chunking of the body text.
+  // (Implementation detail: thread segments are stored in draft.body as JSON array)
+  try {
+    const segments = JSON.parse(draft.body ?? '[]') as string[];
+    if (Array.isArray(segments) && segments.every(s => typeof s === 'string')) {
+      return segments.map(s => s.slice(0, TWEET_MAX));
+    }
+  } catch { /* fall through to naive chunking */ }
+  return [draft.hook ?? '', draft.body ?? ''].filter(Boolean).map(s => s.slice(0, TWEET_MAX));
+}
 
-**Minimum custom chart structure:**
+export async function publishToTwitter(draft: DraftRow, channel: ChannelRow): Promise<TwitterPublishResult> {
+  const creds = parseTwitterCredentials(channel);
+  const client = new TwitterApi({ ...creds });
 
+  const formatted = formatForTwitter(draft);
+  if (Array.isArray(formatted)) {
+    // Thread
+    const results = await client.v2.tweetThread(formatted);
+    return { id: results[0].data.id, threadIds: results.map(r => r.data.id) };
+  } else {
+    // Single tweet
+    const result = await client.v2.tweet({ text: formatted });
+    return { id: result.data.id };
+  }
+}
 ```
-charts/orbitl/
-  Chart.yaml
-  values.yaml
-  charts/
-    postgresql/        # bitnami/postgresql as dependency
-  templates/
-    web-deployment.yaml
-    web-service.yaml
-    daemon-deployment.yaml
-    migrate-job.yaml   # Helm hook: post-install, post-upgrade
-    ingress.yaml
-    secrets.yaml       # or reference external secret
+
+### Short-Form Generation Path
+
+The `generator.ts` file needs a `tweet` branch added to `buildGenerationPrompt`. Short-form tweet generation uses the same Claude call but with a different prompt spec:
+
+```typescript
+// Existing spec selection:
+const spec = contentType === 'note'
+  ? '150–300 words, punchy and direct, optimized for social scroll-stopping'
+  : '800–2000 words, structured argument...';
+
+// Add tweet branch:
+const spec =
+  contentType === 'tweet'
+    ? 'SINGLE TWEET: exactly 1 tweet of max 240 characters (leave buffer for hashtags). Return the tweet text in the "hook" field. Set body to "" and cta to "". The hook IS the complete tweet.'
+  : contentType === 'note'
+    ? '150–300 words, punchy and direct, optimized for social scroll-stopping'
+    : '800–2000 words, structured argument with clear thesis, supporting points, and conclusion';
 ```
 
-**`Chart.yaml` dependency:**
-```yaml
-dependencies:
-  - name: postgresql
-    version: "18.x.x"
-    repository: "oci://registry-1.docker.io/bitnamicharts"
-    condition: postgresql.enabled
+For **thread generation from a long-form draft**, this is a separate operation (not the standard generation pipeline). It takes an existing approved `note` or `article` draft and decomposes it into tweet segments. This calls Claude with a decomposition prompt and returns a new draft with `contentType: 'tweet'` and the segments stored as a JSON array in `body`. No new library needed — this is a prompt engineering task with the existing Anthropic SDK.
+
+```typescript
+// Thread decomposition prompt pattern (pure prompt, no new library)
+const THREAD_DECOMPOSITION_SYSTEM = `You are a social media editor. Convert long-form content into Twitter/X threads.
+Each tweet must be ≤240 characters (leave headroom for numbering).
+The thread should flow naturally as a conversation, not a bulleted list.`;
+
+const THREAD_DECOMPOSITION_PROMPT = (draft: DraftRow) => `
+Convert this content into a Twitter thread. Return ONLY a JSON array of tweet strings.
+Each string must be ≤240 characters.
+Start with a hook tweet that stands alone.
+End with a CTA or takeaway tweet.
+Use 4–8 tweets for a note-length piece; 8–15 for an article.
+
+CONTENT:
+${[draft.hook, draft.body, draft.cta].filter(Boolean).join('\n\n')}
+
+Return only: ["tweet 1 text", "tweet 2 text", ...]`;
 ```
 
-**Key Helm patterns** (confidence: MEDIUM — verified k3s Helm Controller docs + bitnami docs, community chart examples):
-- Database migration as a Helm hook (`helm.sh/hook: post-install,post-upgrade`) ensures migrations run before rolling out new pods
-- `values.yaml` exposes `image.tag`, `replicaCount`, `postgresql.enabled`, and `ingress.enabled` as the primary knobs
-- Secrets managed via `secretRef` in pod specs pointing to a Kubernetes Secret — do not embed secrets in values files
+---
 
-**What NOT to do with Helm:**
-- Do not use the generic `icoretech/nextjs` chart from Artifact Hub — it assumes a specific structure and adds ingress annotations that may conflict with k3s Traefik
-- Do not put `CREDENTIALS_ENCRYPTION_KEY` or `ANTHROPIC_API_KEY` in `values.yaml` — use `kubectl create secret` and reference via `secretKeyRef`
+## API Tier Constraints
 
-### Supporting Libraries — New Additions Only
+The X API tier situation is important for the initial channel setup UX. The credentials form should communicate these limits:
 
-These libraries are **not currently in the project** and would be added for the new milestone:
+| Tier | Monthly Post Limit | Cost | Notes |
+|------|-------------------|------|-------|
+| Free | 500 posts/month | $0 | Write-only (no read endpoints). Posts only — no reading timeline, search, etc. Sufficient for Orbitl's publish-only use case. |
+| Basic | 10,000 posts/month | $200/month | Higher limits. Not required for personal use. |
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `fast-glob` | 3.3.x | Glob-based provider file discovery (alternative to `readdirSync`) | If providers need to be discovered across multiple directories or match complex patterns. If providers stay in a single flat directory, `readdirSync` is sufficient and has no extra dependency |
-| `@types/node` | 20.x (dev) | Type definitions for `fs`, `path`, `process` in provider loader | Required if not already present; check `package.json` |
+**For Orbitl's use case (publish-only, single creator):** The Free tier (500 posts/month) is sufficient. A creator publishing 1-2 threads per day uses ~60 API calls/month (a 6-tweet thread = 6 POST requests). Well within limits.
 
-**No new libraries are required for the provider system itself.** The pattern is implemented with what already exists (TypeScript, Zod, Node.js built-ins).
+**Rate limits for posting:** 100 POST `/2/tweets` per 15 minutes per user (user-level OAuth 1.0a). Threads of up to 15 tweets well within this window.
+
+**Thread reply restriction:** Creating a thread using `tweetThread()` works by posting each subsequent tweet as a reply to the previous one. This reply-to-self mechanism functions on the Free tier — the restriction on replies (that you can only reply to accounts you follow or that have mentioned you) does not apply to replying to your own tweets.
 
 ---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| Hand-rolled registry + `fs.readdirSync` | `inversify` DI container | Inversion of control is unnecessary when providers are loaded at startup, not injected throughout the app. Adds decorator metadata complexity with `reflect-metadata`. Overkill for a flat list of named providers. |
-| Hand-rolled registry | `plugo` / `live-plugin-manager` | These load plugins from npm packages at runtime. Orbitl providers live in the same repo — no npm distribution needed. Adds unnecessary complexity. |
-| `node:22-bookworm-slim` Docker base | `node:22-alpine` | Alpine uses musl libc. The Node.js Docker team explicitly does not officially support Alpine. Native npm modules (like `pg`) can produce unexpected behavior. The slim Debian variant is 30% larger but fully compatible. |
-| `node:22-bookworm-slim` Docker base | `node:22` (full Debian) | Full Debian is 3-4x larger (1GB+) with hundreds of unnecessary packages. No benefit over slim for a Node.js app. |
-| Separate Dockerfile.daemon | Combining web and daemon in one image | Violates single-responsibility for containers; prevents independent scaling of daemon; harder to reason about container entrypoints |
-| Custom Helm chart | Generic community Next.js Helm chart | Generic charts have opinions about ingress controllers, service meshes, and image pull policies that conflict with k3s defaults. A minimal custom chart gives full control at low cost (~6 template files). |
-| Bitnami PostgreSQL subchart | Self-managed StatefulSet for PostgreSQL | Writing and maintaining a PostgreSQL StatefulSet from scratch is error-prone and unnecessary. Bitnami chart is battle-tested, actively maintained, and supports k3s. |
-| `postgres:17-alpine` (Docker Compose) | `postgres:17` (full Debian) | PostgreSQL's Alpine image is officially maintained by the PostgreSQL Docker project (not the Node.js team). glibc issues don't apply to the database binary itself. Alpine PostgreSQL is the community standard for Docker Compose deployments. |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Twitter/X npm client | `twitter-api-v2` | `twitter-v2` (HunterLarco) | `twitter-v2` is unmaintained — last release years ago. `twitter-api-v2` is actively maintained, ships bundled types, and has native `tweetThread()` support. |
+| Twitter/X npm client | `twitter-api-v2` | Raw `fetch` to POST `/2/tweets` | OAuth 1.0a HMAC-SHA1 signing is tedious to implement correctly. `twitter-api-v2` handles signing internally. No reason to avoid the library here. |
+| Auth method | OAuth 1.0a | OAuth 2.0 PKCE | OAuth 2.0 requires token refresh (2-hour expiry), a browser-based authorization flow, and secure refresh token storage updates. OAuth 1.0a uses static credentials like every other provider in the app. Simpler for a self-hosted tool. |
+| Timezone fix | `Intl.DateTimeFormat` (built-in) | `date-fns-tz` or `@date-fns/tz` | Scheduler fix requires 20 lines of Intl arithmetic — no library justified. `date-fns-tz` (3.x) and `@date-fns/tz` (1.4.1) are the right choice if timezone complexity grows significantly. |
+| Thread storage | JSON array in `drafts.body` | New `thread_tweets` table | The existing schema stores `body` as text; a thread is stored as `JSON.stringify(string[])`. Avoids a new table and migration for what is structurally a different serialization of the same content. If thread management complexity grows (reorder individual tweets, per-tweet images), a dedicated table is the right call. |
 
 ---
 
@@ -331,37 +330,27 @@ These libraries are **not currently in the project** and would be added for the 
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `node:22-alpine` for web/daemon containers | musl libc causes compatibility issues with native Node.js modules (pg, sharp, etc.); Node.js Docker team does not officially support it | `node:22-bookworm-slim` |
-| `output: export` (Next.js static export) | Static export removes API routes, server components, and dynamic rendering — all of which Orbitl uses | `output: standalone` |
-| Embedding secrets in Docker images or Helm values files | Secrets become visible in image layers and version control | `.env` files for Docker Compose (gitignored); Kubernetes Secrets + `secretKeyRef` for Helm |
-| Running migrations as part of the web container startup | Race conditions if multiple replicas start simultaneously; hard to observe migration failures separately | Dedicated `migrate` service/job that must complete before web starts |
-| TypeScript decorators + `reflect-metadata` for provider registration | Requires `experimentalDecorators: true` in tsconfig; adds build complexity; TS 5.x decorator standard differs from legacy; fragile ecosystem | Plain interface + `satisfies` + registry |
-| Zod 4 (`zod/v4` subpath) for provider config schemas | Zod 4 is currently at `zod/v4` subpath (not the main package); the project uses Zod 3.25.x; mixing Zod 3 and Zod 4 causes type incompatibilities | Continue using Zod 3.25.x; upgrade to Zod 4 as a separate migration after it ships as the default npm package |
+| `twitter-v2` npm package (HunterLarco) | Unmaintained. Last release was 2+ years ago. No `tweetThread()` support. | `twitter-api-v2` by plhery |
+| `twitter-api-sdk` (official X SDK) | The official X SDK for Node.js is poorly maintained and lags behind API changes. The community library `twitter-api-v2` has better TypeScript support and is more widely used (244 downstream projects vs. minimal usage for the official SDK). | `twitter-api-v2` |
+| App-Only Bearer Token (OAuth 2.0 app-only) | App-only auth cannot post tweets — it only supports read endpoints. POST `/2/tweets` requires user context authentication. | OAuth 1.0a User Context with 4-credential set |
+| `luxon` for timezone fix | Luxon is 50KB+ and adds a full date/time library for what is a narrow IANA timezone offset problem. Overkill for fixing one function. | `Intl.DateTimeFormat` built-in |
+| Storing thread tweets as separate `drafts` rows | Thread tweets are a single publishable unit. Modeling them as N drafts breaks the review UX (you'd have to approve each tweet individually) and complicates the queue runner. Store as a JSON array in `body`. | JSON array in `drafts.body` with `contentType: 'tweet'` + a `isThread` flag or thread segment count |
+| Zod 4 (`zod/v4`) | Already in existing STACK.md: Zod 4 is at a subpath, project uses Zod 3.25.x. Do not upgrade this milestone. | Zod 3.25.x (current) |
 
 ---
 
-## Stack Patterns by Variant
+## Installation
 
-**If providers stay in the same repo (current plan):**
-- Use filesystem scan (`readdirSync`) over `src/lib/publishers/` and `src/lib/research/`
-- No npm publishing pipeline needed
-- Provider files are TypeScript compiled alongside the main app
+```bash
+# Single new runtime dependency for the Twitter/X publisher:
+npm install twitter-api-v2
 
-**If providers are later distributed as npm packages (future, out of scope for v1):**
-- Switch to npm keyword discovery (scan `node_modules` for packages with a specific keyword in `package.json`)
-- Adds a provider npm publishing workflow
-- Not needed for v1
-
-**If running a single machine (Docker Compose):**
-- `docker-compose.yml` with postgres + web + daemon + migrate services
-- `postgres:17-alpine` for the database
-- `node:22-bookworm-slim` for web and daemon
-
-**If scaling to a small cluster (k3s Helm):**
-- Custom Helm chart with Bitnami PostgreSQL subchart
-- Migrate as a Helm hook Job
-- Daemon as a Deployment with `replicas: 1` (must not run multiple daemon instances — cron scheduling would fire duplicate jobs)
-- Web as a Deployment with `replicas: N` (stateless, scales normally)
+# No other new dependencies required:
+# - Schema changes: drizzle-kit generate + migrate (tools already installed)
+# - Timezone fix: built-in Intl API
+# - Thread generation: existing Anthropic SDK
+# - v1.0 debt fixes: code-only changes in existing files
+```
 
 ---
 
@@ -369,49 +358,57 @@ These libraries are **not currently in the project** and would be added for the 
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `next@16.1.6` | `output: standalone` | Verified in Next.js 16.1.6 docs; `output: standalone` has been stable since Next.js 12 |
-| `next@16.1.6` | Custom server incompatible with `standalone` | Official docs explicitly state `server.js` from standalone cannot be used with a custom server |
-| `drizzle-kit@0.31.9` | `drizzle-orm@0.45.1` | Already validated in existing stack; migration via `drizzle-kit migrate` works as a standalone Node.js script suitable for Docker Compose `migrate` service |
-| `node:22-bookworm-slim` | `pg@8.19.0` | pg uses libssl which requires glibc — confirmed incompatible with Alpine musl |
-| `zod@3.25.x` | Provider config validation | Do not upgrade to Zod 4 during this milestone; Zod 4 is at `zod/v4` subpath and has breaking changes in error API, UUID, and record types |
-| Helm 3.x | k3s built-in Helm Controller | k3s ships with Helm Controller that manages HelmChart CRDs; standard `helm` CLI also works directly |
-| Bitnami PostgreSQL chart `18.x` | PostgreSQL 16/17 | Chart 18.x ships PostgreSQL 17 by default; can pin to 16 via `image.tag` |
+| `twitter-api-v2@^1.29.0` | Node.js 18+ | Requires Node.js 18+ for modern fetch. Project uses Node.js 20+ (from Docker base). No conflict. |
+| `twitter-api-v2@^1.29.0` | TypeScript 5.x | Ships bundled type definitions. No `@types/twitter-api-v2` needed. |
+| `twitter-api-v2@^1.29.0` | ESM + CommonJS | Works in both module systems. tsx runner (used in dev) handles it correctly. |
+| Drizzle Kit `0.31.9` | `ALTER TYPE ADD VALUE` | Drizzle Kit ≥0.26.2 generates correct `ADD VALUE` SQL for pgEnum additions. Version 0.31.9 is confirmed compatible. |
+| `contentTypeEnum` with `'tweet'` | Existing `drafts` rows | `ADD VALUE` does not affect existing rows. LinkedIn and Substack drafts keep their current `note`/`article` values unchanged. |
+| `platformEnum` with `'twitter'` | Existing `channels` rows | Same — existing LinkedIn/Substack channels unaffected. |
+| `Intl.DateTimeFormat` timezone | Node.js 20 (Docker base) | Node.js 20 ships with full ICU data. IANA timezone support confirmed available without additional packages. |
 
 ---
 
-## Installation
+## Stack Patterns by Variant
 
-```bash
-# No new runtime dependencies needed for the provider system itself.
-# The pattern uses TypeScript interfaces, fs, path, and dynamic import — all built-in.
+**For single-tweet posts (contentType: 'tweet'):**
+- Generate with Claude using the tweet spec (≤240 chars in `hook` field)
+- Store as a standard `drafts` row with `contentType: 'tweet'`
+- Publish via `client.v2.tweet({ text: draft.hook })`
+- The `body` field is empty; `cta` is empty
 
-# Only if opting for glob-based multi-directory provider discovery:
-npm install fast-glob
+**For thread posts (thread generated from long-form draft):**
+- Decompose via separate Claude call using the thread decomposition prompt
+- Store segments as `JSON.stringify(string[])` in `drafts.body`; `contentType: 'tweet'`; `title` holds the thread headline
+- Publish via `client.v2.tweetThread(segments)` — library handles reply chaining automatically
+- `formatDraft` returns the first segment for preview purposes
 
-# Docker (not npm — install Docker Engine or Docker Desktop separately)
-# https://docs.docker.com/engine/install/
+**For the review UI (both variants):**
+- Single tweet: show `hook` text with character counter
+- Thread: show numbered tweet list parsed from `body` JSON; allow editing individual segments
+- No new UI component library needed — extend existing draft review components
 
-# Helm (for k3s deployment)
-# https://helm.sh/docs/intro/install/
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-```
+**For the X Developer Portal setup (user-facing docs/config):**
+- User creates an App under their Project in the X Developer Portal
+- Enables OAuth 1.0a in App Settings → User authentication settings
+- Sets permissions to "Read and Write"
+- Copies API Key, API Secret, Access Token, Access Token Secret to Orbitl channel config form
+- No callback URL or web auth flow needed — the 4 static tokens are sufficient
 
 ---
 
 ## Sources
 
-- [Next.js Deploying Docs (official, v16.1.6)](https://nextjs.org/docs/app/getting-started/deploying) — Docker deployment options confirmed; MEDIUM-HIGH confidence
-- [Next.js Self-Hosting Guide (official, v16.1.6)](https://nextjs.org/docs/app/guides/self-hosting) — Environment variables, caching, multi-server notes; HIGH confidence
-- [Next.js `output` config reference (official)](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output) — Standalone output mechanics, caveats; HIGH confidence
-- [Vercel with-docker official example](https://github.com/vercel/next.js/tree/canary/examples/with-docker) — Confirmed multi-stage build with node:22.14-slim; HIGH confidence
-- [Snyk: Choosing the best Node.js Docker image](https://snyk.io/blog/choosing-the-best-node-js-docker-image/) — node:bookworm-slim recommendation with vulnerability data; MEDIUM confidence
-- [Slash Engineering: Scaling 1M lines of TypeScript — Registries](https://puzzles.slash.com/blog/scaling-1m-lines-of-typescript-registries) — Registry + discriminator + loadModules auto-discovery pattern at production scale; MEDIUM confidence
-- [Bitnami PostgreSQL Helm Chart (Artifact Hub)](https://artifacthub.io/packages/helm/bitnami/postgresql) — Chart version 18.4.0 current; MEDIUM confidence
-- [k3s Helm Controller docs](https://docs.k3s.io/helm) — k3s native Helm support confirmed; HIGH confidence
-- [Zod v4 release notes](https://zod.dev/v4) — v4 at `zod/v4` subpath, not main package yet; HIGH confidence
-- [TypeScript `satisfies` operator (TypeScript 4.9+)](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html) — Confirmed works in TS 5.x; HIGH confidence
+- [PLhery/node-twitter-api-v2 GitHub](https://github.com/PLhery/node-twitter-api-v2) — Version 1.28.0 (Nov 2025); `tweetThread()` method confirmed; OAuth 1.0a initialization confirmed; TypeScript types bundled; HIGH confidence
+- [node-twitter-api-v2/doc/v2.md](https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md) — `tweetThread(tweets: (SendTweetV2Params | string)[])` method signature confirmed; MEDIUM confidence (summary via WebFetch)
+- [node-twitter-api-v2/doc/examples.md](https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/examples.md) — OAuth 1.0a four-credential initialization confirmed; MEDIUM confidence
+- [X Developer Community: OAuth 1.0a vs OAuth 2.0 for posting](https://devcommunity.x.com/t/can-i-just-use-oauth-1-0a-to-post-a-tweet-with-api-v2/201240) — OAuth 1.0a confirmed valid for POST /2/tweets; MEDIUM confidence
+- [X Developer Community: Free tier rate limits](https://devcommunity.x.com/t/specifics-about-the-new-free-tier-rate-limits/229761) — 500 posts/month free, 10K basic; MEDIUM confidence (X changes these frequently — verify at docs.x.com before shipping)
+- [X API Rate Limits docs](https://docs.x.com/x-api/fundamentals/rate-limits) — 100 POST /2/tweets per 15min per user (OAuth user context); MEDIUM confidence
+- [Drizzle ORM pgEnum docs](https://orm.drizzle.team/docs/column-types/pg) — pgEnum ADD VALUE migration support in drizzle-kit ≥0.26.2; HIGH confidence
+- [MDN: Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) — IANA timezone support in Node.js via V8 ICU; HIGH confidence
+- [npm: twitter-api-v2](https://www.npmjs.com/package/twitter-api-v2) — Version 1.29.0 current (as of search, ~Jan 2026); 244 downstream dependents; MEDIUM confidence
 
 ---
 
-*Stack research for: Orbitl — pluggable provider system and containerized deployment*
-*Researched: 2026-02-26*
+*Stack research for: Orbitl v1.1 — Twitter/X publisher, short-form content, thread decomposition, tech debt*
+*Researched: 2026-02-28*

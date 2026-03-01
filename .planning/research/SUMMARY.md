@@ -1,233 +1,217 @@
 # Project Research Summary
 
-**Project:** Orbitl — Pluggable Provider System, UI Polish, and Containerized Deployment
-**Domain:** Self-hosted AI content generation and publishing automation with extensible plugin architecture
-**Researched:** 2026-02-26
-**Confidence:** MEDIUM-HIGH
+**Project:** Orbitl v1.1 — Twitter/X Publisher, Short-Form Content Type, Thread Generation, Tech Debt Cleanup
+**Domain:** Adding Twitter/X publishing and short-form content capabilities to an existing AI social content generator
+**Researched:** 2026-02-28
+**Confidence:** HIGH (stack, architecture, pitfalls confirmed against official docs and direct codebase analysis); MEDIUM (API tier pricing and rate limits — X changes these frequently)
 
 ## Executive Summary
 
-Orbitl is a self-hosted, AI-powered content pipeline that takes a creator through research, topic ranking, voice-matched draft generation, human review, and scheduled publishing. Phases 1-7 are complete; this milestone adds three things: (1) a drop-in pluggable provider system for publishers and research adapters, (2) UI polish that makes the existing functionality feel production-ready, and (3) Docker Compose deployment that makes self-hosting a single-command operation. Research confirms that all three are achievable without introducing new runtime dependencies beyond Docker itself — the plugin system uses TypeScript interfaces, a Map-based registry, and `fs.readdirSync` already available in the codebase.
+Orbitl v1.1 extends a mature, working v1.0 system to add Twitter/X as a third publisher platform. The existing pluggable `PublisherProvider` interface absorbs the new platform cleanly — the Twitter provider is structurally identical to the LinkedIn and Substack providers already shipping. The net new scope is precisely bounded: one npm package (`twitter-api-v2`), two PostgreSQL enum value additions (`'twitter'` in `platformEnum`, `'tweet'` in `contentTypeEnum`), four new files, and ten modified files. No subsystem redesign is required. The implementation risk is low because patterns are well-established and the architecture already accounts for multiple platforms.
 
-The recommended architecture is a Registry + Strategy pattern: two registries (one for publisher providers, one for research adapters), convention-based auto-discovery via filename suffix (`.provider.ts`, `.adapter.ts`), and module-level singleton initialization at startup. This pattern is verified at production scale by Slash Engineering's 1M+ LoC TypeScript codebase and mirrors Payload CMS and Fastify's plugin models. The "drop a file, done" contributor experience is achievable — but it requires runtime interface validation at load time to prevent silent failures when interface methods change in future releases.
+The key capability addition — thread generation from approved long-form drafts — is a meaningful content repurposing differentiator that no competitor currently automates. Buffer, Postiz, and Mixpost all require manual thread composition; Orbitl's approach is to call Claude with a structured decomposition prompt against an approved draft and produce a reviewable thread as a new draft. This is the highest-leverage feature in the scope and should be treated as the flagship deliverable of v1.1. The implementation is prompt-engineering and data-model work, not platform API complexity.
 
-The critical risk profile centers on four known code-level issues that must be fixed before containerizing: (1) job scripts require `process.exit(0)` instead of clean DB pool shutdown, (2) queue items can get permanently stuck in `publishing` status with no recovery, (3) the daemon has no SIGTERM handler, and (4) the scheduler has a server-local-time timezone bug. None of these are architectural — they are discrete fixes. Address them first, before writing Dockerfiles, to avoid baking broken behavior into containers.
+The five v1.0 tech debt items must be addressed in this milestone because two of them (publish-now stub, retry bug) will cause observable failures on Twitter that are harder to tolerate than on Substack — duplicate tweets and permanently-stuck queue items are more damaging than a delayed newsletter post. The DISABLE_INTERNAL_CRON env var is critical for any user running the daemon alongside Kubernetes CronJobs: without it, duplicate post events produce duplicate tweets. Fix the tech debt items first so that the Twitter publisher is built on correct queue semantics from the start.
 
 ---
 
 ## Key Findings
 
-### Recommended Stack
-
-The existing stack (Next.js 16.1.6, TypeScript 5, Drizzle ORM, PostgreSQL, Zod 3.25.x, Radix UI, Tailwind CSS 4, node-cron, Anthropic SDK) is locked and not re-evaluated. New additions for this milestone are minimal: no new runtime npm packages are needed for the plugin system. Containerization requires two Dockerfiles (`Dockerfile.web` using `output: standalone`, `Dockerfile.daemon` compiled with tsc), Docker Compose v2, and a minimal custom Helm chart with Bitnami PostgreSQL as a subchart for the optional k3s path.
-
-See `.planning/research/STACK.md` for full details and Dockerfiles.
+### From STACK.md
 
 **Core technologies (new additions only):**
-- TypeScript `interface` + `satisfies` operator: define provider contracts — catches violations at assignment site, better DX than abstract classes
-- `Map<string, Provider>` registry + `fs.readdirSync`: plugin auto-discovery — zero dependencies, native Node.js 20 built-ins
-- `node:22-bookworm-slim` Docker base image: glibc-compatible, avoids Alpine musl issues with `pg` native module
-- `output: standalone` (Next.js config): enables minimal Docker image without `npm install` in the runner stage
-- Docker Compose v2: single-machine orchestration with `condition: service_healthy` startup ordering
-- Custom Helm chart + Bitnami PostgreSQL subchart: minimal k3s deployment path, deferred to v2+
+
+| Technology | Version | Purpose | Rationale |
+|------------|---------|---------|-----------|
+| `twitter-api-v2` | `^1.29.0` | X API client for tweet and thread posting | Only actively-maintained, fully-typed Node.js X API client; ships its own TypeScript definitions; native `tweetThread()` handles reply-chain sequencing automatically |
+| `Intl.DateTimeFormat` (built-in) | Node.js 20 (project baseline) | Scheduler timezone fix | 20-line implementation; no library needed for IANA timezone offset arithmetic at this scope |
+| `drizzle-kit generate` + migrate | 0.31.9 (already installed) | Add `'twitter'` and `'tweet'` enum values | Drizzle Kit ≥0.26.2 generates correct `ALTER TYPE ... ADD VALUE` SQL; no additional tooling required |
 
 **Critical version constraints:**
-- Do NOT upgrade to Zod 4 during this milestone — `zod/v4` subpath has breaking changes in error API
-- `output: standalone` is incompatible with custom `server.js` — the daemon must remain a separate process
-- `postgres:17-alpine` is acceptable for Docker Compose DB (PostgreSQL team maintains the Alpine image; musl concern does not apply to the DB binary)
-- Daemon Helm deployment must be `replicas: 1` — multiple daemon instances would fire duplicate cron ticks
+- Do NOT upgrade Zod to v4 — project uses Zod 3.25.x and `zod/v4` has breaking changes in error API
+- Use OAuth 1.0a with 4 static credentials; do NOT implement OAuth 2.0 PKCE (requires redirect URI, token refresh, callback endpoint — 3x complexity for no user-facing benefit in a self-hosted tool)
+- Thread tweets stored as `JSON.stringify(string[])` in `drafts.body`; do NOT create a new `tweetThreads` table (unnecessary complexity at single-creator scale)
+- X API Free tier allows approximately 500 post creations per month; a 10-tweet thread consumes 10 of those 500 — document this constraint in the channel UI
 
-### Expected Features
+**Authentication choice — OAuth 1.0a:**
+- `appKey`, `appSecret`, `accessToken`, `accessSecret` — 4 static strings, no expiry, no refresh cycle
+- Stored encrypted in `channels.credentials` using existing `encrypt()`/`decrypt()` functions
+- Consistent with LinkedIn provider pattern; zero new auth infrastructure required
 
-Research identifies a clear boundary between what must ship for v1 to feel complete and what can follow in v1.x. Orbitl's competitive moat — voice-matched pipeline with pluggable extensibility — is not shared by any competitor. Buffer owns analytics/scheduling; Postiz/Mixpost own multi-platform self-hosting; no tool combines AI voice cloning from writing samples + research automation + drop-in provider extensibility.
+### From FEATURES.md
 
-See `.planning/research/FEATURES.md` for full feature matrix and competitor analysis.
+**Must ship (v1.1 MVP — non-negotiable):**
+- DB migration: add `'twitter'` to `platformEnum`, `'tweet'` to `contentTypeEnum`
+- `TwitterProvider` implementing the existing `PublisherProvider` interface — OAuth 1.0a credentials, single tweet and thread posting, 280-char-aware `formatDraft()`
+- Tweet content type generation prompt — hook/body/CTA structure with 280-char segment constraints and voice-adapted conciseness
+- Thread generation from approved draft — server action: AI decomposes approved article/note body into tweet array, saves as new `tweet` draft
+- Thread card preview in draft review — renders tweet drafts as a card list with per-card character count indicators (green/yellow/red)
+- Publish-now stub fix — wire route handler to call publisher directly, not just set `publishing` status
+- Retry bug fix — reset `retryCount = 0` on user-initiated retry
+- DISABLE_INTERNAL_CRON env var — add guard at cron registration call site
+- Scheduler timezone fix — apply `ScheduleConfig.timezone` to window hour calculations using `Intl.DateTimeFormat`
+- CreateChannelForm actionable errors — map DB constraint and validation errors to specific user messages
 
-**Must have (table stakes for v1 launch):**
-- Pluggable publisher provider interface — Substack + LinkedIn refactored as reference implementations; auto-discovery from filesystem
-- Pluggable research adapter interface — Exa, Reddit, Substack monitor adapters refactored; consistent extensibility model
-- Single-user authentication — required before Docker deployment recommendation; any network-accessible instance is otherwise open
-- Docker Compose deployment — `docker compose up` brings up web + daemon + PostgreSQL; includes `.env.example`
-- UI polish on critical flows — draft review, queue management, channel setup; empty states; loading states; actionable error messages
-- Timezone-aware scheduling — correctness bug, not polish; "9am" must mean user's 9am
-- DB connection cleanup — clean shutdown for daemon and job runners; prerequisite for Docker
+**Should ship if capacity allows:**
+- Hook variant picker — generate 3 alt opening tweets; surface as chip picker in thread preview (same UX as `headlineOptions[]`)
+- "Generate thread from this draft" one-click button on approved long-form draft review page
 
-**Should have (competitive differentiators, v1.x):**
-- Headline picker UI — `headlineOptions[]` already generated; just needs picker component
-- Voice confidence badge — score already computed; needs UI treatment with tooltip
-- Research source transparency — sources stored in `researchRuns`; surface in draft review
-- AI usage dashboard — aggregate spend by channel/operation; data already in `aiAuditLog`
-- Daily/weekly summary job — automated digest of what was researched, drafted, published
-- Data export — JSON export of drafts, channels, audit log; self-hosted user expectation
-- Retry UI for failed queue items — backend handles retries; just needs a button in queue view
+**Defer to v1.2+:**
+- Media/image attachments on tweets — chunked `v1/media/upload` flow; substantially different from text-only posting
+- Tweet analytics (impressions, engagements) — requires paid X API tier ($100+/month); out of scope
+- Bluesky/Mastodon publisher — community contribution via the existing pluggable provider system
 
-**Defer to v2+:**
-- Helm chart — defer until users actually request k3s/Kubernetes scaling
-- Additional publisher providers (Twitter/X, Medium, Ghost, Bluesky) — let community contribute via pluggable system
-- Additional research adapters (RSS, Hacker News, custom webhooks)
-- Multi-user auth — only if solo-creator assumption is invalidated
+**Competitive differentiation:**
+- Orbitl is the only tool in the competitive set that automates long-form → thread repurposing via AI. Buffer, Postiz, and Mixpost all require manual thread composition. This is the feature to emphasize.
+- Voice adaptation (tweet-specific register constraints in persona prompt) is a secondary differentiator; no competitor applies platform-specific voice tuning.
 
-**Anti-features (explicitly exclude):**
-- Social analytics/engagement metrics — different product; link to native platform analytics
-- Real-time multi-user collaboration — scope expands 3x; contradicts solo-creator positioning
-- Auto-publish without human review — destroys trust; human-in-the-loop is the product's safety moat
-- Built-in image generation — requires separate AI provider, media storage; major scope expansion
-- Mobile app — responsive web is sufficient; PWA installable if needed
+### From ARCHITECTURE.md
 
-### Architecture Approach
+**Existing subsystems touched (additive changes only):**
+- `src/db/schema.ts` — enum additions
+- `src/lib/publishing/publisher-registry.ts` — one import + one `register()` call
+- `src/lib/publishing/scheduler.ts` — add `twitter` key to `DEFAULT_WINDOWS`; add timezone fix
+- `src/lib/generation/generator.ts` — add `tweet` branch in `buildGenerationPrompt()`
+- `src/app/api/queue/[id]/publish-now/route.ts` — replace stub with actual dispatch
+- `src/app/api/queue/[id]/retry/route.ts` — reset `retryCount = 0`
+- `src/daemon/index.ts` — add `DISABLE_INTERNAL_CRON` env var guard
+- `src/components/channels/CreateChannelForm.tsx` — add `twitter` to platform dropdown; better error messages
+- `src/components/drafts/DraftCard.tsx` — add `twitter` to `PLATFORM_STYLES`, `tweet` to `CONTENT_TYPE_STYLES`
 
-The recommended architecture is two registries (Publisher + Research Adapter), each with a typed interface, a Map-based registry class, a glob-based startup loader, and a module-level singleton for initialization. The build order is strict: define interfaces first, build registries second, build loaders third, then migrate existing implementations as reference providers, then update queue-runner and orchestrator to use registry dispatch instead of if/else chains. This sequence ensures each step is independently testable.
-
-See `.planning/research/ARCHITECTURE.md` for full patterns, code examples, and anti-patterns.
-
-**Major components:**
-1. `PublisherRegistry` — maps `channel.platform` string to `PublisherProvider`; dispatches publish calls; replaces if/else chain in `queue-runner.ts`
-2. `ResearchAdapterRegistry` — holds all research adapters; fans out to all registered adapters via `getAll()` + `Promise.allSettled`; replaces hardcoded imports in `orchestrator.ts`
-3. `PublisherProvider` interface — contract: `platform`, `formatContent()`, `publish()`, `validateCredentials()`; enforced with `satisfies` operator at definition site
-4. `ResearchAdapter` interface — contract: `name`, `isConfigured()`, `search()`; `isConfigured()` enables graceful skip when adapter has no API key configured
-5. Startup loader (`loader.ts` per domain) — globs `*.provider.ts` / `*.adapter.ts` directories; dynamically imports; registers; runs once at process start
-6. `init.ts` singleton — for Next.js API routes where dynamic filesystem import at request time is restricted; ensures providers loaded exactly once per process
+**New files:**
+- `src/lib/publishing/twitter.ts` — OAuth 1.0a credential parsing, `publishTweet()`, `publishThread()`, `formatForTwitter()`
+- `src/lib/publishing/providers/twitter.provider.ts` — `PublisherProvider` implementation; routes on `draft.contentType`
+- `src/lib/generation/thread.ts` — pure function: splits draft body into tweet-sized segments; unit-testable with no I/O
+- `src/app/api/drafts/[id]/thread/route.ts` — POST endpoint: validates approved draft exists, calls AI decomposition, saves thread draft
 
 **Key architectural decisions:**
-- Interface + object literal + `satisfies` over abstract class inheritance — simpler, no class hierarchy required, easier for contributors
-- Registry throws on unknown platform (hard failure) rather than silently no-oping — surfaces misconfiguration immediately
-- Research adapter registry uses `getAll()` fan-out; publisher registry uses `get(key)` single lookup — different dispatch semantics for different use cases
-- Next.js App Router requires startup singleton pattern for provider loading (cannot glob filesystem at request time); daemon uses true async glob
-- `platformEnum` in `schema.ts` is a Postgres enum locked to current values — new platforms require a schema migration even if the provider file auto-discovers
+- Thread storage: `JSON.stringify(string[])` in `drafts.body` with `contentType = 'tweet'`; `hook` holds `tweets[0]` for card preview. No new table required.
+- Thread posting: strictly sequential `for...of` loop (not `Promise.all()`); each tweet ID from API response feeds the next tweet's `reply.in_reply_to_tweet_id`.
+- `tweetThread()` from `twitter-api-v2` handles the sequential chaining automatically — prefer this over a manual loop.
+- Publish-now fix: dispatch `provider.publish()` synchronously within the route handler; update `publishQueue` and `drafts` rows to match queue-runner behavior exactly.
 
-### Critical Pitfalls
+**Recommended build order (dependencies determine sequence):**
+1. DB schema + migration (everything downstream depends on enum values)
+2. Twitter API client (`twitter.ts`) — build and unit-test signing logic in isolation
+3. Twitter provider + registry registration + scheduler defaults
+4. Tweet generation prompt branch in `generator.ts` (independent of Steps 2-3; can run in parallel)
+5. Thread splitter pure function (`thread.ts`) — fully independent; unit-testable from day one
+6. Thread API route (depends on Steps 1 and 5)
+7. Tech debt fixes — independent of all Twitter work; do these before wiring up Twitter in production
+8. UI updates — depends on Steps 1 and 3 (Twitter must be registered before channel creation works)
 
-Six critical pitfalls are identified. Four are pre-existing code issues that must be fixed before containerizing. Two are new risks introduced by this milestone's features.
+### From PITFALLS.md
 
-See `.planning/research/PITFALLS.md` for full detail, recovery strategies, and the "Looks Done But Isn't" checklist.
+**Critical pitfalls (data loss or permanent publish failure):**
 
-1. **DB connection pool not closed in job scripts** — `publish.ts` and `research.ts` use `process.exit(0)` as a workaround; replace with `pool.end()` in `finally` blocks before building Docker images. This is confirmed in CONCERNS.md.
+1. **OAuth 2.0 refresh token not persisted (Pitfall 1)** — Moot if using OAuth 1.0a as recommended; only triggered if OAuth 2.0 PKCE is attempted. Prevention: use OAuth 1.0a. Do not implement PKCE.
 
-2. **Stuck `publishing` queue items with no recovery** — queue-runner's inner catch has no further recovery; items freeze in `publishing` state permanently. Add a recovery query at the top of each `runPublishQueue()` call that resets items stuck longer than a configurable timeout (30 min).
+2. **Postgres enum migration transaction violation (Pitfall 2)** — PostgreSQL disallows using a newly-added enum value within the same transaction that added it. Drizzle-kit's `push` command has known bugs with enum change detection. **Prevention: always use `drizzle-kit generate` (not `push`) and run the enum addition as a standalone migration file before any code that uses the new value is deployed.**
 
-3. **Daemon has no SIGTERM handler** — Kubernetes/Docker sends SIGTERM on pod termination; daemon exits mid-publish leaving DB connections open and queue items stuck. Add `process.on('SIGTERM')` handler with `isShuttingDown` flag. Run daemon directly as `node dist/daemon/index.js`, not via npm (npm swallows signals).
+3. **Thread posting race — `Promise.all()` breaks reply chain (Pitfall 3)** — Posting thread tweets concurrently produces standalone tweets, not a thread. Prevention: use `twitter-api-v2`'s `tweetThread()` method; never use `Promise.all()` for thread posting.
 
-4. **`NEXT_PUBLIC_` env vars are baked into Docker image at build time** — runtime `docker-compose.yml` overrides are silently ignored for `NEXT_PUBLIC_` vars. Minimize their use; read config in server components or API routes using unprefixed `process.env`.
+4. **Short-form draft schema mismatch (Pitfall 4)** — The existing draft review UI and generator assume `note`/`article` field shapes. Tweet drafts use only `body` (single tweet or JSON array); `hook` and `cta` are null. Rendering tweet drafts in the long-form card produces broken UI. **Prevention: add a dedicated `tweet` branch in `buildGenerationPrompt()` and a tweet-specific draft review component.**
 
-5. **`depends_on` without `condition: service_healthy` causes startup race conditions** — Docker Compose's default `depends_on` waits for container start, not DB readiness. Use `condition: service_healthy` + postgres `healthcheck` block. Research confirms a dedicated `migrate` service with `condition: service_completed_successfully` is the correct Drizzle migration pattern.
+5. **AI generates tweets over 280 characters despite explicit prompting (Pitfall 5)** — LLMs regularly violate character constraints. Twitter's character counting for emoji and URLs differs from JavaScript's `.length`. Prevention: validate all tweet text server-side using a conservative 270-character limit before inserting the draft; never rely on model self-compliance.
 
-6. **Plugin interface versioning — breaking changes kill contributed providers** — adding a required method to `PublisherProvider` breaks all existing drop-in providers at runtime with a cryptic `TypeError`. Build runtime interface validation into the loader at startup (check each loaded module against required interface shape); treat the provider interface as a versioned public API.
+6. **Free tier monthly write cap affects thread economics (Pitfall 6)** — 500 posts/month; a 10-tweet thread = 10 writes. One active channel can exhaust the free tier in 30 days of daily threads. Prevention: log X API write limit headers on every successful post; surface remaining quota in the channel dashboard; distinguish `403 Forbidden` (monthly cap) from `429 Too Many Requests` (rate limit) in error handling.
+
+**Moderate pitfalls (bugs or UX regressions, not data loss):**
+
+7. **Retry bug — `retryCount` increments on user-initiated retry (Pitfall 7)** — An item at `retryCount = 3` immediately permanently-fails when user clicks Retry because the route increments instead of resets. **Fix: `SET retryCount = 0` in the retry route.**
+
+8. **Publish-now sets `publishing` but daemon never picks it up (Pitfall 8)** — Items in `publishing` state bypass the daemon's `WHERE status = 'queued'` filter; they sit until `recoverStuckItems()` fires 15 minutes later. **Fix: dispatch `provider.publish()` synchronously in the route handler; do not rely on daemon to pick up `publishing`-status items.**
+
+9. **Long-form persona prompt produces generic tweets (Pitfall 9)** — The voice pipeline was optimized for 150-2000 word content; applying it verbatim to tweets produces LinkedIn-style text squished to 280 chars. Prevention: add tweet-specific persona instructions in `buildGenerationPrompt()` that prioritize vocabulary, opinion, and tone over sentence structure patterns. Accept imperfect quality in v1.1; iterate on prompt engineering.
+
+10. **Naive text chunking for thread generation produces incoherent tweets (Pitfall 10)** — Splitting `body` at 280-char boundaries cuts mid-sentence and buries the hook. Prevention: implement thread generation as a dedicated AI call (not text splitting) with structured decomposition prompt — `{ tweets: string[] }` output where each tweet is a complete standalone thought.
+
+11. **DISABLE_INTERNAL_CRON not implemented — duplicate posts from daemon + CronJob (Pitfall 11)** — Without this guard, running both the daemon and a Kubernetes CronJob simultaneously posts duplicate content to Twitter. **Prevention: implement `DISABLE_INTERNAL_CRON` check before shipping Twitter — duplicate tweets are highly visible.**
 
 ---
 
 ## Implications for Roadmap
 
-Based on research, a 4-phase structure is recommended. The ordering is driven by dependency analysis: known code defects must be fixed before containerizing; provider interfaces must be defined before migrating existing implementations; Docker must work before Helm is relevant.
+Based on combined research, a 3-phase structure is recommended. The ordering is driven by the dependency graph: enum migrations gate all feature work; tech debt fixes must precede Twitter publisher wiring to ensure correct queue semantics; UI surfaces last.
 
-### Phase 1: Known Issues and Foundation Cleanup
+### Phase 1: Foundation — DB Migration + Tech Debt Fixes
 
-**Rationale:** Four known code defects (CONCERNS.md items) are prerequisites for containerization and would cause Docker deployments to fail silently or leave broken state. Fix these before writing any new code so new features build on a clean foundation.
-
-**Delivers:**
-- `pool.end()` in all job script `finally` blocks; no more `process.exit(0)` workarounds
-- Stuck-item recovery query in `runPublishQueue()`
-- Timezone fix in `scheduler.ts`
-- SIGTERM handler in `daemon/index.ts`
-- Anthropic pricing moved from hardcoded `audit.ts` to config
-
-**Addresses (from FEATURES.md):** DB connection cleanup (prerequisite for Docker), timezone-aware scheduling (correctness bug)
-
-**Avoids (from PITFALLS.md):** Pitfalls 1 (DB connection leak), 2 (stuck items), 3 (daemon SIGTERM), timing bug in scheduler
-
-**Research flag:** Standard patterns — no additional research needed. All fixes are documented in CONCERNS.md.
-
-### Phase 2: Pluggable Provider System
-
-**Rationale:** This is the architectural heart of the milestone. Build interfaces first (no dependencies), then registries, then loaders, then migrate existing implementations as reference providers, then update callers. ARCHITECTURE.md provides a strict build order that makes each step independently testable. The interface contract is only trustworthy once proven by two real reference implementations (Substack + LinkedIn).
+**Rationale:** The enum migration is the single hardest prerequisite — every downstream feature depends on `'twitter'` and `'tweet'` existing in the database. The five tech debt fixes are independent of Twitter work and should be done here rather than interleaved with feature development, because two of them (publish-now, retry bug) directly affect queue correctness that the Twitter publisher depends on. Fixing them early means Twitter is built on verified, correct queue semantics.
 
 **Delivers:**
-- `PublisherProvider` interface + `PublisherRegistry` + startup loader
-- `ResearchAdapter` interface + `ResearchAdapterRegistry` + startup loader
-- `substack.provider.ts` and `linkedin.provider.ts` as reference publisher implementations
-- `exa.adapter.ts`, `reddit.adapter.ts`, `substack-monitor.adapter.ts` as reference research implementations
-- `queue-runner.ts` updated to use `registry.get(platform)` — zero platform knowledge in queue runner
-- `orchestrator.ts` updated to use `registry.getAll()` fan-out
-- Runtime interface validation in loader (guards against future breaking changes)
-- Provider contract test file contributors can run locally
+- DB migration: `'twitter'` added to `platformEnum`, `'tweet'` added to `contentTypeEnum` (standalone migration, not combined with data changes)
+- Publish-now route: dispatch `provider.publish()` directly; update `publishQueue` and `drafts` rows
+- Retry bug: `retryCount = 0` reset on user-initiated retry
+- DISABLE_INTERNAL_CRON: env var guard added before `schedule()` call in daemon
+- Scheduler timezone fix: `Intl.DateTimeFormat`-based window hour resolution in `scheduler.ts`
+- CreateChannelForm: specific error messages for validation/constraint failures
 
-**Uses (from STACK.md):** TypeScript `satisfies`, `fs.readdirSync`, dynamic `import()`, Zod for credential schema validation, `init.ts` singleton for Next.js compatibility
+**Features from FEATURES.md:** All five tech debt items (required MVP)
 
-**Implements (from ARCHITECTURE.md):** All 6 major components; strict 10-step build order
+**Pitfalls avoided:** Pitfall 2 (enum migration), Pitfall 7 (retry bug), Pitfall 8 (publish-now stub), Pitfall 11 (duplicate posts), Pitfall 12 (scheduler timezone)
 
-**Avoids (from PITFALLS.md):** Pitfall 4 (interface versioning / no runtime validation), if/else dispatch anti-pattern
+**Research flag:** Standard patterns — no additional research needed. Implementation is fully specified in ARCHITECTURE.md.
 
-**Research flag:** Standard patterns — HIGH confidence from Slash Engineering, Payload CMS, Fastify references. No additional research needed.
+---
 
-### Phase 3: Authentication and UI Polish
+### Phase 2: Twitter Publisher + Content Type
 
-**Rationale:** Auth is required before Docker deployment can be recommended to any user. UI polish (empty states, loading states, actionable errors) is a force multiplier that affects every feature — building shared UI components here means they're available for all polish work. These two concerns can be worked in parallel but logically belong in the same phase as they both gate the "ready for real users" threshold.
+**Rationale:** With correct enum values in the DB and correct queue semantics, the Twitter publisher can be built safely. The natural build sequence (API client → provider → generation prompt → thread splitter → thread route) means each step is independently testable before the next begins. Character limit validation and error handling must be built here — not retrofitted — because Pitfalls 3, 5, and 6 all manifest at publish time.
 
 **Delivers:**
-- Single-user authentication (password or token); middleware protecting all `/api/**` routes
-- Empty states with next-step guidance for channels, drafts, queue
-- Loading/skeleton states for research and generation flows
-- Actionable error messages with platform-specific context (e.g., "LinkedIn token expired — reconnect")
-- Retry UI button in queue view
-- "Test connection" action when saving channel credentials
-- Queue management improvements: cancel, reorder
+- `twitter.ts`: OAuth 1.0a credential parsing, `publishTweet()`, `publishThread()`, `formatForTwitter()` with 270-char enforcement
+- `twitter.provider.ts`: `PublisherProvider` implementation registered in `publisher-registry.ts` and `scheduler.ts`
+- Tweet generation prompt branch in `generator.ts` with tweet-specific voice constraints
+- `thread.ts` pure function: AI-based decomposition (not naive chunking) of long-form draft into tweet array
+- Thread API route `POST /api/drafts/[id]/thread`: validates approved draft → AI decomposition → inserts thread draft
+- Character count validation server-side before draft insert (270-char conservative limit)
+- Twitter API error handling: distinguish `401` (bad credentials), `403` (monthly cap), `429` (rate limit) with specific user-facing messages
+- Log X API write limit response headers on every successful post
 
-**Addresses (from FEATURES.md):** Authentication (P1), UI polish (P1), retry UI for queue failures (P2)
+**Features from FEATURES.md:** TwitterProvider, tweet content type, thread generation from approved draft (all required MVP)
 
-**Avoids (from PITFALLS.md):** Security pitfall (unauthenticated API routes); UX pitfalls (silent adapter failure, no credential validation, empty states)
+**Pitfalls avoided:** Pitfall 3 (thread race — use `tweetThread()`), Pitfall 4 (schema mismatch — dedicated tweet draft field mapping), Pitfall 5 (char limit overrun — server-side validation), Pitfall 6 (monthly cap handling), Pitfall 9 (voice prompt), Pitfall 10 (AI decomposition not text chunking), Pitfall 13 (document X Developer Portal app-in-project requirement in UI)
 
-**Research flag:** Auth implementation will likely need phase-level research — pattern choice (NextAuth, custom JWT, passkey) depends on deployment target and session requirements. Recommend `/gsd:research-phase` when planning this phase.
+**Research flag:** Standard patterns — HIGH confidence from official X API docs and `twitter-api-v2` library documentation. No additional research needed.
 
-### Phase 4: Docker Compose Deployment
+---
 
-**Rationale:** Depends on all prior phases. Auth must exist (Phase 3), DB cleanup must work (Phase 1), and providers must load cleanly at container startup (Phase 2). With those in place, Docker Compose is straightforward and well-documented.
+### Phase 3: UI — Twitter Channel + Thread Preview
 
-**Delivers:**
-- `Dockerfile.web` (multi-stage, `output: standalone`, `node:22-bookworm-slim`)
-- `Dockerfile.daemon` (multi-stage, compiled with tsc, direct `node` entrypoint for signal propagation)
-- `docker-compose.yml` with postgres (health check), migrate (one-shot), web, daemon services
-- `.env.example` with every required variable documented
-- `docker compose up` works on a fresh clone with populated `.env`
-- Structured JSON logging (replace console.log before shipping logs to any aggregator)
-
-**Uses (from STACK.md):** `node:22-bookworm-slim`, `postgres:17-alpine`, Docker Compose v2, `output: standalone`, `condition: service_healthy`, `condition: service_completed_successfully`
-
-**Avoids (from PITFALLS.md):** Pitfall 1 (`NEXT_PUBLIC_` baked at build time), Pitfall 5 (`depends_on` without health check), signal propagation pitfall, Helm secrets pitfall
-
-**Research flag:** Standard patterns — HIGH confidence from official Next.js docs, Vercel with-docker example, official Docker Compose docs. No additional research needed.
-
-### Optional Phase 5: v1.x Enhancements (Post-Launch)
-
-**Rationale:** These features are differentiating and valued but not required for v1 launch. All leverage data that already exists in the system — they are display and aggregation work, not new data collection.
+**Rationale:** UI work is last because it depends on the provider being registered (channel creation requires `twitter` to be a valid platform option) and on the thread draft format being defined (thread preview component needs to know the `body` JSON schema). These are entirely additive UI changes against already-working backend features.
 
 **Delivers:**
-- Headline picker UI (surfaces existing `headlineOptions[]`)
-- Voice confidence badge (surfaces existing score with tooltip)
-- Research source transparency in draft review
-- AI usage dashboard (aggregate `aiAuditLog` by channel/operation)
-- Daily/weekly summary job
-- Data export (JSON)
+- `CreateChannelForm`: add `twitter` to platform dropdown; render the 4 OAuth 1.0a credential fields (driven by `configSchema`); display free-tier rate limit information
+- `DraftCard`: add `twitter` to `PLATFORM_STYLES`, `tweet` to `CONTENT_TYPE_STYLES`
+- Thread card preview component: renders tweet drafts as numbered card list with per-tweet character count indicators (green ≤240 / yellow ≤270 / red >270)
+- Tweet single-draft preview: shows `hook` text with 280-char counter
+- Optionally: hook variant picker (3 alt opening tweets; chip UI matching existing `headlineOptions[]` pattern)
+- Optionally: "Generate thread from this draft" button on approved long-form draft review page
 
-**Deferred to v2+:**
-- Helm chart — build only when users request k3s/Kubernetes scaling
-- Additional publisher providers — community contribution via pluggable system
-- Multi-user auth — only if solo-creator assumption is invalidated
+**Features from FEATURES.md:** Thread card preview (required MVP); hook variant picker and thread-from-draft button (capacity permitting)
+
+**Pitfalls avoided:** Pitfall 4 (tweet-specific review component), Pitfall 14 (documentation in UI that X Developer Portal requires an App inside a Project)
+
+**Research flag:** Standard patterns — UI components extend existing Radix UI / Tailwind CSS patterns. No additional research needed.
+
+---
 
 ### Phase Ordering Rationale
 
-- **Cleanup before build:** Known defects in job scripts and the daemon would silently break Docker deployments. Fixing them in Phase 1 means every subsequent phase builds on verified foundations.
-- **Interfaces before implementations:** ARCHITECTURE.md's build order is strict — define interfaces, then registries, then loaders, then migrate, then update callers. This order ensures each step is testable and no phase depends on an interface that changes in the next step.
-- **Auth before Docker:** A Docker Compose deployment without auth makes `/api/channels`, `/api/drafts`, and `/api/queue` publicly accessible over the network. Auth must exist before the deployment is recommended to anyone.
-- **Docker before Helm:** The Helm chart wraps Docker images. Docker must work first. Helm is explicitly deferred to v2+.
+- **Migration before everything:** The enum values are a hard prerequisite. Nothing else can be developed or tested without them.
+- **Tech debt before Twitter:** The publish-now stub and retry bug create incorrect queue behavior that would silently affect Twitter from day one. Fix queue semantics first, then build the publisher.
+- **DISABLE_INTERNAL_CRON before Twitter publish:** Duplicate tweets are observable and damaging in a way that duplicate Substack or LinkedIn posts are not. This must be in place before the Twitter channel type is available to users.
+- **Provider before UI:** Channel creation UI requires Twitter to be a registered platform. Provider implementation must be complete and registered before the UI work begins.
+- **Tech debt in Phase 1, not interleaved:** Doing tech debt cleanup in a dedicated phase avoids context-switching and ensures all fixes are verified before feature development begins.
 
 ### Research Flags
 
-Phases likely needing `/gsd:research-phase` during planning:
-- **Phase 3 (Auth):** Pattern choice (NextAuth, custom JWT, passkey) is non-trivial; depends on session requirements, upgrade path to multi-user, and Next.js App Router compatibility. Research needed before planning.
+Phases likely needing `/gsd:research-phase` during planning: **None.** All three phases are fully specified in the research files with code examples, file locations, and explicit build orders.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Cleanup):** All fixes are explicitly documented in CONCERNS.md; implementation is unambiguous.
-- **Phase 2 (Plugin System):** Architecture is fully specified in ARCHITECTURE.md with code examples; HIGH confidence from verified production references.
-- **Phase 4 (Docker Compose):** Official Next.js, Docker, and Docker Compose documentation covers all patterns; Dockerfiles are fully specified in STACK.md.
+Phases with standard, well-documented patterns (skip research-phase):
+- Phase 1 (Foundation): all fixes are confirmed by direct codebase inspection; implementation is unambiguous
+- Phase 2 (Twitter Publisher): API patterns HIGH confidence from official X API docs; `twitter-api-v2` library patterns confirmed; architecture fully specified in ARCHITECTURE.md
+- Phase 3 (UI): entirely additive Radix UI / Tailwind CSS component work matching existing patterns
 
 ---
 
@@ -235,54 +219,48 @@ Phases with standard patterns (skip research-phase):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM-HIGH | Core plugin patterns HIGH (official TypeScript/Node docs); Docker patterns HIGH (official Next.js + Docker docs); Helm patterns MEDIUM (k3s Helm Controller docs + community examples) |
-| Features | MEDIUM | No direct user research; drawn from competitor analysis (Buffer, Postiz, Mixpost) and product positioning inference; competitor analysis is solid, priority judgments are opinionated estimates |
-| Architecture | HIGH | Registry + Strategy pattern verified against production system (Slash Engineering 1M+ LoC); confirmed by Payload CMS and Fastify official docs; existing codebase directly inspected |
-| Pitfalls | HIGH | Critical pitfalls confirmed by direct codebase analysis (CONCERNS.md, queue-runner.ts, daemon/index.ts); Docker pitfalls from official Next.js docs and GitHub Discussions |
+| Stack | HIGH | `twitter-api-v2` library confirmed active, typed, `tweetThread()` confirmed; Drizzle enum migration behavior confirmed against known GitHub issues; OAuth 1.0a confirmed valid for POST /2/tweets |
+| Features | HIGH | Feature boundaries confirmed against official X API docs, competitor analysis (Buffer, Postiz, Mixpost), and direct codebase inspection; MVP definition is clear |
+| Architecture | HIGH | Primary source: direct codebase read of existing provider files, schema, generator, queue-runner, daemon; build order confirmed against dependency graph; all patterns additive to existing, working architecture |
+| Pitfalls | HIGH (API-level pitfalls), MEDIUM (rate limit numbers) | Critical pitfalls confirmed by direct codebase inspection and official X API docs; rate limit numbers (500/month free tier) confirmed from multiple sources but X changes pricing frequently — verify at docs.x.com before shipping |
 
-**Overall confidence:** MEDIUM-HIGH
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Auth implementation pattern:** Research did not evaluate specific auth libraries (NextAuth vs. custom JWT vs. passkey). This must be resolved in Phase 3 planning via `/gsd:research-phase` before implementation begins.
-- **`platformEnum` Postgres enum expansion:** Adding new platform providers via the plugin system still requires a DB schema migration to extend the enum. This constraint is noted but a migration strategy for community-contributed providers is not fully designed — needs attention when a third-party provider is first added (v2+).
-- **`fast-glob` vs. `readdirSync`:** Research leaves this decision open — `readdirSync` is sufficient for a single flat directory and has no extra dependency; `fast-glob` is warranted only if multi-directory discovery is needed. Decide during Phase 2 planning.
-- **Structured logging format:** Research flags the need to move from console.log to structured JSON logging before containerizing, but does not recommend a specific library (pino, winston, etc.). Decide during Phase 4 planning — pino is the standard choice for Node.js + Docker.
-- **Helm chart scope:** Deferred to v2+, but when it becomes relevant, the k3s Helm Controller pattern (STACK.md) and secrets management approach (PITFALLS.md) are already specified.
+- **X API free tier monthly cap exact number:** Research cites 500 posts/month from multiple sources, but X has changed this number historically and official documentation is inconsistent. Verify the current number at `docs.x.com/x-api/fundamentals/rate-limits` immediately before shipping the channel configuration UI copy.
+- **Thread character count validation for emoji and non-BMP Unicode:** Twitter counts emoji as 2 characters and URLs always as 23 characters, regardless of actual length. JavaScript's `.length` returns different values. The 270-character conservative limit provides a buffer, but a production-quality implementation should use Twitter's weighted character count algorithm. Acceptable to ship with the conservative limit in v1.1 and address in v1.2 if character-limit publish failures are observed.
+- **Thread engagement sweet spot:** Research cites 5-10 tweets with 7 as the engagement sweet spot, sourced from community analysis rather than Twitter's own data. The AI decomposition prompt should target 5-8 tweets as a conservative range. This can be tuned based on creator feedback post-launch.
+- **Voice quality for tweets:** Research acknowledges that long-form persona prompts do not translate cleanly to 280-character content (Pitfall 9). The tweet-specific prompt additions in Phase 2 are an improvement, not a solution. Expect creators to report that generated tweets "don't sound like me" more frequently than for long-form content. This is a known limitation to document in the UI during v1.1.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Next.js Self-Hosting Guide (official)](https://nextjs.org/docs/app/guides/self-hosting) — Docker deployment, `output: standalone`, env var runtime behavior
-- [Next.js `output` config reference (official)](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output) — standalone output mechanics and caveats
-- [Vercel with-docker official example](https://github.com/vercel/next.js/tree/canary/examples/with-docker) — multi-stage Dockerfile confirmed with `node:22.14-slim`
-- [k3s Helm Controller docs](https://docs.k3s.io/helm) — k3s native Helm support
-- [TypeScript `satisfies` operator docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html) — interface enforcement at assignment site
-- [Payload CMS plugin architecture (official docs)](https://payloadcms.com/docs/plugins/build-your-own) — plugin array registration pattern
-- [Fastify plugin system (official docs)](https://fastify.dev/docs/latest/Reference/Plugins/) — encapsulation and explicit registration
-- [TypeScript adapter pattern (refactoring.guru)](https://refactoring.guru/design-patterns/adapter/typescript/example) — canonical interface + implements reference
-- [Docker Compose startup ordering (official)](https://docs.docker.com/compose/how-tos/startup-order/) — `depends_on` health check behavior
-- [node-postgres Pool documentation](https://node-postgres.com/apis/pool) — `pool.end()` requirement for clean script exit
-- [Zod v4 release notes](https://zod.dev/v4) — v4 at `zod/v4` subpath; breaking changes confirmed
-- Orbitl CONCERNS.md codebase audit — direct code analysis; HIGH confidence
+- Direct codebase analysis: `src/db/schema.ts`, `src/lib/publishing/`, `src/lib/generation/generator.ts`, `src/daemon/index.ts`, `src/app/api/queue/` — confirmed existing implementations, bugs, TODOs
+- [X API v2 Create Post (official)](https://docs.x.com/x-api/posts/create-post) — thread via `reply.in_reply_to_tweet_id` confirmed; no batch thread endpoint
+- [X API Rate Limits (official)](https://docs.x.com/x-api/fundamentals/rate-limits) — 100 POST requests per 15 min per user; free tier caps
+- [X OAuth 1.0a (official)](https://developer.x.com/en/docs/authentication/oauth-1-0a) — 4-credential server-side pattern confirmed; no expiry
+- [X OAuth 2.0 PKCE (official)](https://developer.twitter.com/en/docs/authentication/oauth-2-0/authorization-code) — browser redirect required, 2h access token expiry — basis for rejecting PKCE
+- [PLhery/node-twitter-api-v2 GitHub](https://github.com/PLhery/node-twitter-api-v2) — `tweetThread()` confirmed; OAuth 1.0a initialization confirmed; bundled TypeScript types
+- [Drizzle ORM pgEnum docs](https://orm.drizzle.team/docs/column-types/pg) — `ADD VALUE` migration support in drizzle-kit ≥0.26.2 confirmed
+- [Drizzle ORM GitHub issues #2389, #3466, #4295](https://github.com/drizzle-team/drizzle-orm/issues/2389) — enum migration pitfalls confirmed
+- [MDN: Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) — IANA timezone support in Node.js confirmed
 
 ### Secondary (MEDIUM confidence)
-- [Slash Engineering: Scaling 1M lines of TypeScript](https://puzzles.slash.com/blog/scaling-1m-lines-of-typescript-registries) — registry + discriminator + loadModules auto-discovery pattern at production scale
-- [Snyk: Choosing the best Node.js Docker image](https://snyk.io/blog/choosing-the-best-node-js-docker-image/) — `node:bookworm-slim` vs Alpine recommendation
-- [Bitnami PostgreSQL Helm Chart (Artifact Hub)](https://artifacthub.io/packages/helm/bitnami/postgresql) — chart version 18.4.0 current
-- [Node.js graceful shutdown with SIGTERM (Rising Stack)](https://blog.risingstack.com/graceful-shutdown-node-js-kubernetes/) — SIGTERM handler pattern
-- [Node.js Docker signal handling best practices (goldbergyoni)](https://github.com/goldbergyoni/nodebestpractices/blob/master/sections/docker/graceful-shutdown.md) — direct node entrypoint for signal propagation
-- [ArjanCodes: Plugin architecture best practices](https://arjancodes.com/blog/best-practices-for-decoupling-software-using-plugins/) — plugin/provider pattern design
-- [Stateful: Node.js plugin system with Map-based registry](https://stateful.com/blog/build-a-plugin-system-with-node) — registry pattern implementation
+- [X Developer Community: OAuth 1.0a for API v2](https://devcommunity.x.com/t/can-i-just-use-oauth-1-0a-to-post-a-tweet-with-api-v2/201240) — confirmed valid for POST /2/tweets
+- [X Developer Community: Free tier rate limits](https://devcommunity.x.com/t/specifics-about-the-new-free-tier-rate-limits/229761) — 500 posts/month free tier (verify before shipping)
+- [X Developer Community: Thread API](https://devcommunity.x.com/t/api-endpoint-for-twitter-threads-or-chained-tweets/185818) — no batch thread endpoint confirmed
+- [Writing Effective Twitter Threads in 2025 — usevisuals.com](https://usevisuals.com/blog/writing-effective-twitter-threads-2025) — thread structure best practices; 5-10 tweet range
+- [Automate Blog to Twitter Thread — analyticsvidhya.com](https://www.analyticsvidhya.com/blog/2025/01/automate-blog-to-twitter-thread/) — AI decomposition prompt patterns
+- [npm: twitter-api-v2](https://www.npmjs.com/package/twitter-api-v2) — v1.29.0 current; 244 downstream dependents
 
 ### Tertiary (MEDIUM-LOW confidence)
-- Buffer, Postiz, Mixpost product sites — competitor feature landscape; no instrumented user research available
-- [semver-ts.org: TypeScript plugin interface versioning](https://www.semver-ts.org/) — versioning strategy for provider interfaces
-- [iodigital: Function registry pattern](https://techhub.iodigital.com/articles/function-registry-pattern-react) — eliminating if/else with registry + canHandle
+- Buffer, Postiz, Mixpost — competitor feature analysis for thread creation and scheduling; no programmatic access — manual review
+- [AI-generated tweet voice quality analysis — apaya.com](https://apaya.com/blog/ai-twitter-x-post-generator) — voice quality limitations of LLM tweet generation
 
 ---
 
-*Research completed: 2026-02-26*
+*Research completed: 2026-02-28*
 *Ready for roadmap: yes*
