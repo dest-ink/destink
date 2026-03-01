@@ -70,10 +70,12 @@ process.on('SIGINT', () => {
 
 // Initialize provider registries before first tick.
 // If initialization fails, let it crash — a daemon without registries cannot function.
-await initRegistries();
+(async () => {
+  await initRegistries();
 
-task = schedule('* * * * *', () => {
-  tick().catch(console.error);
-});
+  task = schedule('* * * * *', () => {
+    tick().catch(console.error);
+  });
 
-console.log('[daemon] Publish loop started — checking queue every minute');
+  console.log('[daemon] Publish loop started — checking queue every minute');
+})();

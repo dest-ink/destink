@@ -1,4 +1,3 @@
-import path from 'path';
 import { Registry } from '@/lib/providers/registry';
 import { PublisherProvider, PROVIDER_API_VERSION } from '@/lib/providers/types';
 
@@ -38,34 +37,44 @@ export function isPublisherProvider(val: unknown): val is PublisherProvider {
  * After initialisation, use `publisherRegistry.get(platform)` to dispatch
  * publish calls without if/else chains.
  */
-export const publisherRegistry = new Registry<PublisherProvider>(p => p.platform);
+const globalForPublisher = globalThis as typeof globalThis & {
+  publisherRegistry?: Registry<PublisherProvider>;
+};
+
+export const publisherRegistry =
+  globalForPublisher.publisherRegistry ??
+  new Registry<PublisherProvider>((p) => p.platform);
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPublisher.publisherRegistry = publisherRegistry;
+}
 
 // ─── Initializer ─────────────────────────────────────────────────────────────
 
 /**
- * Scan the `providers/` directory adjacent to this file and register every
- * valid *.provider.ts (or *.provider.js in production) file.
+ * Import and register all publisher providers.
  *
- * Invalid modules emit a console.warn and are skipped — one bad provider
- * never blocks others from loading.
- *
- * Uses `process.cwd()` + relative path so this works with both tsx (dev) and
- * Next.js build output where __dirname / import.meta.url are unreliable.
+ * Uses explicit imports so the module works correctly in both bundled (Next.js
+ * webpack / Turbopack) and unbundled (tsx) contexts. Adding a new provider
+ * requires adding an import + register call here.
  */
 export async function initPublisherRegistry(): Promise<void> {
-  const providersDir = path.resolve(process.cwd(), 'src/lib/publishing/providers');
-  // Development: tsx runs .ts source files directly.
-  await publisherRegistry.loadDirectory(
-    providersDir,
-    '.provider.ts',
-    (mod) => (isPublisherProvider(mod) ? mod : null),
-  );
-  // Production builds compile .ts to .js — scan both extensions.
-  // Registry.loadDirectory() does not check frozen flag internally,
-  // so sequential calls are safe (Map.set is idempotent by key).
-  await publisherRegistry.loadDirectory(
-    providersDir,
-    '.provider.js',
-    (mod) => (isPublisherProvider(mod) ? mod : null),
-  );
+  if (publisherRegistry.keys().length > 0) return;
+
+  const { default: linkedin } = await import('./providers/linkedin.provider');
+  const { default: substack } = await import('./providers/substack.provider');
+
+  if (isPublisherProvider(linkedin)) {
+    publisherRegistry.register(linkedin);
+  } else {
+    console.warn('[Registry] Skipping invalid publisher provider: linkedin');
+  }
+
+  if (isPublisherProvider(substack)) {
+    publisherRegistry.register(substack);
+  } else {
+    console.warn('[Registry] Skipping invalid publisher provider: substack');
+  }
+
+  publisherRegistry.freeze();
 }

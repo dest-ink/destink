@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3021",
-    "dev:daemon": "tsx watch --env-file=.env src/daemon/index.ts",
+    "dev:daemon": "tsx --env-file=.env src/daemon/index.ts",
     "job:publish": "tsx --env-file=.env src/jobs/publish.ts",
     "job:daily-summary": "tsx --env-file=.env src/jobs/daily-summary.ts",
     "job:research": "tsx --env-file=.env src/jobs/research.ts",
