@@ -6,7 +6,7 @@
 
 ## Overview
 
-Orbitl is a personal content automation system that handles the full lifecycle from topic discovery to scheduled publishing across multiple Substack publications and LinkedIn profiles. It is designed as a private, self-hosted tool that works while you're away — researching, drafting, and publishing according to your voice, views, and configured schedules.
+Orbitl is an open-source personal content automation system that handles the full lifecycle from topic discovery to scheduled publishing across multiple Substack publications and LinkedIn profiles. It is designed as a private, self-hosted tool that works while you're away — researching, drafting, and publishing according to your voice, views, and configured schedules.
 
 **Core principles:**
 - No content ever publishes without explicit human approval
