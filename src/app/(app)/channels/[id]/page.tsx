@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/db/client';
-import { channels, aiAuditLog } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { channels, aiAuditLog, researchRuns } from '@/db/schema';
+import { eq, sql, desc } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChannelCostSummary } from '@/components/channels/ChannelCostSummary';
+import { ChannelTabs } from '@/components/channels/ChannelTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +41,21 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
     operationCount: Number(costResult.operationCount),
   };
 
+  // Fetch last research run for status display
+  const [lastRun] = await db
+    .select({
+      runAt: researchRuns.runAt,
+      topicsFound: researchRuns.topicsFound,
+    })
+    .from(researchRuns)
+    .where(eq(researchRuns.channelId, id))
+    .orderBy(desc(researchRuns.runAt))
+    .limit(1);
+
+  const lastResearchRun = lastRun
+    ? { runAt: lastRun.runAt.toISOString(), topicCount: lastRun.topicsFound?.length ?? 0 }
+    : null;
+
   const platformStyle = PLATFORM_STYLES[channel.platform] ?? {
     label: channel.platform,
     color: 'bg-muted text-muted-foreground border-border',
@@ -48,14 +63,12 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      {/* Back link */}
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2">
           <Link href="/channels">&larr; Back to channels</Link>
         </Button>
       </div>
 
-      {/* Channel header */}
       <div className="flex items-center gap-3 mb-8">
         <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
         <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
@@ -63,8 +76,13 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
         </Badge>
       </div>
 
-      {/* Cost summary */}
-      <ChannelCostSummary costSummary={costSummary} />
+      <ChannelTabs
+        channelId={channel.id}
+        costSummary={costSummary}
+        personaPrompt={channel.personaPrompt}
+        researchConfig={channel.researchConfig ?? null}
+        lastResearchRun={lastResearchRun}
+      />
     </div>
   );
 }
