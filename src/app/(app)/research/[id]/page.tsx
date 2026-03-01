@@ -5,7 +5,6 @@ import { researchers, researcherChannels, channels } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { ResearcherForm } from '@/components/research/ResearcherForm';
-import { ResearchRunPanel } from '@/components/research/ResearchRunPanel';
 import type { ResearchSourceConfig } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -36,33 +35,34 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
     .orderBy(desc(channels.createdAt));
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2">
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b border-border shrink-0">
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/research">&larr; Back to research</Link>
         </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold text-foreground">{researcher.name}</h1>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/research/${id}/runs`}>View Runs</Link>
+          </Button>
+        </div>
       </div>
 
-      <h1 className="text-xl font-semibold text-foreground mb-8">{researcher.name}</h1>
-
-      {/* Run Research panel */}
-      <div className="mb-8 border border-border rounded-lg p-5 bg-card">
-        <h2 className="text-sm font-medium text-foreground mb-3">Run Research</h2>
-        <ResearchRunPanel researcherId={id} />
+      <div className="flex-1 p-6 overflow-y-auto">
+        {/* Edit form */}
+        <ResearcherForm
+          researcher={{
+            id: researcher.id,
+            name: researcher.name,
+            topics: researcher.topics as string[],
+            keywords: researcher.keywords as string[],
+            sourceConfig: researcher.sourceConfig as ResearchSourceConfig,
+          }}
+          linkedChannelIds={linkedChannelIds}
+          allChannels={allChannels}
+        />
       </div>
-
-      {/* Edit form */}
-      <ResearcherForm
-        researcher={{
-          id: researcher.id,
-          name: researcher.name,
-          topics: researcher.topics as string[],
-          keywords: researcher.keywords as string[],
-          sourceConfig: researcher.sourceConfig as ResearchSourceConfig,
-        }}
-        linkedChannelIds={linkedChannelIds}
-        allChannels={allChannels}
-      />
     </div>
   );
 }
