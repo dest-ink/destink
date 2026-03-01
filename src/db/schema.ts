@@ -93,9 +93,30 @@ export const publishQueue = pgTable('publish_queue', {
   createdAt: timestamptz('created_at').defaultNow().notNull(),
 });
 
+export const researchers = pgTable('researchers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  topics: jsonb('topics').$type<string[]>().default([]).notNull(),
+  keywords: jsonb('keywords').$type<string[]>().default([]).notNull(),
+  sourceConfig: jsonb('source_config').$type<ResearchSourceConfig>().notNull(),
+  createdAt: timestamptz('created_at').defaultNow().notNull(),
+  updatedAt: timestamptz('updated_at').defaultNow().notNull(),
+});
+
+export const researcherChannels = pgTable('researcher_channels', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  researcherId: uuid('researcher_id')
+    .references(() => researchers.id, { onDelete: 'cascade' })
+    .notNull(),
+  channelId: uuid('channel_id')
+    .references(() => channels.id, { onDelete: 'cascade' })
+    .notNull(),
+});
+
 export const researchRuns = pgTable('research_runs', {
   id: uuid('id').primaryKey().defaultRandom(),
   channelId: uuid('channel_id').references(() => channels.id, { onDelete: 'cascade' }).notNull(),
+  researcherId: uuid('researcher_id').references(() => researchers.id, { onDelete: 'set null' }),
   sourcesSearched: jsonb('sources_searched').$type<ResearchSource[]>(),
   topicsFound: jsonb('topics_found').$type<TopicRecommendation[]>(),
   draftsGenerated: jsonb('drafts_generated').$type<string[]>(),
@@ -161,6 +182,16 @@ export interface VoiceProfile {
   topicsToAvoid: string[];
   vocabularyNotes: string;
   idealReader: string;
+}
+
+export interface ResearchSourceConfig {
+  subreddits: string[];
+  substackFeeds: string[];
+  searchQueryTemplates: string[];
+  excludedDomains: string[];
+  contentTypeMix: { note: number; article: number };
+  maxDraftsPerRun: number;
+  scheduleHours: number;
 }
 
 export interface ResearchSource {

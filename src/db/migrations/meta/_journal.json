@@ -22,6 +22,13 @@
       "when": 1772303802594,
       "tag": "0002_conscious_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772384251103,
+      "tag": "0003_regular_karma",
+      "breakpoints": true
     }
   ]
 }
