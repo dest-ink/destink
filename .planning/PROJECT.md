@@ -45,7 +45,18 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 
 ### Active
 
-No active milestone. Ready for v1.2.
+## Current Milestone: v1.2 Content Pipeline Automation
+
+**Goal:** Wire up the full research-to-publish pipeline — research runs automatically generate drafts, users approve them, then schedule or publish immediately. Manual and automated workflows both supported.
+
+**Target features:**
+- Research runs auto-generate drafts (using maxDraftsPerRun and contentTypeMix settings) for linked channels only
+- Manual "generate drafts" button on research run detail page
+- Automation scheduling (cron-based: "run research every night at 2am" with optional auto-draft generation)
+- Separation of automation config from research config
+- All generated drafts go to approval queue — user must approve before publishing
+- Post-approval: schedule for later or publish immediately
+- Clean up unused/confusing config fields (notePercent label, scheduleHours)
 
 ### Out of Scope
 
@@ -94,4 +105,4 @@ No active milestone. Ready for v1.2.
 | Next.js standalone output for Docker | Minimal ~150MB production image vs ~1GB with full node_modules | ✓ Good |
 
 ---
-*Last updated: 2026-03-01 after v1.1 Research Overhaul shipped*
+*Last updated: 2026-03-01 after v1.2 Content Pipeline Automation started*

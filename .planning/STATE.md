@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Research Overhaul
-status: complete
+milestone: v1.2
+milestone_name: Content Pipeline Automation
+status: active
 last_updated: "2026-03-01T00:00:00.000Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Automated, high-quality content that sounds like the creator wrote it — from research to published post, hands-off except for final approval.
-**Current focus:** v1.1 complete — ready for next milestone
+**Current focus:** v1.2 Content Pipeline Automation — research runs auto-generate drafts, approval queue, scheduling
 
 ## Current Position
 
-Phase: 11 of 11 (Channel Page Cleanup)
-Plan: All complete
-Status: Milestone complete
-Last activity: 2026-03-01 - Completed quick task 001: Split research page into configuration and runs with full run visibility
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-01 — Milestone v1.2 started
 
-Progress: [██████████] 100% (v1.1)
+Progress: [░░░░░░░░░░] 0% (v1.2)
 
 ## Performance Metrics
 
