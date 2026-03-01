@@ -9,30 +9,30 @@ Requirements for v1.1 milestone (Research Overhaul). Each maps to roadmap phases
 
 ### Research Entity
 
-- [ ] **RES-01**: User can create a named researcher with topics, keywords, and source config
-- [ ] **RES-02**: User can link a researcher to one or more channels via checkbox multi-select
-- [ ] **RES-03**: User can edit an existing researcher's name, config, and channel assignments
-- [ ] **RES-04**: User can delete a researcher (cascades join table, nullifies run history)
-- [ ] **RES-05**: Existing per-channel research configs are migrated to standalone researchers
+- [x] **RES-01**: User can create a named researcher with topics, keywords, and source config
+- [x] **RES-02**: User can link a researcher to one or more channels via checkbox multi-select
+- [x] **RES-03**: User can edit an existing researcher's name, config, and channel assignments
+- [x] **RES-04**: User can delete a researcher (cascades join table, nullifies run history)
+- [x] **RES-05**: Existing per-channel research configs are migrated to standalone researchers
 
 ### Research Page
 
-- [ ] **PAGE-01**: User sees "Research" in the sidebar nav between Channels and Drafts
-- [ ] **PAGE-02**: Research list page shows all researchers with linked channel badges and last run info
-- [ ] **PAGE-03**: User can navigate to create a new researcher from the Research page
-- [ ] **PAGE-04**: User can navigate to a researcher detail page to edit config and run research
+- [x] **PAGE-01**: User sees "Research" in the sidebar nav between Channels and Drafts
+- [x] **PAGE-02**: Research list page shows all researchers with linked channel badges and last run info
+- [x] **PAGE-03**: User can navigate to create a new researcher from the Research page
+- [x] **PAGE-04**: User can navigate to a researcher detail page to edit config and run research
 
 ### Live Progress
 
-- [ ] **PROG-01**: User can click "Run Research" on a researcher and see a live step-by-step log
-- [ ] **PROG-02**: Each adapter start/result/error streams as a separate log line with color coding
-- [ ] **PROG-03**: Topic ranking step appears in the log before completion
-- [ ] **PROG-04**: Errors display inline in the log (red) without crashing the UI
+- [x] **PROG-01**: User can click "Run Research" on a researcher and see a live step-by-step log
+- [x] **PROG-02**: Each adapter start/result/error streams as a separate log line with color coding
+- [x] **PROG-03**: Topic ranking step appears in the log before completion
+- [x] **PROG-04**: Errors display inline in the log (red) without crashing the UI
 
 ### Channel Cleanup
 
-- [ ] **CLEAN-01**: Research Config tab is removed from channel detail page
-- [ ] **CLEAN-02**: Channel overview links to /research instead of showing run button
+- [x] **CLEAN-01**: Research Config tab is removed from channel detail page
+- [x] **CLEAN-02**: Channel overview links to /research instead of showing run button
 
 ## Future Requirements
 
@@ -94,27 +94,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RES-01 | Phase 8 | Pending |
-| RES-02 | Phase 9 | Pending |
-| RES-03 | Phase 9 | Pending |
-| RES-04 | Phase 9 | Pending |
-| RES-05 | Phase 8 | Pending |
-| PAGE-01 | Phase 10 | Pending |
-| PAGE-02 | Phase 10 | Pending |
-| PAGE-03 | Phase 10 | Pending |
-| PAGE-04 | Phase 10 | Pending |
-| PROG-01 | Phase 9 | Pending |
-| PROG-02 | Phase 9 | Pending |
-| PROG-03 | Phase 9 | Pending |
-| PROG-04 | Phase 9 | Pending |
-| CLEAN-01 | Phase 11 | Pending |
-| CLEAN-02 | Phase 11 | Pending |
+| RES-01 | Phase 8 | Done |
+| RES-02 | Phase 9 | Done |
+| RES-03 | Phase 9 | Done |
+| RES-04 | Phase 9 | Done |
+| RES-05 | Phase 8 | Done |
+| PAGE-01 | Phase 10 | Done |
+| PAGE-02 | Phase 10 | Done |
+| PAGE-03 | Phase 10 | Done |
+| PAGE-04 | Phase 10 | Done |
+| PROG-01 | Phase 9 | Done |
+| PROG-02 | Phase 9 | Done |
+| PROG-03 | Phase 9 | Done |
+| PROG-04 | Phase 9 | Done |
+| CLEAN-01 | Phase 11 | Done |
+| CLEAN-02 | Phase 11 | Done |
 
 **Coverage:**
 - v1.1 requirements: 15 total
 - Mapped to phases: 15
-- Unmapped: 0
+- Completed: 15
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 — traceability complete after roadmap creation*
+*Last updated: 2026-03-01 — all 15 requirements implemented*

@@ -38,23 +38,14 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 - ✓ k3s deployment guide — v1.0
 - ✓ DB connection lifecycle cleanup and queue runner tests — v1.0
 - ✓ Graceful daemon shutdown (SIGTERM) and daily summary job — v1.0
+- ✓ Standalone researchers with many-to-many channel linking — v1.1
+- ✓ Research page (list, create/edit, channel multi-select) — v1.1
+- ✓ Live SSE progress streaming during research runs — v1.1
+- ✓ Channel page cleanup (removed per-channel research config tab) — v1.1
 
 ### Active
 
-#### Current Milestone: v1.1 Research Overhaul
-
-**Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
-
-**Target features:**
-- Standalone `researchers` table with name + config (decoupled from channels)
-- Many-to-many researcher↔channel linking via join table
-- Data migration: move existing per-channel research configs to new researchers
-- Research page in sidebar nav (`/research`)
-- Research list page with researcher cards
-- Create/edit researcher with channel multi-select
-- Live SSE progress panel (step-by-step adapter log, errors inline)
-- Progress event infrastructure in orchestrator + engine
-- Channel page cleanup (remove Research Config tab, link to /research instead)
+No active milestone. Ready for v1.2.
 
 ### Out of Scope
 
@@ -68,7 +59,7 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 
 ## Context
 
-**Current state:** v1.0 shipped. 5 phases (17 plans) complete. ~78k lines across 390 files.
+**Current state:** v1.1 shipped. 9 phases (21 plans) complete.
 
 **Tech stack:** Next.js 16, TypeScript, Drizzle ORM, PostgreSQL, Tailwind CSS 4, Radix UI, Auth.js v5, next-themes. AI via Anthropic Claude API. Infrastructure: Docker Compose, Helm chart for k3s.
 
@@ -103,4 +94,4 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 | Next.js standalone output for Docker | Minimal ~150MB production image vs ~1GB with full node_modules | ✓ Good |
 
 ---
-*Last updated: 2026-03-01 after v1.1 Research Overhaul milestone start*
+*Last updated: 2026-03-01 after v1.1 Research Overhaul shipped*

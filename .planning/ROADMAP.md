@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-4 + 3.1 (shipped 2026-03-01)
-- 🚧 **v1.1 Research Overhaul** — Phases 8-11 (in progress)
+- ✅ **v1.1 Research Overhaul** — Phases 8-11 (shipped 2026-03-01)
 
 ## Phases
 
@@ -25,14 +25,14 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
 
 </details>
 
-### 🚧 v1.1 Research Overhaul (In Progress)
+### ✅ v1.1 Research Overhaul (Shipped 2026-03-01)
 
 **Milestone Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
 
-- [ ] **Phase 8: Research Schema & Migration** - New tables + data migration from per-channel configs
-- [ ] **Phase 9: Research API & Progress Infrastructure** - CRUD routes, SSE endpoint, orchestrator progress events
-- [ ] **Phase 10: Research Page UI** - Sidebar nav, list page, create/edit forms, live run panel
-- [ ] **Phase 11: Channel Page Cleanup** - Remove Research Config tab, update channel overview
+- [x] **Phase 8: Research Schema & Migration** - New tables + data migration from per-channel configs
+- [x] **Phase 9: Research API & Progress Infrastructure** - CRUD routes, SSE endpoint, orchestrator progress events
+- [x] **Phase 10: Research Page UI** - Sidebar nav, list page, create/edit forms, live run panel
+- [x] **Phase 11: Channel Page Cleanup** - Remove Research Config tab, update channel overview
 
 ## Phase Details
 
@@ -48,7 +48,7 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
   5. Drizzle schema types are generated and the app builds without type errors
 
 Plans:
-- [ ] 08-01: TBD
+- [x] 08-01: Schema + migration + data migration script
 
 ### Phase 9: Research API & Progress Infrastructure
 **Goal**: Full CRUD for researchers via API routes, plus SSE-based live progress streaming during research runs
@@ -64,7 +64,7 @@ Plans:
   7. The `callClaude` JSON code fence stripping works correctly (verified by a successful topic ranking step)
 
 Plans:
-- [ ] 09-01: TBD
+- [x] 09-01: CRUD routes + SSE endpoint + progress events
 
 ### Phase 10: Research Page UI
 **Goal**: Users can manage researchers and run research from a dedicated Research page with live progress feedback
@@ -79,7 +79,7 @@ Plans:
   6. Adapter errors appear as red log lines in the progress panel without crashing the page
 
 Plans:
-- [ ] 10-01: TBD
+- [x] 10-01: Sidebar nav + list page + create/edit + run panel
 
 ### Phase 11: Channel Page Cleanup
 **Goal**: Channel detail page no longer has a Research Config tab — research is managed from /research
@@ -91,7 +91,7 @@ Plans:
   3. No orphaned imports or dead code from the removed ResearchConfigForm
 
 Plans:
-- [ ] 11-01: TBD
+- [x] 11-01: Remove Research Config tab + update OverviewTab
 
 ## Progress
 
@@ -102,10 +102,10 @@ Plans:
 | 3. Authentication & UI Polish | v1.0 | 4/4 | Complete | 2026-02-28 |
 | 3.1. Fix CronJob Registry Init | v1.0 | 1/1 | Complete | 2026-02-28 |
 | 4. Deployment & Observability | v1.0 | 4/4 | Complete | 2026-03-01 |
-| 8. Research Schema & Migration | v1.1 | 0/? | Not started | - |
-| 9. Research API & Progress Infrastructure | v1.1 | 0/? | Not started | - |
-| 10. Research Page UI | v1.1 | 0/? | Not started | - |
-| 11. Channel Page Cleanup | v1.1 | 0/? | Not started | - |
+| 8. Research Schema & Migration | v1.1 | 1/1 | Complete | 2026-03-01 |
+| 9. Research API & Progress Infrastructure | v1.1 | 1/1 | Complete | 2026-03-01 |
+| 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
+| 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
 
 ---
 *Full v1.0 details: .planning/milestones/v1.0-ROADMAP.md*

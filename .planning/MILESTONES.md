@@ -1,12 +1,18 @@
 # Milestones
 
-## v1.1 Research Overhaul (In Progress)
+## v1.1 Research Overhaul (Shipped: 2026-03-01)
 
-**Phases:** 8-11 (4 phases)
-**Requirements:** 15 defined
-**Started:** 2026-03-01
+**Phases completed:** 4 phases (4 plans)
+**Requirements:** 15/15 satisfied
+**Timeline:** 2026-03-01
 
-**Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
+**Key accomplishments:**
+- Standalone researchers table decoupled from channels with many-to-many join table
+- Data migration script for existing per-channel research configs
+- Full CRUD API for researchers with channel multi-select
+- SSE-based live progress streaming during research runs
+- Research page in sidebar nav with list, create/edit, and run panel
+- Channel detail page cleaned up (Research Config tab removed)
 
 **Replaces:** v1.1 Twitter/X & Cleanup (scrapped, moved to v1.2+; archived in milestones/)
 
