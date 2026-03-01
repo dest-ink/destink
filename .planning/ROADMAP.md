@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-4 + 3.1 (shipped 2026-03-01)
-- 🚧 **v1.1 Twitter/X & Cleanup** — Phases 5-7 (in progress)
+- 🚧 **v1.1 Research Overhaul** — Phases 8-11 (in progress)
 
 ## Phases
 
@@ -18,60 +18,80 @@
 
 </details>
 
-### 🚧 v1.1 Twitter/X & Cleanup (In Progress)
+<details>
+<summary>❌ v1.1 Twitter/X & Cleanup (Phases 5-7) — SCRAPPED, moved to v1.2+</summary>
 
-**Milestone Goal:** Add Twitter/X as a publishing platform with short-form content and thread generation, while eliminating v1.0 queue correctness bugs that would cause observable failures on Twitter.
+Replaced by Research Overhaul. Original requirements archived in `.planning/milestones/v1.1-twitter-REQUIREMENTS.md`.
 
-- [ ] **Phase 5: Foundation — DB Migration + Tech Debt** - Correct queue semantics and enum values before any Twitter work begins
-- [ ] **Phase 6: Twitter Publisher + Content Generation** - Full Twitter publishing stack and tweet/thread content generation
-- [ ] **Phase 7: Thread Review UI** - Card-by-card thread preview with character counts and inline editing
+</details>
+
+### 🚧 v1.1 Research Overhaul (In Progress)
+
+**Milestone Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
+
+- [ ] **Phase 8: Research Schema & Migration** - New tables + data migration from per-channel configs
+- [ ] **Phase 9: Research API & Progress Infrastructure** - CRUD routes, SSE endpoint, orchestrator progress events
+- [ ] **Phase 10: Research Page UI** - Sidebar nav, list page, create/edit forms, live run panel
+- [ ] **Phase 11: Channel Page Cleanup** - Remove Research Config tab, update channel overview
 
 ## Phase Details
 
-### Phase 5: Foundation — DB Migration + Tech Debt
-**Goal**: Queue behavior is correct and the database schema supports Twitter before any new feature code ships
-**Depends on**: Phase 4 (v1.0 complete)
-**Requirements**: DEBT-01, DEBT-02, DEBT-03, DEBT-04, DEBT-05
+### Phase 8: Research Schema & Migration
+**Goal**: Standalone researcher entities exist in the database with a many-to-many channel relationship, and existing per-channel configs are migrated
+**Depends on**: v1.0 complete
+**Requirements**: RES-01 (schema), RES-05
 **Success Criteria** (what must be TRUE):
-  1. Clicking "Publish now" on a queued item immediately dispatches it to the correct publisher — the item does not sit in "publishing" status waiting for the daemon
-  2. Clicking "Retry" on a failed item resets its retry counter so it can attempt up to three retries again without immediately re-failing
-  3. Running the daemon with DISABLE_INTERNAL_CRON=true produces no internal cron schedules — safe to run alongside Kubernetes CronJobs without duplicate posts
-  4. A channel configured for 9:00–17:00 in America/Chicago schedules posts within that window in Chicago local time, not UTC
-  5. Submitting a channel creation form with a duplicate name shows "A channel with that name already exists" instead of a generic error
-**Plans**: TBD
+  1. A `researchers` table exists with columns for id, name, topics, keywords, and source config (JSON)
+  2. A `researcherChannels` join table exists linking researchers to channels (many-to-many)
+  3. The `researchRuns` table has a `researcherId` foreign key (nullable for historical runs)
+  4. Running the migration on a database with existing per-channel research configs creates one researcher per channel config and links it to the source channel
+  5. Drizzle schema types are generated and the app builds without type errors
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 08-01: TBD
 
-### Phase 6: Twitter Publisher + Content Generation
-**Goal**: Users can create a Twitter channel, generate tweet and thread drafts, and publish them to Twitter/X
-**Depends on**: Phase 5
-**Requirements**: TWIT-01, TWIT-02, TWIT-03, TWIT-04, TWIT-05, GEN-01, GEN-02, GEN-03, GEN-04, GEN-05
+### Phase 9: Research API & Progress Infrastructure
+**Goal**: Full CRUD for researchers via API routes, plus SSE-based live progress streaming during research runs
+**Depends on**: Phase 8
+**Requirements**: RES-02, RES-03, RES-04, PROG-01, PROG-02, PROG-03, PROG-04
 **Success Criteria** (what must be TRUE):
-  1. User can create a Twitter/X channel by entering OAuth 1.0a credentials (API Key, API Secret, Access Token, Access Token Secret) — credentials are stored encrypted at rest
-  2. User can publish a single tweet from the publish queue and it appears on their Twitter/X profile
-  3. User can publish a thread from the publish queue and it appears as a sequential reply chain on their Twitter/X profile
-  4. User sees a specific, actionable error message when a Twitter API call fails — distinguishing bad credentials, monthly cap exhausted, and rate limit from each other
-  5. User can generate a tweet draft from channel research — the draft follows a hook/body/CTA structure and every segment is 280 characters or fewer
-  6. User can trigger "Generate thread" on an approved long-form draft and receive a structured 5-10 tweet thread where each tweet is a complete, standalone thought
-  7. User sees 3 alternate opening hook options for a generated thread and can pick the one that best fits their voice
-**Plans**: TBD
+  1. POST /api/researchers creates a researcher with name, config, and channel IDs
+  2. PUT /api/researchers/[id] updates a researcher's name, config, and channel assignments
+  3. DELETE /api/researchers/[id] removes the researcher, cascades join table rows, and nullifies researcherId on existing runs
+  4. POST /api/researchers/[id]/run triggers a research run and returns an SSE stream
+  5. The SSE stream emits events for: adapter-start, adapter-result, adapter-error, topic-ranking, run-complete
+  6. Errors during a run appear as adapter-error events in the stream (not 500s)
+  7. The `callClaude` JSON code fence stripping works correctly (verified by a successful topic ranking step)
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 09-01: TBD
 
-### Phase 7: Thread Review UI
-**Goal**: Users review tweet drafts and threads in a purpose-built card interface that makes character limits and per-tweet editing visible
-**Depends on**: Phase 6
-**Requirements**: REVIEW-01, REVIEW-02, REVIEW-03
+### Phase 10: Research Page UI
+**Goal**: Users can manage researchers and run research from a dedicated Research page with live progress feedback
+**Depends on**: Phase 9
+**Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04
 **Success Criteria** (what must be TRUE):
-  1. Tweet drafts and threads render as individual numbered cards — not as a single text blob — so each tweet is independently scannable
-  2. Each tweet card shows a character count indicator that is green when under 240 characters, yellow from 240-270, and red above 270
-  3. User can click into any individual tweet card and edit its text before approving the thread
-**Plans**: TBD
+  1. "Research" appears in the sidebar nav between Channels and Drafts
+  2. The /research page lists all researchers as cards showing name, linked channel badges, and last run timestamp
+  3. Clicking "New Researcher" navigates to a form with name, topics, keywords, source config, and channel multi-select
+  4. Clicking a researcher card navigates to a detail/edit page with the same form fields plus a "Run Research" button
+  5. Clicking "Run Research" opens a live progress panel that shows step-by-step log lines as the run proceeds
+  6. Adapter errors appear as red log lines in the progress panel without crashing the page
 
 Plans:
-- [ ] 07-01: TBD
+- [ ] 10-01: TBD
+
+### Phase 11: Channel Page Cleanup
+**Goal**: Channel detail page no longer has a Research Config tab — research is managed from /research
+**Depends on**: Phase 10
+**Requirements**: CLEAN-01, CLEAN-02
+**Success Criteria** (what must be TRUE):
+  1. The channel detail page tabs no longer include "Research Config"
+  2. The channel overview tab shows a link to /research instead of a "Run Research" button
+  3. No orphaned imports or dead code from the removed ResearchConfigForm
+
+Plans:
+- [ ] 11-01: TBD
 
 ## Progress
 
@@ -82,9 +102,11 @@ Plans:
 | 3. Authentication & UI Polish | v1.0 | 4/4 | Complete | 2026-02-28 |
 | 3.1. Fix CronJob Registry Init | v1.0 | 1/1 | Complete | 2026-02-28 |
 | 4. Deployment & Observability | v1.0 | 4/4 | Complete | 2026-03-01 |
-| 5. Foundation — DB Migration + Tech Debt | v1.1 | 0/? | Not started | - |
-| 6. Twitter Publisher + Content Generation | v1.1 | 0/? | Not started | - |
-| 7. Thread Review UI | v1.1 | 0/? | Not started | - |
+| 8. Research Schema & Migration | v1.1 | 0/? | Not started | - |
+| 9. Research API & Progress Infrastructure | v1.1 | 0/? | Not started | - |
+| 10. Research Page UI | v1.1 | 0/? | Not started | - |
+| 11. Channel Page Cleanup | v1.1 | 0/? | Not started | - |
 
 ---
 *Full v1.0 details: .planning/milestones/v1.0-ROADMAP.md*
+*Scrapped v1.1 Twitter details: .planning/milestones/v1.1-twitter-ROADMAP.md*

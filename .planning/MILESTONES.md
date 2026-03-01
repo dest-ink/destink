@@ -1,5 +1,17 @@
 # Milestones
 
+## v1.1 Research Overhaul (In Progress)
+
+**Phases:** 8-11 (4 phases)
+**Requirements:** 15 defined
+**Started:** 2026-03-01
+
+**Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
+
+**Replaces:** v1.1 Twitter/X & Cleanup (scrapped, moved to v1.2+; archived in milestones/)
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-01)
 
 **Phases completed:** 5 phases (17 plans)

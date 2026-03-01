@@ -41,20 +41,20 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 
 ### Active
 
-#### Current Milestone: v1.1 Twitter/X & Cleanup
+#### Current Milestone: v1.1 Research Overhaul
 
-**Goal:** Add Twitter/X as a publishing platform with short-form content support and thread generation, while cleaning up v1.0 tech debt.
+**Goal:** Research configs become standalone named entities with multi-channel support, a dedicated Research page, and live step-by-step progress during runs.
 
 **Target features:**
-- Twitter/X publisher provider (OAuth 2.0, tweet and thread posting)
-- Short-form content type (tweets as a distinct draft format)
-- Thread generation from long-form drafts
-- Tweet-appropriate voice adaptation (concise style within character limits)
-- Fix publish-now stub (actually dispatch to publisher)
-- Fix retry bug (reset retryCount on retry)
-- Implement DISABLE_INTERNAL_CRON env var in daemon
-- Scheduler timezone support (window hours)
-- Actionable error messages in CreateChannelForm
+- Standalone `researchers` table with name + config (decoupled from channels)
+- Many-to-many researcher↔channel linking via join table
+- Data migration: move existing per-channel research configs to new researchers
+- Research page in sidebar nav (`/research`)
+- Research list page with researcher cards
+- Create/edit researcher with channel multi-select
+- Live SSE progress panel (step-by-step adapter log, errors inline)
+- Progress event infrastructure in orchestrator + engine
+- Channel page cleanup (remove Research Config tab, link to /research instead)
 
 ### Out of Scope
 
@@ -103,4 +103,4 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 | Next.js standalone output for Docker | Minimal ~150MB production image vs ~1GB with full node_modules | ✓ Good |
 
 ---
-*Last updated: 2026-02-28 after v1.1 milestone start*
+*Last updated: 2026-03-01 after v1.1 Research Overhaul milestone start*
