@@ -140,7 +140,7 @@ Plans:
 Plans:
 - [x] 13-01-PLAN.md — Schema migration (autoDraft column), batch generation engine, progress event types, unit tests
 - [x] 13-02-PLAN.md — Auto-draft wiring in engine, manual trigger API endpoint, SSE panel event handling
-- [ ] 13-03-PLAN.md — GenerateDraftsButton component, RunDetail UI, autoDraft toggle, RunsList badge
+- [x] 13-03-PLAN.md — GenerateDraftsButton component, RunDetail UI, autoDraft toggle, RunsList badge
 
 ### Phase 14: Automation Config
 **Goal**: Users can configure when research runs happen automatically and whether those runs generate drafts, all in a dedicated automation settings area separate from research source config
@@ -187,7 +187,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 12. Config Cleanup | v1.2 | Complete    | 2026-03-03 | 2026-03-03 |
-| 13. Draft Generation | v1.2 | 2/3 | In progress | - |
+| 13. Draft Generation | v1.2 | 3/3 | Checkpoint | - |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |
 

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Content Pipeline Automation
 status: unknown
-last_updated: "2026-03-03T12:24:03Z"
+last_updated: "2026-03-03T12:28:45Z"
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 20
+  completed_plans: 20
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 of 15 (Draft Generation) -- plan 02 complete
-Plan: 02 complete
-Status: Phase 13 in progress, 2/3 plans done
-Last activity: 2026-03-03 -- Phase 13 Plan 02 executed
+Phase: 13 of 15 (Draft Generation) -- plan 03 complete (awaiting human verification checkpoint)
+Plan: 03 complete (checkpoint:human-verify pending)
+Status: Phase 13 all auto-tasks done, verification checkpoint reached
+Last activity: 2026-03-03 -- Phase 13 Plan 03 executed
 
-Progress: [███░░░░░░░] 30% (v1.2)
+Progress: [████░░░░░░] 40% (v1.2)
 
 ## Performance Metrics
 
@@ -45,7 +45,7 @@ Progress: [███░░░░░░░] 30% (v1.2)
 | 10. Research Page UI | 1 | -- | -- |
 | 11. Channel Cleanup | 1 | -- | -- |
 | 12. Config Cleanup | 2 | 60min | 30min |
-| 13. Draft Generation | 2 | 4min | 2min |
+| 13. Draft Generation | 3 | 6min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: --
@@ -75,6 +75,9 @@ Recent decisions affecting current work:
 - [13-01]: status: 'pending_review' set explicitly in insert values per DRAFT-06 (not relying on DB default)
 - [13-02]: generateDraftsForRun emits drafts-done internally -- engine.ts auto-draft hook does not re-emit to avoid duplicates
 - [13-02]: Manual trigger 409 guard returns JSON (not SSE) since stream hasn't been opened at that point
+- [13-03]: GenerateDraftsButton handles 409 as soft yellow log message -- expected condition not a failure state
+- [13-03]: router.refresh() called unconditionally after stream closes (finally block) to sync server state
+- [13-03]: draftsDoneIds captured during stream, applied to local state after finally to avoid stale closure
 
 ### Pending Todos
 
@@ -87,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 13-02-PLAN.md. Auto-draft hook in engine.ts, manual trigger SSE endpoint, autoDraft PUT handler, ResearchRunPanel draft event handling (5 event types).
-Resume file: .planning/phases/13-draft-generation/13-02-SUMMARY.md
+Stopped at: Completed 13-03-PLAN.md auto tasks; stopped at checkpoint:human-verify. GenerateDraftsButton, RunDetail update, autoDraft toggle in ResearcherForm, RunsList draft badges.
+Resume file: .planning/phases/13-draft-generation/13-03-SUMMARY.md
