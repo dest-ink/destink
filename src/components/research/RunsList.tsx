@@ -17,6 +17,7 @@ interface Run {
   topicCount: number;
   sourceCount: number;
   aiModel: string | null;
+  draftsGenerated: string[] | null;
 }
 
 interface RunsListProps {
@@ -70,6 +71,14 @@ export function RunsList({ runs, researcherId }: RunsListProps) {
                 <span className="text-xs text-muted-foreground">
                   {run.topicCount} topic{run.topicCount !== 1 ? 's' : ''}
                 </span>
+                {run.draftsGenerated && run.draftsGenerated.length > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-mono text-green-600 border-green-500/20 bg-green-500/10"
+                  >
+                    {run.draftsGenerated.length} draft{run.draftsGenerated.length !== 1 ? 's' : ''}
+                  </Badge>
+                )}
                 <span className="text-muted-foreground/40">&rarr;</span>
               </div>
             </div>

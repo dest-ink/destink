@@ -33,6 +33,7 @@ interface ResearcherFormProps {
     sourceConfig: ResearchSourceConfig;
     maxDraftsPerRun: number;
     shortFormPercent: number;
+    autoDraft: boolean;
   };
   /** Currently linked channel IDs (for edit mode) */
   linkedChannelIds?: string[];
@@ -56,6 +57,7 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
   const [shortFormPercent, setShortFormPercent] = useState<number>(
     researcher?.shortFormPercent ?? 70,
   );
+  const [autoDraft, setAutoDraft] = useState<boolean>(researcher?.autoDraft ?? false);
   const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>(
     linkedChannelIds ?? [],
   );
@@ -96,6 +98,7 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
       keywords,
       maxDraftsPerRun,
       shortFormPercent,
+      autoDraft,
       sourceConfig: {
         ...sourceConfig,
         searchQueryTemplates: sourceConfig.searchQueryTemplates.filter(Boolean),
@@ -250,6 +253,22 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
             className="bg-card border-border w-24"
           />
         </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            id="auto-draft"
+            type="checkbox"
+            checked={autoDraft}
+            onChange={(e) => setAutoDraft(e.target.checked)}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label htmlFor="auto-draft" className="text-sm font-medium cursor-pointer">
+            Auto-generate drafts after each run
+          </Label>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          When enabled, drafts are automatically created from top-ranked topics after every research run completes.
+        </p>
       </div>
 
       <div className="border-t border-border" />

@@ -32,6 +32,7 @@ export default async function RunsPage({ params }: RunsPageProps) {
       topicCount: sql<number>`jsonb_array_length(coalesce(${researchRuns.topicsFound}, '[]'::jsonb))`,
       sourceCount: sql<number>`jsonb_array_length(coalesce(${researchRuns.sourcesSearched}, '[]'::jsonb))`,
       aiModel: researchRuns.aiModel,
+      draftsGenerated: researchRuns.draftsGenerated,
     })
     .from(researchRuns)
     .innerJoin(channels, eq(channels.id, researchRuns.channelId))
@@ -43,6 +44,7 @@ export default async function RunsPage({ params }: RunsPageProps) {
     runAt: r.runAt.toISOString(),
     topicCount: Number(r.topicCount),
     sourceCount: Number(r.sourceCount),
+    draftsGenerated: r.draftsGenerated as string[] | null,
   }));
 
   return (
