@@ -121,7 +121,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Schema migration, type cleanup, API routes, engine, tests, dead code deletion
+- [x] 12-01-PLAN.md — Schema migration, type cleanup, API routes, engine, tests, dead code deletion
 - [ ] 12-02-PLAN.md — Slider component, form restructuring with sections, UI cleanup
 
 ### Phase 13: Draft Generation
@@ -184,7 +184,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 9. Research API & Progress Infrastructure | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
-| 12. Config Cleanup | v1.2 | 0/2 | Not started | - |
+| 12. Config Cleanup | v1.2 | 1/2 | In progress | - |
 | 13. Draft Generation | v1.2 | 0/? | Not started | - |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |

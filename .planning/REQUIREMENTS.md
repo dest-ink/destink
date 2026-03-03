@@ -57,9 +57,9 @@ Requirements for v1.2 milestone (Content Pipeline Automation). Each maps to road
 
 ### Config Cleanup
 
-- [ ] **CFG-01**: maxDraftsPerRun moved from research source config to draft generation / automation settings
-- [ ] **CFG-02**: notePercent renamed to "Note vs Article %" with clear description of what notes and articles are
-- [ ] **CFG-03**: scheduleHours removed from research source config (replaced by automation config)
+- [x] **CFG-01**: maxDraftsPerRun moved from research source config to draft generation / automation settings
+- [x] **CFG-02**: notePercent renamed to "Note vs Article %" with clear description of what notes and articles are
+- [x] **CFG-03**: scheduleHours removed from research source config (replaced by automation config)
 
 ## Future Requirements
 
@@ -136,9 +136,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-04 | Phase 9 | Done |
 | CLEAN-01 | Phase 11 | Done |
 | CLEAN-02 | Phase 11 | Done |
-| CFG-01 | Phase 12 | Pending |
-| CFG-02 | Phase 12 | Pending |
-| CFG-03 | Phase 12 | Pending |
+| CFG-01 | Phase 12 | Done |
+| CFG-02 | Phase 12 | Done |
+| CFG-03 | Phase 12 | Done |
 | DRAFT-01 | Phase 13 | Pending |
 | DRAFT-02 | Phase 13 | Pending |
 | DRAFT-03 | Phase 13 | Pending |
@@ -153,9 +153,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Coverage:**
 - v1.1 requirements: 15 total, 15 completed
-- v1.2 requirements: 14 total, 0 completed
+- v1.2 requirements: 14 total, 3 completed
 - Mapped to phases: 29/29
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 -- v1.2 traceability added (14 requirements mapped to phases 12-15)*
+*Last updated: 2026-03-03 -- CFG-01, CFG-02, CFG-03 completed by Phase 12 Plan 01*
