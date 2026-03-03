@@ -118,10 +118,11 @@ Plans:
   2. The former notePercent field is labeled "Note vs Article %" with a description explaining the difference between notes and articles
   3. scheduleHours no longer exists in the researcher source config (field removed from schema and UI)
   4. Existing researcher configs with these fields still work after migration (no data loss)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — Schema migration, type cleanup, API routes, engine, tests, dead code deletion
+- [ ] 12-02-PLAN.md — Slider component, form restructuring with sections, UI cleanup
 
 ### Phase 13: Draft Generation
 **Goal**: Research runs can produce drafts -- either automatically after a run completes or manually via a button -- respecting channel links and content type settings
@@ -183,7 +184,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 9. Research API & Progress Infrastructure | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
-| 12. Config Cleanup | v1.2 | 0/? | Not started | - |
+| 12. Config Cleanup | v1.2 | 0/2 | Not started | - |
 | 13. Draft Generation | v1.2 | 0/? | Not started | - |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |
