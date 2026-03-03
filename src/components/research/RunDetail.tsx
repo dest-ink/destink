@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import type { ResearchSource, TopicRecommendation } from '@/db/schema';
+import { GenerateDraftsButton } from './GenerateDraftsButton';
 
 const PLATFORM_STYLES: Record<string, { label: string; color: string }> = {
   linkedin: { label: 'LinkedIn', color: 'bg-[#0A66C2]/10 text-[#0A66C2] border-[#0A66C2]/20' },
@@ -28,6 +29,8 @@ interface RunDetailProps {
     aiModel: string | null;
     sourcesSearched: ResearchSource[] | null;
     topicsFound: TopicRecommendation[] | null;
+    draftsGenerated: string[] | null;
+    researcherId: string;
   };
 }
 
@@ -69,6 +72,13 @@ export function RunDetail({ run }: RunDetailProps) {
         <div className="flex gap-6 mt-3 text-sm text-muted-foreground">
           <span>{sources.length} source{sources.length !== 1 ? 's' : ''} searched</span>
           <span>{topics.length} topic{topics.length !== 1 ? 's' : ''} found</span>
+        </div>
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <GenerateDraftsButton
+            runId={run.id}
+            researcherId={run.researcherId}
+            initialDraftsGenerated={run.draftsGenerated}
+          />
         </div>
       </div>
 

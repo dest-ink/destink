@@ -31,6 +31,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
       runAt: researchRuns.runAt,
       sourcesSearched: researchRuns.sourcesSearched,
       topicsFound: researchRuns.topicsFound,
+      draftsGenerated: researchRuns.draftsGenerated,
       aiModel: researchRuns.aiModel,
     })
     .from(researchRuns)
@@ -62,6 +63,8 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
             aiModel: run.aiModel,
             sourcesSearched: run.sourcesSearched as ResearchSource[] | null,
             topicsFound: run.topicsFound as TopicRecommendation[] | null,
+            draftsGenerated: run.draftsGenerated as string[] | null,
+            researcherId: id,
           }}
         />
       </div>
