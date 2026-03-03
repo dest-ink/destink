@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Content Pipeline Automation
 status: unknown
-last_updated: "2026-03-03T11:08:59.755Z"
+last_updated: "2026-03-03T12:24:03Z"
 progress:
   total_phases: 7
   completed_phases: 6
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 of 15 (Draft Generation) -- plan 01 complete
-Plan: 01 complete
-Status: Phase 13 in progress, 1/3 plans done
-Last activity: 2026-03-03 -- Phase 13 Plan 01 executed
+Phase: 13 of 15 (Draft Generation) -- plan 02 complete
+Plan: 02 complete
+Status: Phase 13 in progress, 2/3 plans done
+Last activity: 2026-03-03 -- Phase 13 Plan 02 executed
 
 Progress: [███░░░░░░░] 30% (v1.2)
 
@@ -45,7 +45,7 @@ Progress: [███░░░░░░░] 30% (v1.2)
 | 10. Research Page UI | 1 | -- | -- |
 | 11. Channel Cleanup | 1 | -- | -- |
 | 12. Config Cleanup | 2 | 60min | 30min |
-| 13. Draft Generation | 1 | 2min | 2min |
+| 13. Draft Generation | 2 | 4min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: --
@@ -73,6 +73,8 @@ Recent decisions affecting current work:
 - [13-01]: Topics sorted by relevanceScore descending before type assignment; highest-relevance topics get note slots
 - [13-01]: generateDraftsForRun loads last 10 draft titles for both dedup seed and recentTitles voice context
 - [13-01]: status: 'pending_review' set explicitly in insert values per DRAFT-06 (not relying on DB default)
+- [13-02]: generateDraftsForRun emits drafts-done internally -- engine.ts auto-draft hook does not re-emit to avoid duplicates
+- [13-02]: Manual trigger 409 guard returns JSON (not SSE) since stream hasn't been opened at that point
 
 ### Pending Todos
 
@@ -85,5 +87,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 13-01-PLAN.md. Batch draft engine (generateDraftsForRun + assignContentTypes), autoDraft schema column + migration, 5 draft progress event types, 8 unit tests passing.
-Resume file: .planning/phases/13-draft-generation/13-01-SUMMARY.md
+Stopped at: Completed 13-02-PLAN.md. Auto-draft hook in engine.ts, manual trigger SSE endpoint, autoDraft PUT handler, ResearchRunPanel draft event handling (5 event types).
+Resume file: .planning/phases/13-draft-generation/13-02-SUMMARY.md

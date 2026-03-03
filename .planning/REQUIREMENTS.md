@@ -40,7 +40,7 @@ Requirements for v1.2 milestone (Content Pipeline Automation). Each maps to road
 
 ### Draft Generation
 
-- [ ] **DRAFT-01**: User can click "Generate Drafts" on a research run to create drafts from the top-ranked topics
+- [x] **DRAFT-01**: User can click "Generate Drafts" on a research run to create drafts from the top-ranked topics
 - [x] **DRAFT-02**: Research engine auto-generates drafts after a run completes, respecting maxDraftsPerRun setting
 - [x] **DRAFT-03**: Draft generation uses contentTypeMix (note vs article ratio) to determine content types
 - [x] **DRAFT-04**: Drafts are only created for channels linked to the researcher
@@ -139,7 +139,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CFG-01 | Phase 12 | Done |
 | CFG-02 | Phase 12 | Done |
 | CFG-03 | Phase 12 | Done |
-| DRAFT-01 | Phase 13 | Pending |
+| DRAFT-01 | Phase 13 | Done |
 | DRAFT-02 | Phase 13 | Done |
 | DRAFT-03 | Phase 13 | Done |
 | DRAFT-04 | Phase 13 | Done |
@@ -153,9 +153,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Coverage:**
 - v1.1 requirements: 15 total, 15 completed
-- v1.2 requirements: 14 total, 8 completed
+- v1.2 requirements: 14 total, 9 completed
 - Mapped to phases: 29/29
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-03 -- DRAFT-02 through DRAFT-06 completed by Phase 13 Plan 01*
+*Last updated: 2026-03-03 -- DRAFT-01 completed by Phase 13 Plan 02 (manual trigger endpoint)*
