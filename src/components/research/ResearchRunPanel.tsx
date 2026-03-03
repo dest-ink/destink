@@ -10,7 +10,7 @@ interface ResearchRunPanelProps {
 interface LogLine {
   timestamp: string;
   message: string;
-  color: 'text-muted-foreground' | 'text-green-500' | 'text-destructive' | 'text-blue-500';
+  color: 'text-muted-foreground' | 'text-green-500' | 'text-destructive' | 'text-blue-500' | 'text-yellow-500';
 }
 
 function formatTime(): string {
@@ -119,6 +119,36 @@ export function ResearchRunPanel({ researcherId }: ResearchRunPanelProps) {
         break;
       case 'run-error':
         addLine(`Run failed: ${event.error}`, 'text-destructive');
+        break;
+      case 'draft-start':
+        addLine(
+          `Generating draft ${event.index}/${event.total}: ${event.title}...`,
+          'text-blue-500',
+        );
+        break;
+      case 'draft-complete':
+        addLine(
+          `Draft ${event.index}/${event.total} created: ${event.title}`,
+          'text-green-500',
+        );
+        break;
+      case 'draft-error':
+        addLine(
+          `Draft ${event.index}/${event.total} failed: ${event.error}`,
+          'text-destructive',
+        );
+        break;
+      case 'draft-skipped':
+        addLine(
+          `Skipped: ${event.title} (${event.reason})`,
+          'text-muted-foreground',
+        );
+        break;
+      case 'drafts-done':
+        addLine(
+          `${event.generated} draft${event.generated !== 1 ? 's' : ''} created${event.failed > 0 ? `, ${event.failed} failed` : ''}`,
+          event.failed > 0 ? 'text-yellow-500' : 'text-green-500',
+        );
         break;
     }
   };
