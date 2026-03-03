@@ -41,11 +41,11 @@ Requirements for v1.2 milestone (Content Pipeline Automation). Each maps to road
 ### Draft Generation
 
 - [ ] **DRAFT-01**: User can click "Generate Drafts" on a research run to create drafts from the top-ranked topics
-- [ ] **DRAFT-02**: Research engine auto-generates drafts after a run completes, respecting maxDraftsPerRun setting
-- [ ] **DRAFT-03**: Draft generation uses contentTypeMix (note vs article ratio) to determine content types
-- [ ] **DRAFT-04**: Drafts are only created for channels linked to the researcher
-- [ ] **DRAFT-05**: The draftsGenerated field on research runs is populated with generated draft IDs
-- [ ] **DRAFT-06**: All generated drafts are created with pending_review status (approval always required)
+- [x] **DRAFT-02**: Research engine auto-generates drafts after a run completes, respecting maxDraftsPerRun setting
+- [x] **DRAFT-03**: Draft generation uses contentTypeMix (note vs article ratio) to determine content types
+- [x] **DRAFT-04**: Drafts are only created for channels linked to the researcher
+- [x] **DRAFT-05**: The draftsGenerated field on research runs is populated with generated draft IDs
+- [x] **DRAFT-06**: All generated drafts are created with pending_review status (approval always required)
 
 ### Automation
 
@@ -140,11 +140,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CFG-02 | Phase 12 | Done |
 | CFG-03 | Phase 12 | Done |
 | DRAFT-01 | Phase 13 | Pending |
-| DRAFT-02 | Phase 13 | Pending |
-| DRAFT-03 | Phase 13 | Pending |
-| DRAFT-04 | Phase 13 | Pending |
-| DRAFT-05 | Phase 13 | Pending |
-| DRAFT-06 | Phase 13 | Pending |
+| DRAFT-02 | Phase 13 | Done |
+| DRAFT-03 | Phase 13 | Done |
+| DRAFT-04 | Phase 13 | Done |
+| DRAFT-05 | Phase 13 | Done |
+| DRAFT-06 | Phase 13 | Done |
 | AUTO-01 | Phase 14 | Pending |
 | AUTO-02 | Phase 14 | Pending |
 | AUTO-03 | Phase 14 | Pending |
@@ -153,9 +153,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Coverage:**
 - v1.1 requirements: 15 total, 15 completed
-- v1.2 requirements: 14 total, 3 completed
+- v1.2 requirements: 14 total, 8 completed
 - Mapped to phases: 29/29
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-03 -- CFG-01, CFG-02, CFG-03 completed by Phase 12 Plan 01*
+*Last updated: 2026-03-03 -- DRAFT-02 through DRAFT-06 completed by Phase 13 Plan 01*

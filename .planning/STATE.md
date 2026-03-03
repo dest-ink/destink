@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12 of 15 (Config Cleanup) -- plan 02 complete
-Plan: 02 complete
-Status: Phase 12 complete, all 2 plans done, ready for Phase 13
-Last activity: 2026-03-03 -- Phase 12 Plan 02 executed
+Phase: 13 of 15 (Draft Generation) -- plan 01 complete
+Plan: 01 complete
+Status: Phase 13 in progress, 1/3 plans done
+Last activity: 2026-03-03 -- Phase 13 Plan 01 executed
 
-Progress: [██░░░░░░░░] 20% (v1.2)
+Progress: [███░░░░░░░] 30% (v1.2)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [██░░░░░░░░] 20% (v1.2)
 | 10. Research Page UI | 1 | -- | -- |
 | 11. Channel Cleanup | 1 | -- | -- |
 | 12. Config Cleanup | 2 | 60min | 30min |
+| 13. Draft Generation | 1 | 2min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: --
@@ -68,6 +69,10 @@ Recent decisions affecting current work:
 - [12-01]: ResearchConfig legacy fields made optional for backward compat with channels.researchConfig stored JSON
 - [12-02]: ResearcherForm split into 4 sections (Research Identity, Sources, Draft Settings, Channels); slider replaces Note % input; Schedule field removed
 - [12-02]: @radix-ui/react-slider installed; shadcn-style Slider wrapper created at src/components/ui/slider.tsx
+- [13-01]: assignContentTypes uses Math.round for ratio -- ties favor short-form (50% of 3 = 2 notes via round(1.5))
+- [13-01]: Topics sorted by relevanceScore descending before type assignment; highest-relevance topics get note slots
+- [13-01]: generateDraftsForRun loads last 10 draft titles for both dedup seed and recentTitles voice context
+- [13-01]: status: 'pending_review' set explicitly in insert values per DRAFT-06 (not relying on DB default)
 
 ### Pending Todos
 
@@ -80,5 +85,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 12-02-PLAN.md. Phase 12 complete. Slider component created, ResearcherForm restructured with 4 sections, user approved visual verification.
-Resume file: .planning/phases/12-config-cleanup/12-02-SUMMARY.md
+Stopped at: Completed 13-01-PLAN.md. Batch draft engine (generateDraftsForRun + assignContentTypes), autoDraft schema column + migration, 5 draft progress event types, 8 unit tests passing.
+Resume file: .planning/phases/13-draft-generation/13-01-SUMMARY.md
