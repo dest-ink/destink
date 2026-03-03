@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12 of 15 (Config Cleanup) -- ready to plan
+Phase: 12 of 15 (Config Cleanup) -- context gathered, ready to plan
 Plan: --
-Status: Ready to plan
-Last activity: 2026-03-01 -- Roadmap created for v1.2 milestone
+Status: Context gathered, ready to plan
+Last activity: 2026-03-02 -- Phase 12 context gathered
 
 Progress: [░░░░░░░░░░] 0% (v1.2)
 
@@ -73,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v1.2 roadmap created. 4 phases (12-15), 14 requirements mapped. Ready to plan Phase 12.
-Resume file: None
+Last session: 2026-03-02
+Stopped at: Phase 12 context gathered. Key decisions: fields become top-level columns, generic short-form/long-form content types, silent SQL migration, form gets visual sections.
+Resume file: .planning/phases/12-config-cleanup/12-CONTEXT.md
