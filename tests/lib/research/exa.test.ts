@@ -9,9 +9,6 @@ const baseConfig: ResearchConfig = {
   substackFeeds: [],
   searchQueryTemplates: ['latest news about {topic}', '{topic} trends 2026'],
   excludedDomains: ['reddit.com'],
-  contentTypeMix: { note: 70, article: 30 },
-  maxDraftsPerRun: 3,
-  scheduleHours: 6,
 };
 
 describe('buildExaQueries', () => {

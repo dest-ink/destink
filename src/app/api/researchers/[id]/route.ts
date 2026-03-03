@@ -63,6 +63,8 @@ export const PUT = auth(function PUT(req, ctx) {
       if ('topics' in body) updates.topics = body.topics;
       if ('keywords' in body) updates.keywords = body.keywords;
       if ('sourceConfig' in body) updates.sourceConfig = body.sourceConfig;
+      if ('maxDraftsPerRun' in body) updates.maxDraftsPerRun = body.maxDraftsPerRun;
+      if ('shortFormPercent' in body) updates.shortFormPercent = body.shortFormPercent;
 
       const [updated] = await db
         .update(researchers)

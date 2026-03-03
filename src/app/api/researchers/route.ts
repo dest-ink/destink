@@ -73,10 +73,9 @@ export const POST = auth(function POST(req) {
             substackFeeds: [],
             searchQueryTemplates: [],
             excludedDomains: [],
-            contentTypeMix: { note: 70, article: 30 },
-            maxDraftsPerRun: 3,
-            scheduleHours: 6,
           },
+          maxDraftsPerRun: body.maxDraftsPerRun ?? 3,
+          shortFormPercent: body.shortFormPercent ?? 70,
         })
         .returning();
 

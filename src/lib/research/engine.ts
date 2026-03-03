@@ -62,7 +62,13 @@ Sort by relevanceScore descending. Return ONLY the JSON array.`;
  * enriched with runtime context for the brainstorm adapter.
  */
 function buildResearchConfig(
-  researcher: { topics: string[]; keywords: string[]; sourceConfig: ResearchSourceConfig },
+  researcher: {
+    topics: string[];
+    keywords: string[];
+    sourceConfig: ResearchSourceConfig;
+    maxDraftsPerRun: number;
+    shortFormPercent: number;
+  },
   channelId: string,
   voiceProfile: VoiceProfile | null,
   recentTitles: string[],
@@ -74,9 +80,8 @@ function buildResearchConfig(
     substackFeeds: researcher.sourceConfig.substackFeeds,
     searchQueryTemplates: researcher.sourceConfig.searchQueryTemplates,
     excludedDomains: researcher.sourceConfig.excludedDomains,
-    contentTypeMix: researcher.sourceConfig.contentTypeMix,
-    maxDraftsPerRun: researcher.sourceConfig.maxDraftsPerRun,
-    scheduleHours: researcher.sourceConfig.scheduleHours,
+    maxDraftsPerRun: researcher.maxDraftsPerRun,
+    shortFormPercent: researcher.shortFormPercent,
     channelId,
     voiceProfile,
     recentTitles,
@@ -137,7 +142,7 @@ export async function runResearchForResearcher(
 
     // Build config from researcher + channel context
     const config = buildResearchConfig(
-      researcher as { topics: string[]; keywords: string[]; sourceConfig: ResearchSourceConfig },
+      researcher,
       channel.id,
       voiceProfile,
       recentTitles,
@@ -156,7 +161,7 @@ export async function runResearchForResearcher(
       model: 'claude-haiku-4-5-20251001',
       system: 'You are a content strategist. Return only valid JSON.',
       prompt: analysisPrompt,
-      maxTokens: 2048,
+      maxTokens: 8192,
       audit: { operation: 'topic_ranking', channelId: channel.id },
     });
 
@@ -164,8 +169,14 @@ export async function runResearchForResearcher(
     try {
       topics = JSON.parse(raw) as TopicRecommendation[];
     } catch {
-      onProgress?.({ type: 'run-error', error: `Claude returned invalid JSON: ${raw.slice(0, 200)}` });
-      throw new Error(`[runResearchForResearcher] Claude returned invalid JSON: ${raw.slice(0, 200)}`);
+      // Try to recover truncated JSON arrays by closing the last complete object
+      const repaired = repairTruncatedJsonArray(raw);
+      if (repaired) {
+        topics = repaired as TopicRecommendation[];
+      } else {
+        onProgress?.({ type: 'run-error', error: `Claude returned invalid JSON: ${raw.slice(0, 200)}` });
+        throw new Error(`[runResearchForResearcher] Claude returned invalid JSON: ${raw.slice(0, 200)}`);
+      }
     }
 
     onProgress?.({ type: 'topic-ranking', topicCount: topics.length });
@@ -249,7 +260,7 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
     model: 'claude-haiku-4-5-20251001',
     system: 'You are a content strategist. Return only valid JSON.',
     prompt: analysisPrompt,
-    maxTokens: 2048,
+    maxTokens: 8192,
     audit: { operation: 'topic_ranking', channelId },
   });
 
@@ -257,7 +268,12 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
   try {
     topics = JSON.parse(raw) as TopicRecommendation[];
   } catch {
-    throw new Error(`[runResearchForChannel] Claude returned invalid JSON: ${raw.slice(0, 200)}`);
+    const repaired = repairTruncatedJsonArray(raw);
+    if (repaired) {
+      topics = repaired as TopicRecommendation[];
+    } else {
+      throw new Error(`[runResearchForChannel] Claude returned invalid JSON: ${raw.slice(0, 200)}`);
+    }
   }
 
   // Persist the research run
@@ -273,4 +289,31 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
     .returning();
 
   console.log(`[research] Channel ${channelId}: found ${topics.length} topics, run ${run.id}`);
+}
+
+/**
+ * Attempt to recover a truncated JSON array by finding the last complete object.
+ * Returns the parsed array or null if recovery fails.
+ */
+function repairTruncatedJsonArray(raw: string): unknown[] | null {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('[')) return null;
+
+  // Walk backwards to find the last complete object ending with `}`
+  let lastBrace = trimmed.lastIndexOf('}');
+  while (lastBrace > 0) {
+    const candidate = trimmed.slice(0, lastBrace + 1) + ']';
+    try {
+      const parsed = JSON.parse(candidate);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.warn(`[research] Repaired truncated JSON: kept ${parsed.length} items`);
+        return parsed;
+      }
+    } catch {
+      // Try the next `}` further back
+    }
+    lastBrace = trimmed.lastIndexOf('}', lastBrace - 1);
+  }
+
+  return null;
 }

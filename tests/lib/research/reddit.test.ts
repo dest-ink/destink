@@ -9,9 +9,6 @@ const baseConfig: ResearchConfig = {
   substackFeeds: [],
   searchQueryTemplates: [],
   excludedDomains: [],
-  contentTypeMix: { note: 70, article: 30 },
-  maxDraftsPerRun: 3,
-  scheduleHours: 6,
 };
 
 describe('buildRedditUrls', () => {

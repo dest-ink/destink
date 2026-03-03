@@ -39,9 +39,6 @@ const baseConfig: ResearchConfig = {
   substackFeeds: ['example.substack.com'],
   searchQueryTemplates: [],
   excludedDomains: [],
-  contentTypeMix: { note: 70, article: 30 },
-  maxDraftsPerRun: 3,
-  scheduleHours: 6,
 };
 
 const makeSource = (url: string, source: ResearchSource['source']): ResearchSource => ({
