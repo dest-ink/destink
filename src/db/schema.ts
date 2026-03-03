@@ -7,6 +7,7 @@ import {
   jsonb,
   timestamp,
   numeric,
+  boolean,
 } from 'drizzle-orm/pg-core';
 
 const timestamptz = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
@@ -101,6 +102,7 @@ export const researchers = pgTable('researchers', {
   sourceConfig: jsonb('source_config').$type<ResearchSourceConfig>().notNull(),
   maxDraftsPerRun: integer('max_drafts_per_run').default(3).notNull(),
   shortFormPercent: integer('short_form_percent').default(70).notNull(),
+  autoDraft: boolean('auto_draft').default(false).notNull(),
   createdAt: timestamptz('created_at').defaultNow().notNull(),
   updatedAt: timestamptz('updated_at').defaultNow().notNull(),
 });

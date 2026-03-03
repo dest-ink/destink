@@ -1,0 +1,1 @@
+ALTER TABLE "researchers" ADD COLUMN "auto_draft" boolean DEFAULT false NOT NULL;
