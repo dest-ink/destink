@@ -41,7 +41,7 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
 **Milestone Goal:** Wire up the full research-to-publish pipeline -- research runs generate drafts (manually or on a schedule), all drafts go through approval, and config fields are cleaned up so the UX makes sense.
 
 - [x] **Phase 12: Config Cleanup** - Move, rename, and remove confusing config fields before building on them
-- [ ] **Phase 13: Draft Generation** - Engine that turns research results into drafts, plus manual trigger UI
+- [x] **Phase 13: Draft Generation** - Engine that turns research results into drafts, plus manual trigger UI
 - [ ] **Phase 14: Automation Config** - Schema and UI for scheduling research runs with auto-draft toggle
 - [ ] **Phase 15: Automation Worker** - Cron worker that executes scheduled research runs and generates drafts
 
@@ -135,7 +135,7 @@ Plans:
   4. Drafts are only created for channels linked to the researcher that produced the run (not all channels)
   5. The research run record shows which draft IDs were generated from it (draftsGenerated field populated)
   6. Every generated draft has pending_review status -- no draft skips the approval queue
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 13-01-PLAN.md — Schema migration (autoDraft column), batch generation engine, progress event types, unit tests
@@ -187,7 +187,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 12. Config Cleanup | v1.2 | Complete    | 2026-03-03 | 2026-03-03 |
-| 13. Draft Generation | v1.2 | 3/3 | Checkpoint | - |
+| 13. Draft Generation | 3/3 | Complete   | 2026-03-03 | 2026-03-03 |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |
 
