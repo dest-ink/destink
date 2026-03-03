@@ -29,6 +29,13 @@
       "when": 1772384251103,
       "tag": "0003_regular_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772504756229,
+      "tag": "0004_early_dreaming_celestial",
+      "breakpoints": true
     }
   ]
 }

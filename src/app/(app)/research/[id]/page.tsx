@@ -58,6 +58,8 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
             topics: researcher.topics as string[],
             keywords: researcher.keywords as string[],
             sourceConfig: researcher.sourceConfig as ResearchSourceConfig,
+            maxDraftsPerRun: researcher.maxDraftsPerRun,
+            shortFormPercent: researcher.shortFormPercent,
           }}
           linkedChannelIds={linkedChannelIds}
           allChannels={allChannels}

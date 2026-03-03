@@ -99,6 +99,8 @@ export const researchers = pgTable('researchers', {
   topics: jsonb('topics').$type<string[]>().default([]).notNull(),
   keywords: jsonb('keywords').$type<string[]>().default([]).notNull(),
   sourceConfig: jsonb('source_config').$type<ResearchSourceConfig>().notNull(),
+  maxDraftsPerRun: integer('max_drafts_per_run').default(3).notNull(),
+  shortFormPercent: integer('short_form_percent').default(70).notNull(),
   createdAt: timestamptz('created_at').defaultNow().notNull(),
   updatedAt: timestamptz('updated_at').defaultNow().notNull(),
 });
@@ -154,9 +156,10 @@ export interface ResearchConfig {
   substackFeeds: string[];
   searchQueryTemplates: string[];
   excludedDomains: string[];
-  contentTypeMix: { note: number; article: number };
-  maxDraftsPerRun: number;
-  scheduleHours: number;
+  contentTypeMix?: { note: number; article: number };
+  maxDraftsPerRun?: number;
+  scheduleHours?: number;
+  shortFormPercent?: number;
   // Optional brainstorm context (passed by engine.ts at runtime, not stored in DB)
   channelId?: string;
   voiceProfile?: VoiceProfile | null;
@@ -189,9 +192,6 @@ export interface ResearchSourceConfig {
   substackFeeds: string[];
   searchQueryTemplates: string[];
   excludedDomains: string[];
-  contentTypeMix: { note: number; article: number };
-  maxDraftsPerRun: number;
-  scheduleHours: number;
 }
 
 export interface ResearchSource {

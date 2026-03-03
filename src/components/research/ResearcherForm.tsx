@@ -14,9 +14,6 @@ const DEFAULT_SOURCE_CONFIG: ResearchSourceConfig = {
   substackFeeds: [],
   searchQueryTemplates: [],
   excludedDomains: [],
-  contentTypeMix: { note: 70, article: 30 },
-  maxDraftsPerRun: 3,
-  scheduleHours: 6,
 };
 
 interface Channel {
@@ -33,6 +30,8 @@ interface ResearcherFormProps {
     topics: string[];
     keywords: string[];
     sourceConfig: ResearchSourceConfig;
+    maxDraftsPerRun: number;
+    shortFormPercent: number;
   };
   /** Currently linked channel IDs (for edit mode) */
   linkedChannelIds?: string[];
@@ -49,6 +48,12 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
   const [keywords, setKeywords] = useState<string[]>(researcher?.keywords ?? []);
   const [sourceConfig, setSourceConfig] = useState<ResearchSourceConfig>(
     researcher?.sourceConfig ?? DEFAULT_SOURCE_CONFIG,
+  );
+  const [maxDraftsPerRun, setMaxDraftsPerRun] = useState<number>(
+    researcher?.maxDraftsPerRun ?? 3,
+  );
+  const [shortFormPercent, setShortFormPercent] = useState<number>(
+    researcher?.shortFormPercent ?? 70,
   );
   const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>(
     linkedChannelIds ?? [],
@@ -92,6 +97,8 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
         ...sourceConfig,
         searchQueryTemplates: sourceConfig.searchQueryTemplates.filter(Boolean),
       },
+      maxDraftsPerRun,
+      shortFormPercent,
       channelIds: selectedChannelIds,
     };
 
@@ -230,18 +237,18 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Note %</Label>
+          <Label className="text-sm font-medium">Short-form %</Label>
+          <p className="text-xs text-muted-foreground">
+            Percentage of drafts that should be short-form (quick takes). The rest will be long-form (in-depth pieces).
+          </p>
           <Input
             type="number"
             min={0}
             max={100}
-            value={sourceConfig.contentTypeMix.note}
-            onChange={(e) => {
-              const note = Number(e.target.value);
-              updateSource('contentTypeMix', { note, article: 100 - note });
-            }}
+            value={shortFormPercent}
+            onChange={(e) => setShortFormPercent(Number(e.target.value))}
             className="bg-card border-border"
           />
         </div>
@@ -251,19 +258,8 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
             type="number"
             min={1}
             max={10}
-            value={sourceConfig.maxDraftsPerRun}
-            onChange={(e) => updateSource('maxDraftsPerRun', Number(e.target.value))}
-            className="bg-card border-border"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Schedule (hours)</Label>
-          <Input
-            type="number"
-            min={1}
-            max={168}
-            value={sourceConfig.scheduleHours}
-            onChange={(e) => updateSource('scheduleHours', Number(e.target.value))}
+            value={maxDraftsPerRun}
+            onChange={(e) => setMaxDraftsPerRun(Number(e.target.value))}
             className="bg-card border-border"
           />
         </div>

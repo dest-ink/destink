@@ -60,9 +60,6 @@ async function main(): Promise<void> {
       substackFeeds: config.substackFeeds ?? [],
       searchQueryTemplates: config.searchQueryTemplates ?? [],
       excludedDomains: config.excludedDomains ?? [],
-      contentTypeMix: config.contentTypeMix ?? { note: 70, article: 30 },
-      maxDraftsPerRun: config.maxDraftsPerRun ?? 3,
-      scheduleHours: config.scheduleHours ?? 6,
     };
 
     // Create the researcher
