@@ -65,6 +65,7 @@ export const PUT = auth(function PUT(req, ctx) {
       if ('sourceConfig' in body) updates.sourceConfig = body.sourceConfig;
       if ('maxDraftsPerRun' in body) updates.maxDraftsPerRun = body.maxDraftsPerRun;
       if ('shortFormPercent' in body) updates.shortFormPercent = body.shortFormPercent;
+      if ('autoDraft' in body) updates.autoDraft = body.autoDraft;
 
       const [updated] = await db
         .update(researchers)

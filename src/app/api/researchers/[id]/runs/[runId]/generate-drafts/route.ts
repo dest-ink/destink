@@ -1,0 +1,81 @@
+import { db } from '@/db/client';
+import { researchers, researchRuns } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
+import { auth } from '@/auth';
+import { NextResponse } from 'next/server';
+import { generateDraftsForRun } from '@/lib/generation/batch';
+import type { TopicRecommendation } from '@/db/schema';
+import type { ResearchProgressEvent } from '@/lib/research/progress';
+
+export const POST = auth(function POST(req, ctx) {
+  if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  return (async () => {
+    const { id, runId } = await (ctx?.params as Promise<{ id: string; runId: string }>);
+
+    // Load researcher (need full record for maxDraftsPerRun and shortFormPercent)
+    const [researcher] = await db
+      .select()
+      .from(researchers)
+      .where(eq(researchers.id, id));
+    if (!researcher) {
+      return NextResponse.json({ error: 'Researcher not found' }, { status: 404 });
+    }
+
+    // Load run and verify it belongs to this researcher
+    const [run] = await db
+      .select()
+      .from(researchRuns)
+      .where(and(eq(researchRuns.id, runId), eq(researchRuns.researcherId, id)));
+    if (!run) {
+      return NextResponse.json({ error: 'Run not found' }, { status: 404 });
+    }
+
+    // Guard: if drafts already generated for this run, return 409
+    const existingDrafts = run.draftsGenerated as string[] | null;
+    if (existingDrafts && existingDrafts.length > 0) {
+      return NextResponse.json(
+        { error: 'Drafts already generated for this run' },
+        { status: 409 },
+      );
+    }
+
+    const topics = (run.topicsFound as TopicRecommendation[]) ?? [];
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        function send(event: ResearchProgressEvent) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        }
+
+        generateDraftsForRun(
+          run.id,
+          run.channelId,
+          topics,
+          researcher.maxDraftsPerRun,
+          researcher.shortFormPercent,
+          send,
+        )
+          .then(() => {
+            controller.close();
+          })
+          .catch((err) => {
+            send({
+              type: 'run-error',
+              error: err instanceof Error ? err.message : String(err),
+            });
+            controller.close();
+          });
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
+  })();
+});

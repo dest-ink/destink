@@ -10,6 +10,7 @@ import {
 import { eq, desc, inArray } from 'drizzle-orm';
 import { runResearch } from './orchestrator';
 import { callClaude } from '@/lib/ai/client';
+import { generateDraftsForRun } from '@/lib/generation/batch';
 import type {
   ResearchSource,
   TopicRecommendation,
@@ -204,6 +205,28 @@ export async function runResearchForResearcher(
     console.log(
       `[research] Researcher ${researcherId} → channel ${channel.id}: ${topics.length} topics, run ${run.id}`,
     );
+
+    // Auto-draft: generate drafts if enabled on this researcher
+    if (researcher.autoDraft) {
+      try {
+        const runTopics = run.topicsFound as TopicRecommendation[] ?? [];
+        await generateDraftsForRun(
+          run.id,
+          channel.id,
+          runTopics,
+          researcher.maxDraftsPerRun,
+          researcher.shortFormPercent,
+          onProgress,
+        );
+        // generateDraftsForRun already emits drafts-done via onProgress
+      } catch (err) {
+        // Draft generation failures do NOT affect research run status
+        onProgress?.({
+          type: 'run-error',
+          error: `Draft generation failed: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }
   }
 }
 
