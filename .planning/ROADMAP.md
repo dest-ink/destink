@@ -40,7 +40,7 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
 
 **Milestone Goal:** Wire up the full research-to-publish pipeline -- research runs generate drafts (manually or on a schedule), all drafts go through approval, and config fields are cleaned up so the UX makes sense.
 
-- [ ] **Phase 12: Config Cleanup** - Move, rename, and remove confusing config fields before building on them
+- [x] **Phase 12: Config Cleanup** - Move, rename, and remove confusing config fields before building on them
 - [ ] **Phase 13: Draft Generation** - Engine that turns research results into drafts, plus manual trigger UI
 - [ ] **Phase 14: Automation Config** - Schema and UI for scheduling research runs with auto-draft toggle
 - [ ] **Phase 15: Automation Worker** - Cron worker that executes scheduled research runs and generates drafts
@@ -122,7 +122,7 @@ Plans:
 
 Plans:
 - [x] 12-01-PLAN.md — Schema migration, type cleanup, API routes, engine, tests, dead code deletion
-- [ ] 12-02-PLAN.md — Slider component, form restructuring with sections, UI cleanup
+- [x] 12-02-PLAN.md — Slider component, form restructuring with sections, UI cleanup
 
 ### Phase 13: Draft Generation
 **Goal**: Research runs can produce drafts -- either automatically after a run completes or manually via a button -- respecting channel links and content type settings
@@ -184,7 +184,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 9. Research API & Progress Infrastructure | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 10. Research Page UI | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
-| 12. Config Cleanup | v1.2 | 1/2 | In progress | - |
+| 12. Config Cleanup | v1.2 | 2/2 | Complete | 2026-03-03 |
 | 13. Draft Generation | v1.2 | 0/? | Not started | - |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |

@@ -8,7 +8,7 @@ progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 1
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12 of 15 (Config Cleanup) -- plan 01 complete
-Plan: 01 complete
-Status: Plan 01 complete, ready for next plan
-Last activity: 2026-03-03 -- Phase 12 Plan 01 executed
+Phase: 12 of 15 (Config Cleanup) -- plan 02 complete
+Plan: 02 complete
+Status: Phase 12 complete, all 2 plans done, ready for Phase 13
+Last activity: 2026-03-03 -- Phase 12 Plan 02 executed
 
-Progress: [█░░░░░░░░░] 10% (v1.2)
+Progress: [██░░░░░░░░] 20% (v1.2)
 
 ## Performance Metrics
 
@@ -44,7 +44,7 @@ Progress: [█░░░░░░░░░] 10% (v1.2)
 | 9. API & Progress | 1 | -- | -- |
 | 10. Research Page UI | 1 | -- | -- |
 | 11. Channel Cleanup | 1 | -- | -- |
-| 12. Config Cleanup | 1 | 30min | 30min |
+| 12. Config Cleanup | 2 | 60min | 30min |
 
 **Recent Trend:**
 - Last 5 plans: --
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - [12-01]: maxDraftsPerRun and shortFormPercent promoted to top-level integer columns on researchers table; sourceConfig JSON now contains only 4 source fields
 - [12-01]: contentTypeMix replaced by shortFormPercent (0-100 integer); scheduleHours removed entirely
 - [12-01]: ResearchConfig legacy fields made optional for backward compat with channels.researchConfig stored JSON
+- [12-02]: ResearcherForm split into 4 sections (Research Identity, Sources, Draft Settings, Channels); slider replaces Note % input; Schedule field removed
+- [12-02]: @radix-ui/react-slider installed; shadcn-style Slider wrapper created at src/components/ui/slider.tsx
 
 ### Pending Todos
 
@@ -78,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 12-01-PLAN.md. Schema migration applied. TypeScript clean. Tests pass (pre-existing db/schema.test.ts failures unrelated).
-Resume file: .planning/phases/12-config-cleanup/12-01-SUMMARY.md
+Stopped at: Completed 12-02-PLAN.md. Phase 12 complete. Slider component created, ResearcherForm restructured with 4 sections, user approved visual verification.
+Resume file: .planning/phases/12-config-cleanup/12-02-SUMMARY.md
