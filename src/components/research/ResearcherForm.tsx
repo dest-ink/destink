@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TagInput } from '@/components/ui/tag-input';
+import { Slider } from '@/components/ui/slider';
 import type { ResearchSourceConfig } from '@/db/schema';
 
 const DEFAULT_SOURCE_CONFIG: ResearchSourceConfig = {
@@ -93,12 +94,12 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
       name: name.trim(),
       topics,
       keywords,
+      maxDraftsPerRun,
+      shortFormPercent,
       sourceConfig: {
         ...sourceConfig,
         searchQueryTemplates: sourceConfig.searchQueryTemplates.filter(Boolean),
       },
-      maxDraftsPerRun,
-      shortFormPercent,
       channelIds: selectedChannelIds,
     };
 
@@ -133,135 +134,160 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
   };
 
   return (
-    <div className="space-y-5">
-      {/* Name */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Name</Label>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. AI Industry Research"
-          className="bg-card border-border"
-        />
-      </div>
+    <div className="space-y-6">
 
-      {/* Topics */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Topics</Label>
-        <TagInput value={topics} onChange={setTopics} label="topic" />
-      </div>
-
-      {/* Keywords */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Keywords</Label>
-        <TagInput value={keywords} onChange={setKeywords} label="keyword" />
-      </div>
-
-      {/* Channel multi-select */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Linked Channels</Label>
-        <p className="text-xs text-muted-foreground">
-          Research results will be applied to selected channels.
-        </p>
-        {allChannels.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic">
-            No channels available. Create a channel first.
-          </p>
-        ) : (
-          <div className="flex flex-wrap gap-2 mt-1">
-            {allChannels.map((ch) => {
-              const selected = selectedChannelIds.includes(ch.id);
-              return (
-                <button
-                  key={ch.id}
-                  type="button"
-                  onClick={() => toggleChannel(ch.id)}
-                  className={[
-                    'px-3 py-1.5 text-xs rounded-md border transition-colors',
-                    selected
-                      ? 'bg-primary/10 text-primary border-primary/30'
-                      : 'bg-card text-muted-foreground border-border hover:border-primary/20',
-                  ].join(' ')}
-                >
-                  {ch.name}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Source config */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Subreddits</Label>
-        <TagInput
-          value={sourceConfig.subreddits}
-          onChange={(v) => updateSource('subreddits', v)}
-          label="subreddit"
-          placeholder="e.g. r/MachineLearning"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Substack Feeds</Label>
-        <TagInput
-          value={sourceConfig.substackFeeds}
-          onChange={(v) => updateSource('substackFeeds', v)}
-          label="feed"
-          placeholder="e.g. stratechery.substack.com"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Excluded Domains</Label>
-        <TagInput
-          value={sourceConfig.excludedDomains}
-          onChange={(v) => updateSource('excludedDomains', v)}
-          label="domain"
-          placeholder="e.g. pinterest.com"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Search Query Templates</Label>
-        <p className="text-xs text-muted-foreground">
-          One per line. Use {'{topic}'} as placeholder.
-        </p>
-        <Textarea
-          value={sourceConfig.searchQueryTemplates.join('\n')}
-          onChange={(e) =>
-            updateSource('searchQueryTemplates', e.target.value.split('\n'))
-          }
-          placeholder={"latest news about {topic}\n{topic} trends 2026"}
-          className="min-h-[72px] bg-card border-border font-mono text-sm"
-        />
-      </div>
-
+      {/* Section 1: Research Identity */}
       <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">Research Identity</h3>
+
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Short-form %</Label>
-          <p className="text-xs text-muted-foreground">
-            Percentage of drafts that should be short-form (quick takes). The rest will be long-form (in-depth pieces).
-          </p>
+          <Label className="text-sm font-medium">Name</Label>
           <Input
-            type="number"
-            min={0}
-            max={100}
-            value={shortFormPercent}
-            onChange={(e) => setShortFormPercent(Number(e.target.value))}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. AI Industry Research"
             className="bg-card border-border"
           />
         </div>
+
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Max Drafts/Run</Label>
+          <Label className="text-sm font-medium">Topics</Label>
+          <TagInput value={topics} onChange={setTopics} label="topic" />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Keywords</Label>
+          <TagInput value={keywords} onChange={setKeywords} label="keyword" />
+        </div>
+      </div>
+
+      <div className="border-t border-border" />
+
+      {/* Section 2: Sources */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">Sources</h3>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Subreddits</Label>
+          <TagInput
+            value={sourceConfig.subreddits}
+            onChange={(v) => updateSource('subreddits', v)}
+            label="subreddit"
+            placeholder="e.g. r/MachineLearning"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Substack Feeds</Label>
+          <TagInput
+            value={sourceConfig.substackFeeds}
+            onChange={(v) => updateSource('substackFeeds', v)}
+            label="feed"
+            placeholder="e.g. stratechery.substack.com"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Excluded Domains</Label>
+          <TagInput
+            value={sourceConfig.excludedDomains}
+            onChange={(v) => updateSource('excludedDomains', v)}
+            label="domain"
+            placeholder="e.g. pinterest.com"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Search Query Templates</Label>
+          <p className="text-xs text-muted-foreground">
+            One per line. Use {'{topic}'} as placeholder.
+          </p>
+          <Textarea
+            value={sourceConfig.searchQueryTemplates.join('\n')}
+            onChange={(e) =>
+              updateSource('searchQueryTemplates', e.target.value.split('\n'))
+            }
+            placeholder={"latest news about {topic}\n{topic} trends 2026"}
+            className="min-h-[72px] bg-card border-border font-mono text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="border-t border-border" />
+
+      {/* Section 3: Draft Settings */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">Draft Settings</h3>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Short-form</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              {shortFormPercent}% / {100 - shortFormPercent}%
+            </span>
+            <span className="text-sm font-medium text-foreground">Long-form</span>
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            step={5}
+            value={[shortFormPercent]}
+            onValueChange={([v]) => setShortFormPercent(v)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Short-form keeps you visible with quick takes. Long-form builds authority with in-depth pieces.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Max Drafts per Run</Label>
           <Input
             type="number"
             min={1}
             max={10}
             value={maxDraftsPerRun}
             onChange={(e) => setMaxDraftsPerRun(Number(e.target.value))}
-            className="bg-card border-border"
+            className="bg-card border-border w-24"
           />
+        </div>
+      </div>
+
+      <div className="border-t border-border" />
+
+      {/* Section 4: Channels */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">Channels</h3>
+
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Research results will be applied to selected channels.
+          </p>
+          {allChannels.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              No channels available. Create a channel first.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {allChannels.map((ch) => {
+                const selected = selectedChannelIds.includes(ch.id);
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => toggleChannel(ch.id)}
+                    className={[
+                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
+                      selected
+                        ? 'bg-primary/10 text-primary border-primary/30'
+                        : 'bg-card text-muted-foreground border-border hover:border-primary/20',
+                    ].join(' ')}
+                  >
+                    {ch.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
