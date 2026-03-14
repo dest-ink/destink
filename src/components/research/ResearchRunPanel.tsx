@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import type { ResearchProgressEvent } from '@/lib/research/progress';
 
@@ -18,6 +19,7 @@ function formatTime(): string {
 }
 
 export function ResearchRunPanel({ researcherId }: ResearchRunPanelProps) {
+  const router = useRouter();
   const [running, setRunning] = useState(false);
   const [lines, setLines] = useState<LogLine[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
@@ -88,6 +90,7 @@ export function ResearchRunPanel({ researcherId }: ResearchRunPanelProps) {
       );
     } finally {
       setRunning(false);
+      router.refresh();
     }
   };
 
