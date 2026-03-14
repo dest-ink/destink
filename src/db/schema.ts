@@ -117,6 +117,21 @@ export const researcherChannels = pgTable('researcher_channels', {
     .notNull(),
 });
 
+export const automationSchedules = pgTable('automation_schedules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  researcherId: uuid('researcher_id')
+    .references(() => researchers.id, { onDelete: 'cascade' })
+    .notNull(),
+  name: text('name'),                              // optional user label
+  cronExpression: text('cron_expression').notNull(),
+  enabled: boolean('enabled').default(true).notNull(),
+  nextRunAt: timestamptz('next_run_at'),            // nullable, computed
+  autoDraft: boolean('auto_draft'),                 // null = inherit from researcher
+  maxDraftsPerRun: integer('max_drafts_per_run'),   // null = inherit from researcher
+  createdAt: timestamptz('created_at').defaultNow().notNull(),
+  updatedAt: timestamptz('updated_at').defaultNow().notNull(),
+});
+
 export const researchRuns = pgTable('research_runs', {
   id: uuid('id').primaryKey().defaultRandom(),
   channelId: uuid('channel_id').references(() => channels.id, { onDelete: 'cascade' }).notNull(),
