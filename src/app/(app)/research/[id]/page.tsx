@@ -46,6 +46,9 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
           <Button asChild variant="outline" size="sm">
             <Link href={`/research/${id}/runs`}>View Runs</Link>
           </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/research/${id}/automation`}>Automation</Link>
+          </Button>
         </div>
       </div>
 
