@@ -2,13 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Content Pipeline Automation
-status: unknown
-last_updated: "2026-03-03T20:26:20.128Z"
+status: completed
+stopped_at: Completed 13.1-fix-researchrunpanel-post-run-refresh-01-PLAN.md
+last_updated: "2026-03-14T19:44:09.066Z"
+last_activity: 2026-03-03 -- Phase 13 Plan 03 checkpoint approved, phase complete
 progress:
-  total_phases: 8
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
+  total_phases: 9
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
+  percent: 60
 ---
 
 # Project State
@@ -52,6 +55,7 @@ Progress: [██████░░░░] 60% (v1.2)
 - Trend: --
 
 *Updated after each plan completion*
+| Phase 13.1-fix-researchrunpanel-post-run-refresh P01 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -78,6 +82,7 @@ Recent decisions affecting current work:
 - [13-03]: GenerateDraftsButton handles 409 as soft yellow log message -- expected condition not a failure state
 - [13-03]: router.refresh() called unconditionally after stream closes (finally block) to sync server state
 - [13-03]: draftsDoneIds captured during stream, applied to local state after finally to avoid stale closure
+- [Phase 13.1-fix-researchrunpanel-post-run-refresh]: router.refresh() called unconditionally in finally block -- ensures server state syncs even on error, matching GenerateDraftsButton pattern
 
 ### Pending Todos
 
@@ -89,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-03
-Stopped at: Phase 13 complete. Checkpoint approved. GenerateDraftsButton, autoDraft toggle, RunsList badge all verified. Ready for Phase 14 (Automation Config).
-Resume file: None -- Phase 14 planning not yet started.
+Last session: 2026-03-14T19:44:09.064Z
+Stopped at: Completed 13.1-fix-researchrunpanel-post-run-refresh-01-PLAN.md
+Resume file: None
