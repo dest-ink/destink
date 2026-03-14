@@ -42,6 +42,7 @@ Replaced by Research Overhaul. Original requirements archived in `.planning/mile
 
 - [x] **Phase 12: Config Cleanup** - Move, rename, and remove confusing config fields before building on them
 - [x] **Phase 13: Draft Generation** - Engine that turns research results into drafts, plus manual trigger UI
+- [ ] **Phase 13.1: Fix ResearchRunPanel Post-Run Refresh** - Add router.refresh() so runs list updates after research completes
 - [ ] **Phase 14: Automation Config** - Schema and UI for scheduling research runs with auto-draft toggle
 - [ ] **Phase 15: Automation Worker** - Cron worker that executes scheduled research runs and generates drafts
 
@@ -142,6 +143,19 @@ Plans:
 - [x] 13-02-PLAN.md — Auto-draft wiring in engine, manual trigger API endpoint, SSE panel event handling
 - [x] 13-03-PLAN.md — GenerateDraftsButton component, RunDetail UI, autoDraft toggle, RunsList badge
 
+### Phase 13.1: Fix ResearchRunPanel Post-Run Refresh
+**Goal**: After a research run completes, the runs list page refreshes automatically so the new run row and draft badge appear without a manual page reload
+**Depends on**: Phase 13
+**Requirements**: DRAFT-02 (UI feedback gap closure)
+**Gap Closure**: Closes integration gap from v1.2 audit — ResearchRunPanel missing router.refresh()
+**Success Criteria** (what must be TRUE):
+  1. After a research run completes via ResearchRunPanel, the runs list updates to show the new run without a manual page reload
+  2. If auto-draft generated drafts, the draft count badge appears on the new run row immediately
+**Plans**: TBD
+
+Plans:
+- [ ] 13.1-01: TBD
+
 ### Phase 14: Automation Config
 **Goal**: Users can configure when research runs happen automatically and whether those runs generate drafts, all in a dedicated automation settings area separate from research source config
 **Depends on**: Phase 13
@@ -173,7 +187,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 12 → 13 → 14 → 15
+Phases execute in numeric order: 12 → 13 → 13.1 → 14 → 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -188,6 +202,7 @@ Phases execute in numeric order: 12 → 13 → 14 → 15
 | 11. Channel Page Cleanup | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 12. Config Cleanup | v1.2 | Complete    | 2026-03-03 | 2026-03-03 |
 | 13. Draft Generation | 3/3 | Complete    | 2026-03-03 | 2026-03-03 |
+| 13.1. Fix ResearchRunPanel Refresh | v1.2 | 0/? | Not started | - |
 | 14. Automation Config | v1.2 | 0/? | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |
 
