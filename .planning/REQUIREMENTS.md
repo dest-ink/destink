@@ -49,7 +49,7 @@ Requirements for v1.2 milestone (Content Pipeline Automation). Each maps to road
 
 ### Automation
 
-- [ ] **AUTO-01**: User can configure an automation schedule for a researcher (cron expression or interval)
+- [x] **AUTO-01**: User can configure an automation schedule for a researcher (cron expression or interval)
 - [ ] **AUTO-02**: User can toggle auto-draft generation on/off per automation schedule
 - [ ] **AUTO-03**: User can set max drafts per scheduled run in the automation config
 - [ ] **AUTO-04**: Scheduled research runs execute automatically via cron/worker and generate drafts when enabled
@@ -145,7 +145,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DRAFT-04 | Phase 13 | Done |
 | DRAFT-05 | Phase 13 | Done |
 | DRAFT-06 | Phase 13 | Done |
-| AUTO-01 | Phase 14 | Pending |
+| AUTO-01 | Phase 14 | Complete |
 | AUTO-02 | Phase 14 | Pending |
 | AUTO-03 | Phase 14 | Pending |
 | AUTO-05 | Phase 14 | Pending |

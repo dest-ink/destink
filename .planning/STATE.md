@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Content Pipeline Automation
 status: completed
-stopped_at: Phase 14 context gathered
-last_updated: "2026-03-14T21:31:51.583Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-14T21:57:14.966Z"
 last_activity: 2026-03-03 -- Phase 13 Plan 03 checkpoint approved, phase complete
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 60
 ---
 
@@ -56,6 +56,7 @@ Progress: [██████░░░░] 60% (v1.2)
 
 *Updated after each plan completion*
 | Phase 13.1-fix-researchrunpanel-post-run-refresh P01 | 1 | 1 tasks | 1 files |
+| Phase 14-automation-config P01 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [13-03]: router.refresh() called unconditionally after stream closes (finally block) to sync server state
 - [13-03]: draftsDoneIds captured during stream, applied to local state after finally to avoid stale closure
 - [Phase 13.1-fix-researchrunpanel-post-run-refresh]: router.refresh() called unconditionally in finally block -- ensures server state syncs even on error, matching GenerateDraftsButton pattern
+- [Phase 14-01]: TimeMatcher loaded via createRequire path derivation from node-cron main entry -- node-cron v4 exports map blocks subpath imports; absolute path via resolve is portable
+- [Phase 14-01]: automationSchedules nullable override columns (autoDraft, maxDraftsPerRun) -- null means inherit from researcher; worker resolves via ?? operator
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:31:51.577Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-automation-config/14-CONTEXT.md
+Last session: 2026-03-14T21:57:14.953Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
