@@ -165,10 +165,11 @@ Plans:
   2. User can toggle auto-draft generation on or off per automation schedule
   3. User can set max drafts per scheduled run in the automation config (not in source config)
   4. Automation settings live in their own section or page, visually and structurally separate from the researcher's source/topic config
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — Schema table + cron-utils module + unit tests
+- [ ] 14-02-PLAN.md — Schedule CRUD API, automation page UI, schedule cards/form, nav link
 
 ### Phase 15: Automation Worker
 **Goal**: Scheduled research runs execute automatically at the configured times and generate drafts when auto-draft is enabled
@@ -203,7 +204,7 @@ Phases execute in numeric order: 12 → 13 → 13.1 → 14 → 15
 | 12. Config Cleanup | v1.2 | Complete    | 2026-03-03 | 2026-03-03 |
 | 13. Draft Generation | 3/3 | Complete    | 2026-03-03 | 2026-03-03 |
 | 13.1. Fix ResearchRunPanel Refresh | 1/1 | Complete    | 2026-03-14 | - |
-| 14. Automation Config | v1.2 | 0/? | Not started | - |
+| 14. Automation Config | v1.2 | 0/2 | Not started | - |
 | 15. Automation Worker | v1.2 | 0/? | Not started | - |
 
 ---
