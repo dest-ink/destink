@@ -1,4 +1,4 @@
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from 'substack-sdk';
 import type { drafts, channels } from '@/db/schema';
 import { decrypt } from '@/lib/crypto';
 
@@ -7,12 +7,13 @@ type ChannelRow = typeof channels.$inferSelect;
 
 interface SubstackCredentials {
   publicationUrl: string;
-  token: string;
+  substackSid: string;
+  substackLli: string;
+  handle: string;
 }
 
 export interface SubstackPublishResult {
   id: number;
-  date: string;
 }
 
 /**
@@ -34,9 +35,9 @@ function parseCredentials(channel: ChannelRow): SubstackCredentials {
     throw new Error('Substack channel has no credentials configured');
   }
 
-  const encKey = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  const encKey = process.env.ENCRYPTION_KEY;
   if (!encKey) {
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY env var is not set');
+    throw new Error('ENCRYPTION_KEY env var is not set');
   }
 
   const plaintext = decrypt(channel.credentials, encKey);
@@ -57,10 +58,12 @@ function parseCredentials(channel: ChannelRow): SubstackCredentials {
     typeof parsed !== 'object' ||
     parsed === null ||
     typeof (parsed as Record<string, unknown>).publicationUrl !== 'string' ||
-    typeof (parsed as Record<string, unknown>).token !== 'string'
+    typeof (parsed as Record<string, unknown>).substackSid !== 'string' ||
+    typeof (parsed as Record<string, unknown>).substackLli !== 'string' ||
+    typeof (parsed as Record<string, unknown>).handle !== 'string'
   ) {
     throw new Error(
-      'Substack credentials missing required fields: publicationUrl, token',
+      'Substack credentials missing required fields: publicationUrl, substackSid, substackLli, handle',
     );
   }
 
@@ -70,11 +73,11 @@ function parseCredentials(channel: ChannelRow): SubstackCredentials {
 /**
  * Publish a draft to Substack.
  *
- * - 'note' content type → published as a Substack Note via the builder API.
- * - 'article' content type → not supported by substack-api; throws an error.
+ * - 'note' content type → published as a Substack Note.
+ * - 'article' content type → not yet supported; throws an error.
  *
  * Credentials stored in channel.credentials must decrypt to JSON of the shape:
- *   { publicationUrl: string, token: string }
+ *   { publicationUrl: string, substackSid: string, substackLli: string, handle: string }
  */
 export async function publishToSubstack(
   draft: DraftRow,
@@ -82,7 +85,7 @@ export async function publishToSubstack(
 ): Promise<SubstackPublishResult> {
   if (draft.contentType === 'article') {
     throw new Error(
-      'Article publishing is not supported by the substack-api package. ' +
+      'Article publishing is not yet supported. ' +
         'Only notes (contentType: "note") can be published programmatically.',
     );
   }
@@ -96,11 +99,16 @@ export async function publishToSubstack(
 
   const client = new SubstackClient({
     publicationUrl: creds.publicationUrl,
-    token: creds.token,
+    substackSid: creds.substackSid,
+    substackLli: creds.substackLli,
+    handle: creds.handle,
   });
 
-  const profile = await client.ownProfile();
-  const response = await profile.newNote().paragraph().text(text).publish();
-
-  return { id: response.id, date: response.date };
+  try {
+    const profile = await client.ownProfile();
+    const response = await profile.publishNote(text);
+    return { id: response.id };
+  } finally {
+    await client.close();
+  }
 }

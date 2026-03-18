@@ -7,7 +7,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <span className="font-mono text-sm font-semibold tracking-widest uppercase text-primary">
-            Orbitl
+            Destink
           </span>
           <p className="mt-2 text-sm text-muted-foreground">Sign in to your account</p>
         </div>

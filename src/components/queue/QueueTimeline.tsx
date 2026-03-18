@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { QueueItem } from './QueueItem';
 import type { QueueItemData } from './QueueItem';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ interface QueueTimelineProps {
 }
 
 export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
+  const router = useRouter();
   const [groups, setGroups] = useState(initialGroups);
 
   function handleRemoved(id: string) {
@@ -27,15 +29,8 @@ export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
   }
 
   function handlePublishedNow(id: string) {
-    // Optimistically mark as 'publishing' until the daemon processes it
-    setGroups(prev =>
-      prev.map(g => ({
-        ...g,
-        items: g.items.map(item =>
-          item.id === id ? { ...item, status: 'publishing' as const } : item
-        ),
-      }))
-    );
+    // The API now awaits publish, so refresh to get the final status
+    router.refresh();
   }
 
   function handleRetried(id: string) {

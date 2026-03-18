@@ -1,0 +1,33 @@
+{{- if .Values.cronJobs.publish.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "destink.fullname" . }}-publish
+  labels:
+    {{- include "destink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: publish
+spec:
+  schedule: {{ .Values.cronJobs.publish.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "destink.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: publish
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: publish
+              image: "{{ .Values.jobs.image.repository }}:{{ .Values.jobs.image.tag }}"
+              imagePullPolicy: IfNotPresent
+              command: ["npx", "tsx", "src/jobs/publish.ts"]
+              envFrom:
+                - secretRef:
+                    name: {{ include "destink.fullname" . }}
+              resources:
+                {{- toYaml .Values.jobs.resources | nindent 16 }}
+{{- end }}

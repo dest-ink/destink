@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const PLATFORM_STYLES: Record<string, { label: string; color: string }> = {
   linkedin: { label: 'LinkedIn', color: 'bg-[#0A66C2]/10 text-[#0A66C2] border-[#0A66C2]/20' },
@@ -41,9 +42,21 @@ interface QueueItemProps {
   onPublishedNow?: (id: string) => void;
 }
 
+function toLocalDatetimeValue(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${h}:${min}`;
+}
+
 export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueItemProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newDateTime, setNewDateTime] = useState('');
+  const [displayScheduledFor, setDisplayScheduledFor] = useState(item.scheduledFor);
 
   const platformStyle = PLATFORM_STYLES[item.channelPlatform] ?? {
     label: item.channelPlatform,
@@ -55,8 +68,9 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
   };
 
   const displayTitle = item.draftTitle || item.draftHook || 'Untitled draft';
-  const scheduledDate = new Date(item.scheduledFor);
+  const scheduledDate = new Date(displayScheduledFor);
   const scheduledTime = scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const scheduledDateStr = scheduledDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
   async function handleRemove() {
     setLoading(true);
@@ -91,6 +105,7 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
         setError(msg);
         toast.error(msg);
       } else {
+        toast.success('Published');
         onPublishedNow?.(item.id);
       }
     } catch {
@@ -124,15 +139,87 @@ export function QueueItem({ item, onRemoved, onRetried, onPublishedNow }: QueueI
     }
   }
 
+  function startReschedule() {
+    setNewDateTime(toLocalDatetimeValue(scheduledDate));
+    setRescheduling(true);
+  }
+
+  async function handleReschedule() {
+    if (!newDateTime) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/queue/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledFor: new Date(newDateTime).toISOString() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        const msg = data.error ?? 'Failed to reschedule';
+        setError(msg);
+        toast.error(msg);
+      } else {
+        setDisplayScheduledFor(new Date(newDateTime).toISOString());
+        setRescheduling(false);
+        toast.success('Rescheduled');
+      }
+    } catch {
+      const msg = 'Network error — please try again';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="border border-border bg-card rounded-lg p-4 flex flex-col gap-3">
       {/* Top row: time + status */}
       <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-xs text-muted-foreground tabular-nums">{scheduledTime}</span>
+        <div className="flex items-center gap-2">
+          {item.status === 'queued' && !rescheduling ? (
+            <button
+              onClick={startReschedule}
+              className="font-mono text-xs text-muted-foreground tabular-nums hover:text-foreground hover:underline transition-colors"
+              title="Click to reschedule"
+            >
+              {scheduledDateStr}, {scheduledTime}
+            </button>
+          ) : (
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {scheduledDateStr}, {scheduledTime}
+            </span>
+          )}
+        </div>
         <Badge className={`border text-xs font-mono shrink-0 ${statusStyle.color}`} variant="outline">
           {statusStyle.label}
         </Badge>
       </div>
+
+      {/* Reschedule inline form */}
+      {rescheduling && (
+        <div className="flex items-center gap-2">
+          <Input
+            type="datetime-local"
+            value={newDateTime}
+            onChange={e => setNewDateTime(e.target.value)}
+            className="h-8 text-xs font-mono w-auto"
+          />
+          <Button size="sm" className="h-7 px-3 text-xs" onClick={handleReschedule} disabled={loading}>
+            {loading ? '...' : 'Save'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-3 text-xs"
+            onClick={() => setRescheduling(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex items-start justify-between gap-3">

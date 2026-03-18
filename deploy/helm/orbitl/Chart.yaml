@@ -1,6 +1,0 @@
-apiVersion: v2
-name: orbitl
-description: Self-hosted AI content creation tool
-type: application
-version: 0.1.0
-appVersion: "0.1.0"

@@ -161,7 +161,7 @@ describe('formatForLinkedIn', () => {
 describe('publishToLinkedIn', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.CREDENTIALS_ENCRYPTION_KEY = ENC_KEY;
+    process.env.ENCRYPTION_KEY = ENC_KEY;
   });
 
   afterEach(() => {
@@ -183,10 +183,10 @@ describe('publishToLinkedIn', () => {
     );
   });
 
-  it('throws when CREDENTIALS_ENCRYPTION_KEY is not set', async () => {
-    delete process.env.CREDENTIALS_ENCRYPTION_KEY;
+  it('throws when ENCRYPTION_KEY is not set', async () => {
+    delete process.env.ENCRYPTION_KEY;
     await expect(publishToLinkedIn(makeDraft(), makeChannel())).rejects.toThrow(
-      'CREDENTIALS_ENCRYPTION_KEY env var is not set',
+      'ENCRYPTION_KEY env var is not set',
     );
   });
 

@@ -1,4 +1,4 @@
-# Orbitl Implementation Plan
+# Destink Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -13,7 +13,7 @@
 ## Project Structure
 
 ```
-orbitl/
+destink/
 ├── src/
 │   ├── app/                        # Next.js App Router
 │   │   ├── api/
@@ -87,7 +87,7 @@ orbitl/
 │   ├── Dockerfile.daemon
 │   └── Dockerfile.jobs
 ├── helm/
-│   └── orbitl/
+│   └── destink/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── templates/
@@ -116,7 +116,7 @@ orbitl/
 **Step 1: Bootstrap Next.js project**
 
 ```bash
-cd /Users/dknell/Projects/orbitl
+cd /Users/dknell/Projects/destink
 npx create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias "@/*" --no-turbopack
 ```
 
@@ -137,7 +137,7 @@ npm install next-themes       # for dark mode later
 
 ```bash
 # Database
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink
 
 # Encryption (32-byte hex key: openssl rand -hex 32)
 ENCRYPTION_KEY=
@@ -259,15 +259,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: orbitl
-      POSTGRES_PASSWORD: orbitl
-      POSTGRES_DB: orbitl
+      POSTGRES_USER: destink
+      POSTGRES_PASSWORD: destink
+      POSTGRES_DB: destink
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U orbitl"]
+      test: ["CMD-SHELL", "pg_isready -U destink"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -279,7 +279,7 @@ services:
     ports:
       - "3021:3021"
     environment:
-      DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
+      DATABASE_URL: postgresql://destink:destink@db:5432/destink
     env_file: .env.local
     depends_on:
       db:
@@ -290,7 +290,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.daemon
     environment:
-      DATABASE_URL: postgresql://orbitl:orbitl@db:5432/orbitl
+      DATABASE_URL: postgresql://destink:destink@db:5432/destink
     env_file: .env.local
     depends_on:
       db:
@@ -567,10 +567,10 @@ export type DB = typeof db;
 docker compose up db -d
 
 # Generate migration from schema
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm run db:generate
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm run db:generate
 
 # Apply migration
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm run db:migrate
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm run db:migrate
 ```
 
 Expected: Migration files created in `src/db/migrations/`, tables created in Postgres.
@@ -578,7 +578,7 @@ Expected: Migration files created in `src/db/migrations/`, tables created in Pos
 **Step 6: Run the test — should pass now**
 
 ```bash
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm test tests/db/client.test.ts
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm test tests/db/client.test.ts
 ```
 
 Expected: PASS
@@ -889,7 +889,7 @@ describe('channels data layer', () => {
 **Step 2: Run test (should fail — missing `eq` import)**
 
 ```bash
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm test tests/api/channels.test.ts
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm test tests/api/channels.test.ts
 ```
 
 Add import to test file: `import { eq } from 'drizzle-orm';`
@@ -953,7 +953,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 **Step 5: Run test — expect pass**
 
 ```bash
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm test tests/api/channels.test.ts
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm test tests/api/channels.test.ts
 ```
 
 **Step 6: Commit**
@@ -1182,7 +1182,7 @@ import { SideNav } from '@/components/layout/SideNav';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = { title: 'Orbitl', description: 'Content automation' };
+export const metadata: Metadata = { title: 'Destink', description: 'Content automation' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -1218,7 +1218,7 @@ export function SideNav() {
   const path = usePathname();
   return (
     <nav className="w-48 border-r bg-muted/40 p-4 flex flex-col gap-1">
-      <div className="font-bold text-lg mb-4">Orbitl</div>
+      <div className="font-bold text-lg mb-4">Destink</div>
       {links.map(l => (
         <Link
           key={l.href}
@@ -1396,7 +1396,7 @@ export async function searchReddit(config: ResearchConfig): Promise<ResearchSour
   for (const subreddit of config.subreddits.slice(0, 5)) {
     const url = buildRedditUrl(subreddit, 'hot', 5);
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Orbitl/1.0 (personal content tool)' },
+      headers: { 'User-Agent': 'Destink/1.0 (personal content tool)' },
     });
 
     if (!res.ok) continue;
@@ -2722,41 +2722,41 @@ git commit -m "feat: add research-runner and daily-summary CronJob entry points"
 ### Task 8.1: Helm chart structure
 
 **Files:**
-- Create: `helm/orbitl/Chart.yaml`
-- Create: `helm/orbitl/values.yaml`
-- Create: `helm/orbitl/templates/web-deployment.yaml`
-- Create: `helm/orbitl/templates/daemon-deployment.yaml`
-- Create: `helm/orbitl/templates/postgres-statefulset.yaml`
-- Create: `helm/orbitl/templates/research-cronjob.yaml`
-- Create: `helm/orbitl/templates/daily-summary-cronjob.yaml`
-- Create: `helm/orbitl/templates/services.yaml`
-- Create: `helm/orbitl/templates/secrets.yaml`
-- Create: `helm/orbitl/templates/configmap.yaml`
+- Create: `helm/destink/Chart.yaml`
+- Create: `helm/destink/values.yaml`
+- Create: `helm/destink/templates/web-deployment.yaml`
+- Create: `helm/destink/templates/daemon-deployment.yaml`
+- Create: `helm/destink/templates/postgres-statefulset.yaml`
+- Create: `helm/destink/templates/research-cronjob.yaml`
+- Create: `helm/destink/templates/daily-summary-cronjob.yaml`
+- Create: `helm/destink/templates/services.yaml`
+- Create: `helm/destink/templates/secrets.yaml`
+- Create: `helm/destink/templates/configmap.yaml`
 
-**Step 1: Create `helm/orbitl/Chart.yaml`**
+**Step 1: Create `helm/destink/Chart.yaml`**
 
 ```yaml
 apiVersion: v2
-name: orbitl
+name: destink
 description: Personal content automation system
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
 ```
 
-**Step 2: Create `helm/orbitl/values.yaml`**
+**Step 2: Create `helm/destink/values.yaml`**
 
 ```yaml
 image:
   registry: ""          # e.g. ghcr.io/yourusername
   web:
-    repository: orbitl-web
+    repository: destink-web
     tag: latest
   daemon:
-    repository: orbitl-daemon
+    repository: destink-daemon
     tag: latest
   jobs:
-    repository: orbitl-jobs
+    repository: destink-jobs
     tag: latest
 
 web:
@@ -2770,8 +2770,8 @@ postgres:
   enabled: true
   image: postgres:16-alpine
   storage: 5Gi
-  database: orbitl
-  username: orbitl
+  database: destink
+  username: destink
 
 research:
   schedule: "0 */6 * * *"   # every 6 hours
@@ -2792,7 +2792,7 @@ secrets:
 
 **Step 3: Create deployment templates**
 
-`helm/orbitl/templates/web-deployment.yaml`:
+`helm/destink/templates/web-deployment.yaml`:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -2823,7 +2823,7 @@ spec:
 
 **Step 4: Create CronJob templates**
 
-`helm/orbitl/templates/research-cronjob.yaml`:
+`helm/destink/templates/research-cronjob.yaml`:
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
@@ -2849,7 +2849,7 @@ spec:
 **Step 5: Create secrets template**
 
 ```yaml
-# helm/orbitl/templates/secrets.yaml
+# helm/destink/templates/secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -2893,16 +2893,16 @@ curl -sfL https://get.k3s.io | sh -
 docker run -d -p 5000:5000 --name registry registry:2
 
 # Build and push
-docker build -f docker/Dockerfile.web -t localhost:5000/orbitl-web:latest .
-docker push localhost:5000/orbitl-web:latest
+docker build -f docker/Dockerfile.web -t localhost:5000/destink-web:latest .
+docker push localhost:5000/destink-web:latest
 # Repeat for daemon and jobs images
 ```
 
 3. Deploy with Helm:
 ```bash
-helm install orbitl ./helm/orbitl \
+helm install destink ./helm/destink \
   --set image.registry=localhost:5000 \
-  --set secrets.databaseUrl="postgresql://orbitl:orbitl@orbitl-postgres:5432/orbitl" \
+  --set secrets.databaseUrl="postgresql://destink:destink@destink-postgres:5432/destink" \
   --set secrets.encryptionKey="$(openssl rand -hex 32)" \
   --set secrets.anthropicApiKey="sk-ant-..." \
   --set secrets.exaApiKey="..."
@@ -2916,7 +2916,7 @@ kubectl get cronjobs
 
 5. Access the app (from local network):
 ```bash
-kubectl port-forward svc/orbitl-web 3021:3021
+kubectl port-forward svc/destink-web 3021:3021
 # Or set up an Ingress with the Mac Mini's local IP
 ```
 
@@ -2986,7 +2986,7 @@ git commit -m "feat: add AI audit log dashboard"
 docker compose up db -d
 
 # Run migrations
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm run db:migrate
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm run db:migrate
 
 # Start Next.js + daemon together
 npm run dev:all
@@ -2999,7 +2999,7 @@ open http://localhost:3021
 
 ```bash
 # All tests
-DATABASE_URL=postgresql://orbitl:orbitl@localhost:5432/orbitl npm test
+DATABASE_URL=postgresql://destink:destink@localhost:5432/destink npm test
 
 # Specific module
 npm test tests/lib/crypto.test.ts

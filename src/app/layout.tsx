@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Orbitl',
+  title: 'Destink',
   description: 'Personal content automation',
 };
 

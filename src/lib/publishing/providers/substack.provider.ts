@@ -10,7 +10,9 @@ const substackProvider: PublisherProvider = {
   apiVersion: PROVIDER_API_VERSION,
   configSchema: [
     { key: 'publicationUrl', label: 'Publication URL', type: 'url', required: true },
-    { key: 'token', label: 'Auth Token', type: 'secret', required: true },
+    { key: 'handle', label: 'Substack Handle', type: 'string', required: true },
+    { key: 'substackSid', label: 'substack.sid Cookie', type: 'secret', required: true },
+    { key: 'substackLli', label: 'substack.lli Cookie', type: 'secret', required: true },
   ],
   publish: (draft, channel) => publishToSubstack(draft, channel),
   formatDraft: (draft, _channel) => formatForSubstack(draft),

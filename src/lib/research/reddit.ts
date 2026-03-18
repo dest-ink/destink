@@ -29,7 +29,7 @@ export async function searchReddit(config: ResearchConfig): Promise<ResearchSour
       const res = await fetch(url, {
         headers: {
           // Reddit 429s without a meaningful User-Agent
-          'User-Agent': 'orbitl-research-bot/0.1',
+          'User-Agent': 'destink-research-bot/0.1',
         },
       });
       if (!res.ok) {

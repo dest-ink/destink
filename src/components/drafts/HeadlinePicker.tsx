@@ -7,9 +7,10 @@ interface HeadlinePickerProps {
 export function HeadlinePicker({ headlines, activeIndex, onSelect }: HeadlinePickerProps) {
   return (
     <section>
-      <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+      <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-0.5">
         Headlines
       </h3>
+      <p className="text-xs text-muted-foreground mb-2">Pick one to use as the title</p>
       <div className="flex flex-col gap-1.5">
         {headlines.map((headline, i) => (
           <button

@@ -40,9 +40,9 @@ function parseLinkedInCredentials(channel: ChannelRow): LinkedInCredentials {
     throw new Error('LinkedIn channel has no credentials configured');
   }
 
-  const encKey = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  const encKey = process.env.ENCRYPTION_KEY;
   if (!encKey) {
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY env var is not set');
+    throw new Error('ENCRYPTION_KEY env var is not set');
   }
 
   const plaintext = decrypt(channel.credentials, encKey);

@@ -14,16 +14,18 @@ export default async function NewResearcherPage() {
     .orderBy(desc(channels.createdAt));
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2">
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b border-border shrink-0">
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/research">&larr; Back to research</Link>
         </Button>
+        <h1 className="text-xl font-semibold text-foreground">New Researcher</h1>
       </div>
 
-      <h1 className="text-xl font-semibold text-foreground mb-8">New Researcher</h1>
-
-      <ResearcherForm allChannels={allChannels} />
+      <div className="flex-1 p-6 overflow-y-auto">
+        <ResearcherForm allChannels={allChannels} />
+      </div>
     </div>
   );
 }

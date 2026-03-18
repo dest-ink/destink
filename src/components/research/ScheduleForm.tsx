@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { INTERVAL_PRESETS, getNextRunAt } from '@/lib/cron-utils';
+import {
+  INTERVAL_PRESETS,
+  buildCronExpression,
+  identifyPreset,
+  parseScheduleTime,
+  computeNextRun,
+} from '@/lib/cron-presets';
 
 interface ScheduleData {
   id: string;
@@ -37,7 +43,7 @@ interface ScheduleFormProps {
 }
 
 function formatNextRun(cron: string): string | null {
-  const next = getNextRunAt(cron);
+  const next = computeNextRun(cron);
   if (!next) return null;
   return next.toLocaleString('en-US', {
     weekday: 'short',
@@ -49,6 +55,19 @@ function formatNextRun(cron: string): string | null {
   });
 }
 
+function getInitialPreset(schedule?: ScheduleData) {
+  if (!schedule) return INTERVAL_PRESETS[1]; // Daily
+  return identifyPreset(schedule.cronExpression) ?? INTERVAL_PRESETS[1];
+}
+
+function getInitialTime(schedule?: ScheduleData): { hour: number; minute: number } {
+  if (!schedule) {
+    // Default to 9:00 AM
+    return { hour: 9, minute: 0 };
+  }
+  return parseScheduleTime(schedule.cronExpression) ?? { hour: 9, minute: 0 };
+}
+
 export function ScheduleForm({
   mode,
   schedule,
@@ -57,13 +76,12 @@ export function ScheduleForm({
   onSave,
   onCancel,
 }: ScheduleFormProps) {
-  const initialPreset =
-    mode === 'edit' && schedule
-      ? (INTERVAL_PRESETS.find((p) => p.cron === schedule.cronExpression) ?? INTERVAL_PRESETS[1])
-      : INTERVAL_PRESETS[1]; // Default to "Daily"
+  const initialPreset = getInitialPreset(schedule);
+  const initialTime = getInitialTime(schedule);
 
-  const [selectedCron, setSelectedCron] = useState(
-    mode === 'edit' && schedule ? schedule.cronExpression : INTERVAL_PRESETS[1].cron,
+  const [presetHours, setPresetHours] = useState(String(initialPreset.hours));
+  const [timeValue, setTimeValue] = useState(
+    `${String(initialTime.hour).padStart(2, '0')}:${String(initialTime.minute).padStart(2, '0')}`,
   );
   const [name, setName] = useState(mode === 'edit' && schedule ? (schedule.name ?? '') : '');
   const [autoDraftChecked, setAutoDraftChecked] = useState<boolean | null>(
@@ -75,14 +93,14 @@ export function ScheduleForm({
       : '',
   );
   const [submitting, setSubmitting] = useState(false);
-  const [nextRunPreview, setNextRunPreview] = useState<string | null>(() => formatNextRun(selectedCron));
 
-  // Keep selected preset label in sync
-  const [presetValue, setPresetValue] = useState<string>(initialPreset.cron);
+  // Build cron from current selections
+  const cronExpression = useMemo(() => {
+    const [h, m] = timeValue.split(':').map(Number);
+    return buildCronExpression(Number(presetHours), h ?? 9, m ?? 0);
+  }, [presetHours, timeValue]);
 
-  useEffect(() => {
-    setNextRunPreview(formatNextRun(selectedCron));
-  }, [selectedCron]);
+  const nextRunPreview = useMemo(() => formatNextRun(cronExpression), [cronExpression]);
 
   async function handleSave() {
     setSubmitting(true);
@@ -95,7 +113,7 @@ export function ScheduleForm({
       }
 
       const payload = {
-        cronExpression: selectedCron,
+        cronExpression,
         name: name.trim() || null,
         autoDraft: autoDraftChecked,
         maxDraftsPerRun: maxDrafts,
@@ -138,24 +156,36 @@ export function ScheduleForm({
       {/* Interval picker */}
       <div className="space-y-1.5">
         <Label htmlFor="interval">Interval</Label>
-        <Select
-          value={presetValue}
-          onValueChange={(val) => {
-            setPresetValue(val);
-            setSelectedCron(val);
-          }}
-        >
+        <Select value={presetHours} onValueChange={setPresetHours}>
           <SelectTrigger id="interval">
             <SelectValue placeholder="Select interval" />
           </SelectTrigger>
           <SelectContent>
             {INTERVAL_PRESETS.map((preset) => (
-              <SelectItem key={preset.cron} value={preset.cron}>
+              <SelectItem key={preset.hours} value={String(preset.hours)}>
                 {preset.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Time of day */}
+      <div className="space-y-1.5">
+        <Label htmlFor="schedule-time">
+          {Number(presetHours) === 12 ? 'First run time' : 'Scheduled time'}
+        </Label>
+        <Input
+          id="schedule-time"
+          type="time"
+          value={timeValue}
+          onChange={(e) => setTimeValue(e.target.value)}
+        />
+        {Number(presetHours) === 12 && (
+          <p className="text-xs text-muted-foreground">
+            Also runs 12 hours later
+          </p>
+        )}
         {nextRunPreview && (
           <p className="text-xs text-muted-foreground">Next run: {nextRunPreview}</p>
         )}

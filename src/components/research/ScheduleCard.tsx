@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Calendar, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { INTERVAL_PRESETS } from '@/lib/cron-utils';
+import { identifyPreset, parseScheduleTime, formatTime } from '@/lib/cron-presets';
 
 interface ScheduleData {
   id: string;
@@ -30,8 +30,11 @@ interface ScheduleCardProps {
 }
 
 function getPresetLabel(cronExpression: string): string {
-  const preset = INTERVAL_PRESETS.find((p) => p.cron === cronExpression);
-  return preset ? preset.label : cronExpression;
+  const preset = identifyPreset(cronExpression);
+  if (!preset) return cronExpression;
+  const time = parseScheduleTime(cronExpression);
+  if (!time) return preset.label;
+  return `${preset.label} at ${formatTime(time.hour, time.minute)}`;
 }
 
 function formatNextRunAt(iso: string | null): string {

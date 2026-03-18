@@ -19,9 +19,9 @@ export default async function ResearchPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b border-border shrink-0 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Research</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -37,28 +37,30 @@ export default async function ResearchPage() {
 
       {/* DB error state */}
       {fetchError && (
-        <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 text-sm text-destructive">
+        <div className="m-6 border border-destructive/30 bg-destructive/5 rounded-lg p-4 text-sm text-destructive">
           Failed to load researchers — check that the database is reachable.
         </div>
       )}
 
       {/* Empty state */}
       {!fetchError && rows.length === 0 && (
-        <div className="border border-dashed border-border rounded-lg py-20 text-center">
-          <h2 className="text-lg font-semibold text-foreground mb-2">No researchers yet</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Researchers gather sources and rank topics for your channels.
-            Create one to get started.
-          </p>
-          <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/research/new">Create your first researcher</Link>
-          </Button>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <h2 className="text-lg font-semibold text-foreground mb-2">No researchers yet</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Researchers gather sources and rank topics for your channels.
+              Create one to get started.
+            </p>
+            <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link href="/research/new">Create your first researcher</Link>
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Researcher cards */}
       {!fetchError && rows.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="p-6 grid gap-3 sm:grid-cols-2">
           {rows.map((r) => (
             <ResearcherCard key={r.id} researcher={r} />
           ))}

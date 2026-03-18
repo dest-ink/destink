@@ -1,6 +1,6 @@
-# Deploying Orbitl to k3s
+# Deploying Destink to k3s
 
-This guide walks through deploying the full Orbitl stack on a single-node k3s cluster with TLS via cert-manager and Let's Encrypt.
+This guide walks through deploying the full Destink stack on a single-node k3s cluster with TLS via cert-manager and Let's Encrypt.
 
 **Assumption:** k3s is already installed and running. `kubectl cluster-info` returns a live endpoint.
 
@@ -31,17 +31,17 @@ If helm is not installed, see [helm.sh/docs/intro/install](https://helm.sh/docs/
 Build all three images from the project root:
 
 ```bash
-docker build -f docker/Dockerfile.web -t orbitl-web:0.1.0 .
-docker build -f docker/Dockerfile.daemon -t orbitl-daemon:0.1.0 .
-docker build -f docker/Dockerfile.jobs -t orbitl-jobs:0.1.0 .
+docker build -f docker/Dockerfile.web -t destink-web:0.1.0 .
+docker build -f docker/Dockerfile.daemon -t destink-daemon:0.1.0 .
+docker build -f docker/Dockerfile.jobs -t destink-jobs:0.1.0 .
 ```
 
 For a single-node cluster, import the images directly into k3s (no registry required):
 
 ```bash
-docker save orbitl-web:0.1.0 | sudo k3s ctr images import -
-docker save orbitl-daemon:0.1.0 | sudo k3s ctr images import -
-docker save orbitl-jobs:0.1.0 | sudo k3s ctr images import -
+docker save destink-web:0.1.0 | sudo k3s ctr images import -
+docker save destink-daemon:0.1.0 | sudo k3s ctr images import -
+docker save destink-jobs:0.1.0 | sudo k3s ctr images import -
 ```
 
 Each `k3s ctr images import` prints the image digest when it succeeds.
@@ -53,7 +53,7 @@ Each `k3s ctr images import` prints the image digest when it succeeds.
 ## 3. Create Namespace
 
 ```bash
-kubectl create namespace orbitl
+kubectl create namespace destink
 ```
 
 ---
@@ -63,7 +63,7 @@ kubectl create namespace orbitl
 Copy the chart's default values and customize for your deployment:
 
 ```bash
-cp deploy/helm/orbitl/values.yaml my-values.yaml
+cp deploy/helm/destink/values.yaml my-values.yaml
 ```
 
 Edit `my-values.yaml`. The key fields to change:
@@ -72,19 +72,19 @@ Edit `my-values.yaml`. The key fields to change:
 # Set image tags to match what you built
 web:
   image:
-    repository: orbitl-web
+    repository: destink-web
     tag: "0.1.0"
     pullPolicy: Never        # images were imported locally, never pull
 
 daemon:
   image:
-    repository: orbitl-daemon
+    repository: destink-daemon
     tag: "0.1.0"
     pullPolicy: Never
 
 jobs:
   image:
-    repository: orbitl-jobs
+    repository: destink-jobs
     tag: "0.1.0"
     pullPolicy: Never
 
@@ -126,15 +126,15 @@ openssl rand -hex 32
 ## 5. Install with Helm
 
 ```bash
-helm install orbitl deploy/helm/orbitl \
-  --namespace orbitl \
+helm install destink deploy/helm/destink \
+  --namespace destink \
   -f my-values.yaml
 ```
 
 Helm will:
 1. Create a Kubernetes Secret from the `env` section in your values
 2. Run the database migration Job (a pre-install hook) — waits for it to complete before continuing
-3. Create Deployments for `orbitl-web` and `orbitl-daemon`
+3. Create Deployments for `destink-web` and `destink-daemon`
 4. Create the CronJobs for publishing, research, and daily summaries
 5. Create a Service and Ingress for the web application
 
@@ -145,28 +145,28 @@ Helm will:
 Check that all pods started:
 
 ```bash
-kubectl -n orbitl get pods
+kubectl -n destink get pods
 ```
 
 Check that the migration Job completed:
 
 ```bash
-kubectl -n orbitl get jobs
+kubectl -n destink get jobs
 ```
 
-The `orbitl-db-migrate` job should show `1/1` completions.
+The `destink-db-migrate` job should show `1/1` completions.
 
 Wait for the web deployment to become ready:
 
 ```bash
-kubectl -n orbitl rollout status deployment/orbitl-web
-kubectl -n orbitl rollout status deployment/orbitl-daemon
+kubectl -n destink rollout status deployment/destink-web
+kubectl -n destink rollout status deployment/destink-daemon
 ```
 
 Check web logs to confirm Next.js started:
 
 ```bash
-kubectl -n orbitl logs deployment/orbitl-web
+kubectl -n destink logs deployment/destink-web
 ```
 
 Look for output like `ready started server on 0.0.0.0:3021`.
@@ -174,7 +174,7 @@ Look for output like `ready started server on 0.0.0.0:3021`.
 Test the health endpoint with a port-forward:
 
 ```bash
-kubectl -n orbitl port-forward svc/orbitl-web 3021:80
+kubectl -n destink port-forward svc/destink-web 3021:80
 ```
 
 In a second terminal:
@@ -188,8 +188,8 @@ Expected response: `{"status":"ok"}`. Press `Ctrl+C` to stop the port-forward.
 **Troubleshooting pods not starting:** Check pod logs and events:
 
 ```bash
-kubectl -n orbitl describe pod <pod-name>
-kubectl -n orbitl logs <pod-name>
+kubectl -n destink describe pod <pod-name>
+kubectl -n destink logs <pod-name>
 ```
 
 ---
@@ -256,15 +256,15 @@ ingress:
 Upgrade the Helm release to apply the TLS configuration:
 
 ```bash
-helm upgrade orbitl deploy/helm/orbitl \
-  --namespace orbitl \
+helm upgrade destink deploy/helm/destink \
+  --namespace destink \
   -f my-values.yaml
 ```
 
 cert-manager will automatically request a certificate from Let's Encrypt. Watch it appear:
 
 ```bash
-kubectl -n orbitl get certificate
+kubectl -n destink get certificate
 ```
 
 Once the certificate shows `READY: True`, HTTPS is active. Visit `https://your-domain.com` to confirm.
@@ -278,13 +278,13 @@ When you build new versions of the application:
 **1. Build and import new images:**
 
 ```bash
-docker build -f docker/Dockerfile.web -t orbitl-web:0.2.0 .
-docker build -f docker/Dockerfile.daemon -t orbitl-daemon:0.2.0 .
-docker build -f docker/Dockerfile.jobs -t orbitl-jobs:0.2.0 .
+docker build -f docker/Dockerfile.web -t destink-web:0.2.0 .
+docker build -f docker/Dockerfile.daemon -t destink-daemon:0.2.0 .
+docker build -f docker/Dockerfile.jobs -t destink-jobs:0.2.0 .
 
-docker save orbitl-web:0.2.0 | sudo k3s ctr images import -
-docker save orbitl-daemon:0.2.0 | sudo k3s ctr images import -
-docker save orbitl-jobs:0.2.0 | sudo k3s ctr images import -
+docker save destink-web:0.2.0 | sudo k3s ctr images import -
+docker save destink-daemon:0.2.0 | sudo k3s ctr images import -
+docker save destink-jobs:0.2.0 | sudo k3s ctr images import -
 ```
 
 **2. Update the image tag in `my-values.yaml`:**
@@ -304,8 +304,8 @@ jobs:
 **3. Run the upgrade:**
 
 ```bash
-helm upgrade orbitl deploy/helm/orbitl \
-  -n orbitl \
+helm upgrade destink deploy/helm/destink \
+  -n destink \
   -f my-values.yaml
 ```
 
@@ -318,7 +318,7 @@ Helm automatically runs the migration Job before updating the Deployments. Zero-
 **Migration Job fails:**
 
 ```bash
-kubectl -n orbitl logs job/orbitl-db-migrate
+kubectl -n destink logs job/destink-db-migrate
 ```
 
 Common causes: wrong `DATABASE_URL` (check the Secret), migration file syntax error, or database not yet accepting connections.
@@ -326,8 +326,8 @@ Common causes: wrong `DATABASE_URL` (check the Secret), migration file syntax er
 **Web pod not ready (readiness probe failing):**
 
 ```bash
-kubectl -n orbitl logs deployment/orbitl-web
-kubectl -n orbitl describe pod <pod-name>
+kubectl -n destink logs deployment/destink-web
+kubectl -n destink describe pod <pod-name>
 ```
 
 Confirm the pod's `HOSTNAME` resolves to `0.0.0.0` — the Next.js server must listen on all interfaces.
@@ -335,8 +335,8 @@ Confirm the pod's `HOSTNAME` resolves to `0.0.0.0` — the Next.js server must l
 **CronJobs not running:**
 
 ```bash
-kubectl -n orbitl get cronjobs
-kubectl -n orbitl get jobs
+kubectl -n destink get cronjobs
+kubectl -n destink get jobs
 ```
 
 Check that `READY` is not suspended. If last schedule time is blank, the schedule expression may be invalid or the cluster clock is skewed.
@@ -344,7 +344,7 @@ Check that `READY` is not suspended. If last schedule time is blank, the schedul
 **TLS certificate not issuing:**
 
 ```bash
-kubectl -n orbitl describe certificate orbitl-tls
+kubectl -n destink describe certificate destink-tls
 kubectl -n cert-manager logs deployment/cert-manager
 ```
 
@@ -372,10 +372,10 @@ cronJobs:
     enabled: false
 ```
 
-**View all Orbitl resources:**
+**View all Destink resources:**
 
 ```bash
-kubectl -n orbitl get all
+kubectl -n destink get all
 ```
 
 ---
@@ -397,4 +397,4 @@ kubectl -n orbitl get all
 | `cronJobs.research.enabled` | `true` | Enable research CronJob |
 | `cronJobs.dailySummary.enabled` | `true` | Enable daily summary CronJob |
 
-The full values file with all options is at `deploy/helm/orbitl/values.yaml`.
+The full values file with all options is at `deploy/helm/destink/values.yaml`.

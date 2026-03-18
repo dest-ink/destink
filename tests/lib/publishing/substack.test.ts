@@ -105,7 +105,7 @@ describe('publishToSubstack', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.CREDENTIALS_ENCRYPTION_KEY = 'a'.repeat(64); // 32-byte key in hex
+    process.env.ENCRYPTION_KEY = 'a'.repeat(64); // 32-byte key in hex
 
     mockPublish = vi.fn().mockResolvedValue({ id: 42, date: '2024-01-01T00:00:00Z' });
     paragraphBuilder = {
@@ -138,10 +138,10 @@ describe('publishToSubstack', () => {
     );
   });
 
-  it('throws when CREDENTIALS_ENCRYPTION_KEY is not set', async () => {
-    delete process.env.CREDENTIALS_ENCRYPTION_KEY;
+  it('throws when ENCRYPTION_KEY is not set', async () => {
+    delete process.env.ENCRYPTION_KEY;
     await expect(publishToSubstack(makeDraft(), makeChannel())).rejects.toThrow(
-      'CREDENTIALS_ENCRYPTION_KEY',
+      'ENCRYPTION_KEY',
     );
   });
 

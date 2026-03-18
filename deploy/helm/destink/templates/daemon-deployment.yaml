@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "destink.fullname" . }}-daemon
+  labels:
+    {{- include "destink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: daemon
+spec:
+  replicas: {{ .Values.daemon.replicas }}
+  selector:
+    matchLabels:
+      {{- include "destink.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: daemon
+  template:
+    metadata:
+      labels:
+        {{- include "destink.labels" . | nindent 8 }}
+        app.kubernetes.io/component: daemon
+    spec:
+      containers:
+        - name: daemon
+          image: "{{ .Values.daemon.image.repository }}:{{ .Values.daemon.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: {{ include "destink.fullname" . }}
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            {{- toYaml .Values.daemon.resources | nindent 12 }}

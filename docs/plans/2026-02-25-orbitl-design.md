@@ -1,4 +1,4 @@
-# Orbitl — Design Document
+# Destink — Design Document
 **Date:** 2026-02-25
 **Status:** Approved
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Orbitl is an open-source personal content automation system that handles the full lifecycle from topic discovery to scheduled publishing across multiple Substack publications and LinkedIn profiles. It is designed as a private, self-hosted tool that works while you're away — researching, drafting, and publishing according to your voice, views, and configured schedules.
+Destink is an open-source personal content automation system that handles the full lifecycle from topic discovery to scheduled publishing across multiple Substack publications and LinkedIn profiles. It is designed as a private, self-hosted tool that works while you're away — researching, drafting, and publishing according to your voice, views, and configured schedules.
 
 **Core principles:**
 - No content ever publishes without explicit human approval
@@ -22,7 +22,7 @@ Orbitl is an open-source personal content automation system that handles the ful
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│                        ORBITL                             │
+│                        DESTINK                             │
 │                                                           │
 │   ┌─────────────────────┐   ┌────────────────────────┐   │
 │   │   Next.js App        │   │   Node.js Daemon       │   │

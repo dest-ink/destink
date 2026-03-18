@@ -62,26 +62,30 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2">
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b border-border shrink-0">
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/channels">&larr; Back to channels</Link>
         </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
+          <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
+            {platformStyle.label}
+          </Badge>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-8">
-        <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
-        <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
-          {platformStyle.label}
-        </Badge>
+      <div className="flex-1 p-6 overflow-y-auto">
+        <ChannelTabs
+          channelId={channel.id}
+          platform={channel.platform}
+          channelData={{ platformId: channel.platformId, name: channel.name }}
+          costSummary={costSummary}
+          personaPrompt={channel.personaPrompt}
+          lastResearchRun={lastResearchRun}
+        />
       </div>
-
-      <ChannelTabs
-        channelId={channel.id}
-        costSummary={costSummary}
-        personaPrompt={channel.personaPrompt}
-        lastResearchRun={lastResearchRun}
-      />
     </div>
   );
 }

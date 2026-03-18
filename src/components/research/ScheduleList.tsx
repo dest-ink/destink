@@ -41,11 +41,18 @@ export function ScheduleList({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleData | null>(null);
 
-  function handleSave() {
+  async function handleSave() {
     setShowAddForm(false);
     setEditingSchedule(null);
-    router.refresh();
-    // Reload schedules from server after a brief pause to allow refresh
+    try {
+      const res = await fetch(`/api/researchers/${researcherId}/schedules`);
+      if (res.ok) {
+        setSchedules(await res.json());
+      }
+    } catch {
+      // fall back to server refresh
+      router.refresh();
+    }
   }
 
   function handleDelete(scheduleId: string) {

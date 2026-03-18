@@ -12,16 +12,19 @@ export const POST = auth(function POST(req, ctx) {
     const { id } = await (ctx?.params as Promise<{ id: string }>);
 
     try {
+      const body = await req.json().catch(() => ({})) as { title?: string; scheduledFor?: string };
+      const updates: Record<string, unknown> = { status: 'approved', updatedAt: new Date() };
+      if (body.title) updates.title = body.title;
+
       const [draft] = await db
         .update(drafts)
-        .set({ status: 'approved', updatedAt: new Date() })
+        .set(updates)
         .where(eq(drafts.id, id))
         .returning();
 
       if (!draft) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-      // Schedule immediately — Task 6.1 will replace this with a proper scheduling algorithm
-      const scheduledFor = new Date();
+      const scheduledFor = body.scheduledFor ? new Date(body.scheduledFor) : new Date();
 
       const [queueItem] = await db
         .insert(publishQueue)

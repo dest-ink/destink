@@ -11,12 +11,13 @@ type DraftRow = typeof drafts.$inferSelect;
 
 interface DraftActionsProps {
   draft: Pick<DraftRow, 'id' | 'channelId' | 'contentType' | 'title' | 'researchSources'>;
+  selectedTitle?: string;
   onActionComplete?: () => void;
 }
 
 type ActionState = 'idle' | 'rejecting' | 'regenerating';
 
-export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
+export function DraftActions({ draft, selectedTitle, onActionComplete }: DraftActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // isFetching tracks the in-flight fetch; isPending only covers startTransition, not the fetch itself
@@ -33,7 +34,11 @@ export function DraftActions({ draft, onActionComplete }: DraftActionsProps) {
     setError(null);
     setIsFetching(true);
     try {
-      const res = await fetch(`/api/drafts/${draft.id}/approve`, { method: 'POST' });
+      const res = await fetch(`/api/drafts/${draft.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: selectedTitle || undefined }),
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const msg = (data as { error?: string }).error ?? 'Failed to approve draft';

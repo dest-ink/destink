@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { LogOut, Sun, Moon } from 'lucide-react';
+import Image from 'next/image';
 
 const links = [
   { href: '/channels', label: 'Channels', icon: '◈' },
@@ -28,9 +29,10 @@ export function SideNav() {
   return (
     <nav className="w-52 shrink-0 border-r border-border flex flex-col bg-card">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-border">
+      <div className="px-4 py-5 border-b border-border flex items-center gap-2.5">
+        <Image src="/destink-logo.svg" alt="Destink logo" width={24} height={24} />
         <span className="font-mono text-sm font-semibold tracking-widest uppercase text-primary">
-          Orbitl
+          Destink
         </span>
       </div>
       {/* Links */}

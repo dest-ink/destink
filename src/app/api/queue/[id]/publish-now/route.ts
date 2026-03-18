@@ -35,18 +35,21 @@ export const POST = auth(function POST(_req, ctx) {
         );
       }
 
-      const [updated] = await db
+      await db
         .update(publishQueue)
         .set({ status: 'publishing' })
-        .where(eq(publishQueue.id, id))
-        .returning();
+        .where(eq(publishQueue.id, id));
 
-      // Fire and forget — publish in background, return immediately
-      publishSingleItem(id).catch(err =>
-        console.error(`[publish-now] publishSingleItem failed for ${id}:`, err)
-      );
+      // Await the publish so we can return the final status to the client
+      await publishSingleItem(id);
 
-      return NextResponse.json(updated);
+      // Read back the final status
+      const [final] = await db
+        .select()
+        .from(publishQueue)
+        .where(eq(publishQueue.id, id));
+
+      return NextResponse.json(final);
     } catch (e) {
       console.error('[POST /api/queue/[id]/publish-now] failed:', e);
       const { message, status } = apiError('publish now', e);

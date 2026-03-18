@@ -61,10 +61,16 @@ export default async function AuditPage() {
   }));
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-xl font-semibold mb-6">AI Usage</h1>
-      <AuditSummaryCards summary={parsedSummary} />
-      <AuditTabs byChannel={parsedByChannel} byOperation={parsedByOperation} />
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-6 py-5 border-b border-border shrink-0">
+        <h1 className="text-xl font-semibold text-foreground">AI Usage</h1>
+      </div>
+
+      <div className="flex-1 p-6 overflow-y-auto">
+        <AuditSummaryCards summary={parsedSummary} />
+        <AuditTabs byChannel={parsedByChannel} byOperation={parsedByOperation} />
+      </div>
     </div>
   );
 }

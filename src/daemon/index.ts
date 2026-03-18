@@ -1,5 +1,5 @@
 /**
- * Orbitl background publish queue runner daemon.
+ * Destink background publish queue runner daemon.
  *
  * Deployment notes:
  * - Designed to run as a single Kubernetes Deployment instance.
@@ -11,6 +11,7 @@
 import { schedule, ScheduledTask } from 'node-cron';
 import { pool } from '@/db/client';
 import { runPublishQueue, recoverStuckItems, getRetryDelay } from '@/lib/publishing/queue-runner';
+import { runDueAutomations } from '@/lib/automation/scheduler';
 import { initRegistries } from '@/lib/bootstrap';
 
 // Re-export so existing tests that import getRetryDelay from this module continue to work.
@@ -36,6 +37,7 @@ async function tick() {
   try {
     await recoverStuckItems();
     await runPublishQueue();
+    await runDueAutomations();
   } finally {
     isProcessing = false;
   }
@@ -77,5 +79,5 @@ process.on('SIGINT', () => {
     tick().catch(console.error);
   });
 
-  console.log('[daemon] Publish loop started — checking queue every minute');
+  console.log('[daemon] Daemon started — checking publish queue and automation schedules every minute');
 })();

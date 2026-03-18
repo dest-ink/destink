@@ -1,5 +1,5 @@
 {
-  "name": "orbitl",
+  "name": "destink",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -30,6 +30,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cycletls": "^2.0.5",
     "drizzle-orm": "^0.45.1",
     "exa-js": "^2.5.0",
     "lucide-react": "^0.575.0",
@@ -42,8 +43,9 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "rss-parser": "^3.13.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
-    "substack-api": "^2.2.1",
+    "substack-sdk": "file:/Users/dknell/Projects/substack-sdk",
     "tailwind-merge": "^3.5.0",
     "tsx": "^4.21.0",
     "zod": "^3.25.76"
