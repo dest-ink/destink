@@ -1,0 +1,103 @@
+import { notFound } from 'next/navigation';
+import { db } from '@/db/client';
+import { researchers, researcherChannels, channels, researchRuns, drafts, automationSchedules } from '@/db/schema';
+import { eq, desc, sql, and } from 'drizzle-orm';
+import { PipelineDetail } from '@/components/pipeline/PipelineDetail';
+
+export const dynamic = 'force-dynamic';
+
+interface Props {
+  params: Promise<{ researcherId: string }>;
+}
+
+export default async function PipelineDetailPage({ params }: Props) {
+  const { researcherId } = await params;
+
+  // Fetch researcher
+  const [researcher] = await db.select().from(researchers).where(eq(researchers.id, researcherId));
+  if (!researcher) notFound();
+
+  // Fetch linked channel
+  const [link] = await db
+    .select({ channelId: researcherChannels.channelId })
+    .from(researcherChannels)
+    .where(eq(researcherChannels.researcherId, researcherId))
+    .limit(1);
+
+  let channel = null;
+  if (link) {
+    const [ch] = await db.select().from(channels).where(eq(channels.id, link.channelId));
+    if (ch) {
+      channel = {
+        id: ch.id,
+        name: ch.name,
+        platform: ch.platform,
+        hasVoice: !!ch.personaPrompt,
+        hasCredentials: !!ch.credentials,
+      };
+    }
+  }
+
+  // Fetch schedule
+  const [schedule] = await db
+    .select()
+    .from(automationSchedules)
+    .where(eq(automationSchedules.researcherId, researcherId))
+    .orderBy(desc(automationSchedules.createdAt))
+    .limit(1);
+
+  // Fetch recent runs (last 5)
+  const runs = await db
+    .select({
+      id: researchRuns.id,
+      runAt: researchRuns.runAt,
+      topicCount: sql<number>`jsonb_array_length(coalesce(${researchRuns.topicsFound}, '[]'::jsonb))`,
+      sourceCount: sql<number>`jsonb_array_length(coalesce(${researchRuns.sourcesSearched}, '[]'::jsonb))`,
+      draftsGenerated: researchRuns.draftsGenerated,
+      channelId: researchRuns.channelId,
+    })
+    .from(researchRuns)
+    .where(eq(researchRuns.researcherId, researcherId))
+    .orderBy(desc(researchRuns.runAt))
+    .limit(5);
+
+  // Count pending drafts
+  let pendingDraftCount = 0;
+  if (channel) {
+    const [count] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(drafts)
+      .where(and(eq(drafts.channelId, channel.id), eq(drafts.status, 'pending_review')));
+    pendingDraftCount = Number(count?.count ?? 0);
+  }
+
+  const serializedRuns = runs.map(r => ({
+    id: r.id,
+    runAt: r.runAt.toISOString(),
+    topicCount: Number(r.topicCount),
+    sourceCount: Number(r.sourceCount),
+    draftsGenerated: r.draftsGenerated as string[] | null,
+    channelId: r.channelId,
+  }));
+
+  return (
+    <PipelineDetail
+      researcher={{
+        id: researcher.id,
+        name: researcher.name,
+        topics: researcher.topics as string[],
+        autoDraft: researcher.autoDraft,
+        shortFormPercent: researcher.shortFormPercent,
+        maxDraftsPerRun: researcher.maxDraftsPerRun,
+      }}
+      channel={channel}
+      schedule={schedule ? {
+        cronExpression: schedule.cronExpression,
+        enabled: schedule.enabled,
+        nextRunAt: schedule.nextRunAt?.toISOString() ?? null,
+      } : null}
+      runs={serializedRuns}
+      pendingDraftCount={pendingDraftCount}
+    />
+  );
+}
