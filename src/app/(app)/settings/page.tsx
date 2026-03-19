@@ -13,7 +13,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage channels, researchers, and AI usage.</p>

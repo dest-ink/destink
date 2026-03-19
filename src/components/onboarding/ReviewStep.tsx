@@ -348,7 +348,7 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="w-full max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full px-6 py-8 space-y-6">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="space-y-1">

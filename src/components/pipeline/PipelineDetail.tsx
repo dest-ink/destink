@@ -265,7 +265,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto w-full px-6 py-8 space-y-8">
+      <div className="w-full px-6 py-8 space-y-8">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div>

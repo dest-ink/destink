@@ -170,7 +170,7 @@ export function DashboardClient() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="max-w-4xl mx-auto">
+        <div>
           <div className="h-8 w-48 bg-secondary rounded-lg animate-pulse mb-2" />
           <div className="h-4 w-64 bg-secondary/60 rounded animate-pulse mb-8" />
           <div className="grid gap-4">
@@ -185,7 +185,7 @@ export function DashboardClient() {
 
   return (
     <div className="p-8">
-      <div className="max-w-4xl mx-auto">
+      <div>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">Dashboard</h1>
