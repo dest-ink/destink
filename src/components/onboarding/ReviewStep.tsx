@@ -227,6 +227,9 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
           }
         }
       }
+      // Stream ended — if we're still in 'researching', research completed
+      // but no auto-draft events came. Show 'topics' so user can manually generate.
+      setPhase(prev => prev === 'researching' ? 'topics' : prev);
     } catch (err) {
       addLog(`Connection error: ${err instanceof Error ? err.message : String(err)}`, 'text-destructive');
       setPhase('ready');
@@ -252,7 +255,9 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
         setTopicCount(event.topicCount as number);
         setSourceCount(event.sourceCount as number);
         addLog(`Research complete — ${event.sourceCount} sources, ${event.topicCount} topics`, 'text-green-500');
-        setPhase('topics');
+        // Don't go to 'topics' — if auto-draft is on, draft events will follow immediately
+        // and we'll transition to 'generating'. If no draft events come, the stream ends
+        // and we stay in 'researching' which the finally block handles.
         break;
       case 'run-error':
         addLog(`Research failed: ${event.error}`, 'text-destructive');
@@ -260,6 +265,7 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
         break;
       // Draft events (when auto-draft is on during research)
       case 'draft-start':
+        setPhase('generating');
         addLog(`Generating draft ${event.index}/${event.total}: ${event.title}...`, 'text-blue-500');
         break;
       case 'draft-complete':
@@ -360,17 +366,19 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
                 : phase === 'researching'
                   ? 'Researching...'
                   : phase === 'generating'
-                    ? 'Generating drafts...'
+                    ? 'Writing your drafts...'
                     : 'Your content machine is ready.'}
           </h2>
           <p className="text-sm text-muted-foreground">
             {phase === 'done'
-              ? 'Review and approve your drafts, or run another round.'
-              : phase === 'topics'
-                ? `Found ${topicCount} topics from ${sourceCount} sources.`
-                : phase === 'credentials'
-                  ? 'Add your publishing credentials so drafts can be published later.'
-                  : "Everything's been set up. Review below, or jump right in."}
+              ? 'Review and approve your drafts, or go to your pipeline dashboard.'
+              : phase === 'generating'
+                ? `Found ${topicCount} topics — now generating drafts from the best ones.`
+                : phase === 'topics'
+                  ? `Found ${topicCount} topics from ${sourceCount} sources.`
+                  : phase === 'credentials'
+                    ? 'Add your publishing credentials so drafts can be published later.'
+                    : "Everything's been set up. Review below, or jump right in."}
           </p>
         </div>
 
@@ -586,14 +594,14 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
             )}
 
             {/* Secondary actions */}
-            {(phase === 'ready' || phase === 'done') && (
+            {phase === 'done' && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => { window.location.href = '/get-started'; }}
+                onClick={() => router.push(`/pipelines/${result.researcherId}`)}
                 className="text-muted-foreground"
               >
-                + Add another
+                Go to Dashboard
               </Button>
             )}
             {phase === 'done' && (
@@ -612,15 +620,15 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
               </Button>
             )}
 
-            {/* Escape hatches */}
+            {/* Escape hatch to pipeline */}
             {phase === 'topics' && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/research/${result.researcherId}/runs`)}
+                onClick={() => router.push(`/pipelines/${result.researcherId}`)}
                 className="text-muted-foreground text-xs"
               >
-                View in Research →
+                View pipeline →
               </Button>
             )}
           </div>
