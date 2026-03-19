@@ -192,10 +192,9 @@ export function DraftActions({ draft, selectedTitle, onActionComplete }: DraftAc
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant="destructive"
             disabled={disabled}
             onClick={() => setActionState('rejecting')}
-            className="text-muted-foreground hover:text-destructive hover:border-destructive/50"
           >
             Reject
           </Button>
