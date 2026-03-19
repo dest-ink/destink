@@ -6,6 +6,7 @@ import { eq, desc } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { ResearcherForm } from '@/components/research/ResearcherForm';
 import type { ResearchSourceConfig } from '@/db/schema';
+import { DeleteResourceButton } from '@/components/ui/delete-resource-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,14 +42,22 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/settings">&larr; Back to Settings</Link>
         </Button>
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-foreground">{researcher.name}</h1>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/research/${id}/runs`}>View Runs</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/research/${id}/automation`}>Automation</Link>
-          </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-foreground">{researcher.name}</h1>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/research/${id}/runs`}>View Runs</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/research/${id}/automation`}>Automation</Link>
+            </Button>
+          </div>
+          <DeleteResourceButton
+            resourceName={researcher.name}
+            deleteUrl={`/api/researchers/${researcher.id}`}
+            redirectTo="/settings"
+            description="This will permanently delete this researcher and its automation schedules. Research run history will be preserved. This action cannot be undone."
+          />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Channel {
   id: string;
@@ -27,10 +28,9 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
   const [channels, setChannels] = useState(initialChannels);
   const [researchers, setResearchers] = useState(initialResearchers);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: 'channel' | 'researcher'; id: string; name: string } | null>(null);
 
   const handleDeleteChannel = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This will also delete all drafts, voice profiles, and publish queue items for this channel.`)) return;
-
     setDeleting(id);
     try {
       const res = await fetch(`/api/channels/${id}`, { method: 'DELETE' });
@@ -50,8 +50,6 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
   };
 
   const handleDeleteResearcher = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This will also delete automation schedules linked to this researcher.`)) return;
-
     setDeleting(id);
     try {
       const res = await fetch(`/api/researchers/${id}`, { method: 'DELETE' });
@@ -97,7 +95,7 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDeleteChannel(ch.id, ch.name)}
+                  onClick={() => setConfirmTarget({ type: 'channel', id: ch.id, name: ch.name })}
                   disabled={deleting === ch.id}
                   className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
                   aria-label={`Delete ${ch.name}`}
@@ -130,7 +128,7 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDeleteResearcher(r.id, r.name)}
+                  onClick={() => setConfirmTarget({ type: 'researcher', id: r.id, name: r.name })}
                   disabled={deleting === r.id}
                   className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
                   aria-label={`Delete ${r.name}`}
@@ -157,6 +155,28 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
           </Link>
         </div>
       </div>
+
+      {/* Confirm dialog */}
+      <ConfirmDialog
+        open={!!confirmTarget}
+        onOpenChange={(open) => { if (!open) setConfirmTarget(null); }}
+        title={confirmTarget ? `Delete "${confirmTarget.name}"?` : ''}
+        description={
+          confirmTarget?.type === 'channel'
+            ? 'This will permanently delete this channel along with all its drafts, voice profiles, and publish queue items. This action cannot be undone.'
+            : 'This will permanently delete this researcher and its automation schedules. Research run history will be preserved. This action cannot be undone.'
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!confirmTarget) return;
+          if (confirmTarget.type === 'channel') {
+            await handleDeleteChannel(confirmTarget.id, confirmTarget.name);
+          } else {
+            await handleDeleteResearcher(confirmTarget.id, confirmTarget.name);
+          }
+        }}
+      />
     </div>
   );
 }

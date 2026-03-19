@@ -6,6 +6,7 @@ import { eq, sql, desc } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChannelTabs } from '@/components/channels/ChannelTabs';
+import { DeleteResourceButton } from '@/components/ui/delete-resource-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,11 +69,19 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/settings">&larr; Back to Settings</Link>
         </Button>
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
-          <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
-            {platformStyle.label}
-          </Badge>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
+            <Badge className={`border text-xs font-mono ${platformStyle.color}`} variant="outline">
+              {platformStyle.label}
+            </Badge>
+          </div>
+          <DeleteResourceButton
+            resourceName={channel.name}
+            deleteUrl={`/api/channels/${channel.id}`}
+            redirectTo="/settings"
+            description="This will permanently delete this channel along with all its drafts, voice profiles, and publish queue items. This action cannot be undone."
+          />
         </div>
       </div>
 
