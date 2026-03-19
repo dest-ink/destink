@@ -4,48 +4,63 @@
 
 /* Light mode (default) */
 :root {
-  --background: 0 0% 98%;
-  --foreground: 0 0% 8%;
+  --background: 0 0% 97%;
+  --foreground: 220 15% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 8%;
+  --card-foreground: 220 15% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 8%;
+  --popover-foreground: 220 15% 10%;
   --primary: 24 100% 50%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 93%;
-  --secondary-foreground: 0 0% 8%;
-  --muted: 0 0% 93%;
-  --muted-foreground: 0 0% 40%;
-  --accent: 0 0% 93%;
-  --accent-foreground: 0 0% 8%;
+  --secondary: 220 10% 94%;
+  --secondary-foreground: 220 15% 10%;
+  --muted: 220 10% 94%;
+  --muted-foreground: 220 8% 46%;
+  --accent: 220 10% 94%;
+  --accent-foreground: 220 15% 10%;
   --destructive: 0 84% 50%;
-  --border: 0 0% 85%;
-  --input: 0 0% 88%;
+  --success: 142 72% 40%;
+  --warning: 38 92% 50%;
+  --border: 220 10% 90%;
+  --input: 220 10% 92%;
   --ring: 24 100% 50%;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
+
+  /* Elevation shadows — dimensional layering */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 }
 
 /* Dark mode */
 .dark {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 96%;
-  --card: 0 0% 7%;
-  --card-foreground: 0 0% 96%;
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 96%;
+  --background: 220 15% 5%;
+  --foreground: 220 10% 95%;
+  --card: 220 15% 8%;
+  --card-foreground: 220 10% 95%;
+  --popover: 220 15% 8%;
+  --popover-foreground: 220 10% 95%;
   --primary: 24 100% 54%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 11%;
-  --secondary-foreground: 0 0% 96%;
-  --muted: 0 0% 11%;
-  --muted-foreground: 0 0% 55%;
-  --accent: 0 0% 11%;
-  --accent-foreground: 0 0% 96%;
+  --primary-foreground: 220 15% 5%;
+  --secondary: 220 12% 13%;
+  --secondary-foreground: 220 10% 95%;
+  --muted: 220 12% 13%;
+  --muted-foreground: 220 8% 55%;
+  --accent: 220 12% 13%;
+  --accent-foreground: 220 10% 95%;
   --destructive: 0 84% 60%;
-  --border: 0 0% 15%;
-  --input: 0 0% 11%;
+  --success: 142 72% 50%;
+  --warning: 38 92% 56%;
+  --border: 220 12% 16%;
+  --input: 220 12% 13%;
   --ring: 24 100% 54%;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
 }
 
 @theme inline {
@@ -64,12 +79,18 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
 * {
@@ -80,4 +101,13 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, textarea, select {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
