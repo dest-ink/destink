@@ -7,11 +7,22 @@ import { ResearcherForm } from '@/components/research/ResearcherForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewResearcherPage() {
+interface Props {
+  searchParams: Promise<{ channelId?: string }>;
+}
+
+export default async function NewResearcherPage({ searchParams }: Props) {
+  const { channelId } = await searchParams;
+
   const allChannels = await db
     .select({ id: channels.id, name: channels.name, platform: channels.platform })
     .from(channels)
     .orderBy(desc(channels.createdAt));
+
+  // Pre-select channel if channelId is provided via query param
+  const preSelectedChannelIds = channelId && allChannels.some(ch => ch.id === channelId)
+    ? [channelId]
+    : undefined;
 
   return (
     <div className="flex flex-col h-full">
@@ -24,7 +35,7 @@ export default async function NewResearcherPage() {
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <ResearcherForm allChannels={allChannels} />
+        <ResearcherForm allChannels={allChannels} linkedChannelIds={preSelectedChannelIds} />
       </div>
     </div>
   );

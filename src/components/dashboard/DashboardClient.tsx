@@ -43,7 +43,7 @@ function getPipelineStatus(p: Pipeline): { steps: { key: PipelineStep; label: st
       { key: 'credentials', label: 'Credentials', status: p.channel?.hasCredentials ? 'done' : 'warning' },
       { key: 'research', label: 'Research', status: 'pending' },
     ];
-    return { steps, nextAction: 'Set up a researcher for this channel', nextHref: '/get-started', actionLabel: 'Set up' };
+    return { steps, nextAction: 'Set up a researcher for this channel', nextHref: `/research/new?channelId=${p.channel?.id ?? ''}`, actionLabel: 'Set up' };
   }
 
   const steps: { key: PipelineStep; label: string; status: 'done' | 'warning' | 'pending' }[] = [
