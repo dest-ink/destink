@@ -6,8 +6,8 @@ import { Zap, ArrowRight, FileText, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Pipeline {
-  researcherId: string;
-  researcherName: string;
+  researcherId: string | null;
+  researcherName: string | null;
   topics: string[];
   autoDraft: boolean;
   channel: {
@@ -35,6 +35,17 @@ interface Pipeline {
 type PipelineStep = 'channel' | 'voice' | 'credentials' | 'research';
 
 function getPipelineStatus(p: Pipeline): { steps: { key: PipelineStep; label: string; status: 'done' | 'warning' | 'pending' }[]; nextAction: string; nextHref: string; actionLabel: string } {
+  // Orphan channel — no researcher linked
+  if (!p.researcherId) {
+    const steps: { key: PipelineStep; label: string; status: 'done' | 'warning' | 'pending' }[] = [
+      { key: 'channel', label: 'Channel', status: 'done' },
+      { key: 'voice', label: 'Voice', status: p.channel?.hasVoice ? 'done' : 'pending' },
+      { key: 'credentials', label: 'Credentials', status: p.channel?.hasCredentials ? 'done' : 'warning' },
+      { key: 'research', label: 'Research', status: 'pending' },
+    ];
+    return { steps, nextAction: 'Set up a researcher for this channel', nextHref: '/get-started', actionLabel: 'Set up' };
+  }
+
   const steps: { key: PipelineStep; label: string; status: 'done' | 'warning' | 'pending' }[] = [
     { key: 'channel', label: 'Channel', status: p.channel ? 'done' : 'pending' },
     { key: 'voice', label: 'Voice', status: p.channel?.hasVoice ? 'done' : 'pending' },
@@ -77,17 +88,19 @@ function StatusDot({ status }: { status: 'done' | 'warning' | 'pending' }) {
 function PipelineCard({ pipeline }: { pipeline: Pipeline }) {
   const { steps, nextAction, nextHref, actionLabel } = getPipelineStatus(pipeline);
   const allDone = steps.every(s => s.status === 'done');
+  const cardHref = pipeline.researcherId ? `/pipelines/${pipeline.researcherId}` : nextHref;
+  const displayName = pipeline.researcherName ?? pipeline.channel?.name ?? 'Untitled';
 
   return (
     <Link
-      href={`/pipelines/${pipeline.researcherId}`}
+      href={cardHref}
       className="block rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 group"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
-            {pipeline.researcherName}
+            {displayName}
           </h3>
           {pipeline.channel && (
             <p className="text-xs text-muted-foreground mt-0.5 capitalize">{pipeline.channel.platform} · {pipeline.channel.name}</p>

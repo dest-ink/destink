@@ -5,6 +5,16 @@ import { eq, desc, sql, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 
+// Lower score = higher priority (needs action first)
+function getPriorityScore(p: { researcherId: string | null; channel: { hasCredentials: boolean; hasVoice: boolean } | null; lastRun: unknown; pendingDraftCount: number }): number {
+  if (!p.researcherId) return 0;          // Orphan channel — needs researcher
+  if (!p.channel) return 1;               // Researcher without channel
+  if (!p.channel.hasCredentials) return 2; // Missing credentials
+  if (!p.lastRun) return 3;               // Never run
+  if (p.pendingDraftCount > 0) return 4;  // Drafts to review
+  return 5;                               // All good
+}
+
 export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -101,7 +111,39 @@ export const GET = auth(function GET(req) {
         }),
       );
 
-      return NextResponse.json(pipelines);
+      // Find orphan channels (channels not linked to any researcher)
+      const allLinks = await db.select({ channelId: researcherChannels.channelId }).from(researcherChannels);
+      const linkedChannelIds = new Set(allLinks.map(l => l.channelId));
+
+      const allChannels = await db.select().from(channels).orderBy(desc(channels.createdAt));
+      const orphanChannels = allChannels.filter(ch => !linkedChannelIds.has(ch.id));
+
+      const orphanPipelines = orphanChannels.map(ch => ({
+        researcherId: null,
+        researcherName: null,
+        topics: [],
+        autoDraft: false,
+        channel: {
+          id: ch.id,
+          name: ch.name,
+          platform: ch.platform,
+          hasVoice: !!ch.personaPrompt,
+          hasCredentials: !!ch.credentials,
+        },
+        schedule: null,
+        lastRun: null,
+        pendingDraftCount: 0,
+      }));
+
+      // Combine and sort: items needing action first
+      const all = [...pipelines, ...orphanPipelines];
+      all.sort((a, b) => {
+        const scoreA = getPriorityScore(a);
+        const scoreB = getPriorityScore(b);
+        return scoreA - scoreB;
+      });
+
+      return NextResponse.json(all);
     } catch (err) {
       const { message, status } = apiError('load dashboard', err);
       return NextResponse.json({ error: message }, { status });
