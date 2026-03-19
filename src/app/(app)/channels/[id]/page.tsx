@@ -66,7 +66,7 @@ export default async function ChannelDetailPage({ params }: ChannelDetailPagePro
       {/* Page header */}
       <div className="px-6 py-5 border-b border-border shrink-0">
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
-          <Link href="/channels">&larr; Back to channels</Link>
+          <Link href="/settings">&larr; Back to Settings</Link>
         </Button>
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-foreground">{channel.name}</h1>
