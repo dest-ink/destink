@@ -29,7 +29,17 @@ export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
   }
 
   function handlePublishedNow(id: string) {
-    // The API now awaits publish, so refresh to get the final status
+    // Optimistically update status to 'published' and refresh for server truth
+    setGroups(prev =>
+      prev.map(g => ({
+        ...g,
+        items: g.items.map(item =>
+          item.id === id
+            ? { ...item, status: 'published' as const, publishedAt: new Date().toISOString() }
+            : item
+        ),
+      }))
+    );
     router.refresh();
   }
 
