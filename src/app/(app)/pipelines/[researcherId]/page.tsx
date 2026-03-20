@@ -32,8 +32,10 @@ export default async function PipelineDetailPage({ params }: Props) {
         id: ch.id,
         name: ch.name,
         platform: ch.platform,
+        platformId: ch.platformId,
         hasVoice: !!ch.personaPrompt,
         hasCredentials: !!ch.credentials,
+        personaPrompt: ch.personaPrompt,
       };
     }
   }
@@ -86,6 +88,8 @@ export default async function PipelineDetailPage({ params }: Props) {
         id: researcher.id,
         name: researcher.name,
         topics: researcher.topics as string[],
+        keywords: researcher.keywords as string[],
+        sourceConfig: researcher.sourceConfig as { subreddits: string[]; substackFeeds: string[]; searchQueryTemplates: string[]; excludedDomains: string[] },
         autoDraft: researcher.autoDraft,
         shortFormPercent: researcher.shortFormPercent,
         maxDraftsPerRun: researcher.maxDraftsPerRun,

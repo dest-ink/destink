@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import {
   ArrowLeft, Play, FileText, Clock, Settings as SettingsIcon,
   CheckCircle2, AlertCircle, Circle, KeyRound, ArrowRight, RotateCcw,
+  ChevronDown, ChevronRight, Pencil, Hash, Search, Globe, BookOpen,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -18,6 +19,13 @@ interface PipelineDetailProps {
     id: string;
     name: string;
     topics: string[];
+    keywords: string[];
+    sourceConfig: {
+      subreddits: string[];
+      substackFeeds: string[];
+      searchQueryTemplates: string[];
+      excludedDomains: string[];
+    };
     autoDraft: boolean;
     shortFormPercent: number;
     maxDraftsPerRun: number;
@@ -26,8 +34,10 @@ interface PipelineDetailProps {
     id: string;
     name: string;
     platform: string;
+    platformId: string | null;
     hasVoice: boolean;
     hasCredentials: boolean;
+    personaPrompt: string | null;
   } | null;
   schedule: {
     cronExpression: string;
@@ -71,6 +81,10 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
   const [draftCount, setDraftCount] = useState(0);
   const logRef = useRef<HTMLDivElement>(null);
 
+  // Section visibility
+  const [showChannel, setShowChannel] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
+
   // Credentials
   const [credSchema, setCredSchema] = useState<ConfigField[]>([]);
   const [credValues, setCredValues] = useState<Record<string, string>>({});
@@ -87,7 +101,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [logs]);
 
-  // Load credential schema
   useEffect(() => {
     if (!channel) return;
     fetch(`/api/providers/${channel.platform}`)
@@ -166,6 +179,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
           try { handleSSE(JSON.parse(line.slice(6))); } catch {}
         }
       }
+      setPhase(prev => prev === 'researching' ? 'topics' : prev);
     } catch (err) {
       addLog(`Error: ${err instanceof Error ? err.message : String(err)}`, 'text-destructive');
       setPhase('idle');
@@ -229,13 +243,13 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
         setTopicCount(event.topicCount as number);
         setSourceCount(event.sourceCount as number);
         addLog(`Done — ${event.sourceCount} sources, ${event.topicCount} topics`, 'text-green-500');
-        setPhase('topics');
         break;
       case 'run-error':
         addLog(`Failed: ${event.error}`, 'text-destructive');
         setPhase('idle');
         break;
       case 'draft-start':
+        setPhase('generating');
         addLog(`Drafting ${event.index}/${event.total}: ${event.title}`, 'text-blue-500');
         break;
       case 'draft-complete':
@@ -252,20 +266,21 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
     }
   };
 
-  // ── Pipeline Status ───────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   const steps = [
-    { label: 'Channel', done: !!channel, icon: CheckCircle2 },
-    { label: 'Voice', done: channel?.hasVoice ?? false, icon: CheckCircle2 },
-    { label: 'Credentials', done: hasCredentials, warning: !hasCredentials, icon: hasCredentials ? CheckCircle2 : AlertCircle },
-    { label: 'Research', done: runs.length > 0 || phase !== 'idle', icon: runs.length > 0 ? CheckCircle2 : Circle },
+    { label: 'Channel', done: !!channel },
+    { label: 'Voice', done: channel?.hasVoice ?? false },
+    { label: 'Credentials', done: hasCredentials, warning: !hasCredentials },
+    { label: 'Research', done: runs.length > 0 || phase !== 'idle' },
   ];
 
   const isRunning = phase === 'researching' || phase === 'generating';
+  const { subreddits, substackFeeds, searchQueryTemplates } = researcher.sourceConfig;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="w-full px-6 py-8 space-y-8">
+      <div className="w-full px-6 py-8 space-y-6">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div>
@@ -280,20 +295,18 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
                 <p className="text-sm text-muted-foreground mt-0.5 capitalize">{channel.platform} · {channel.name}</p>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              {schedule?.enabled && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
-                  <Clock className="w-3 h-3" />
-                  {schedule.nextRunAt
-                    ? new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
-                    : 'Scheduled'}
-                </span>
-              )}
-            </div>
+            {schedule?.enabled && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
+                <Clock className="w-3 h-3" />
+                {schedule.nextRunAt
+                  ? new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+                  : 'Scheduled'}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* ── Pipeline Status Bar ────────────────────────────────────── */}
+        {/* ── Pipeline Status ────────────────────────────────────────── */}
         <div className="flex items-center gap-2 p-4 rounded-xl bg-card border border-border shadow-sm">
           {steps.map((step, i) => (
             <div key={step.label} className="flex items-center gap-2">
@@ -314,22 +327,72 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
           ))}
         </div>
 
-        {/* ── Credentials Alert ──────────────────────────────────────── */}
-        {!hasCredentials && channel && !showCredForm && (
-          <button
-            onClick={() => setShowCredForm(true)}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors text-left"
-          >
-            <KeyRound className="w-5 h-5 text-amber-500 shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-foreground">Add publishing credentials</p>
-              <p className="text-xs text-muted-foreground">Required to publish approved drafts to {channel.platform}</p>
-            </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto" />
-          </button>
+        {/* ── Channel Section ────────────────────────────────────────── */}
+        {channel && (
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <button
+              onClick={() => setShowChannel(!showChannel)}
+              className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-accent/30 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Hash className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-sm font-medium text-foreground">{channel.name}</span>
+                  <span className="text-xs text-muted-foreground ml-2 capitalize">{channel.platform}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {channel.hasVoice && <span className="text-[10px] text-green-500 font-medium">Voice ✓</span>}
+                {hasCredentials && <span className="text-[10px] text-green-500 font-medium">Creds ✓</span>}
+                {showChannel ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+              </div>
+            </button>
+
+            {showChannel && (
+              <div className="px-5 py-4 border-t border-border space-y-4">
+                {/* Platform ID */}
+                {channel.platformId && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Handle</p>
+                    <p className="text-sm text-foreground font-mono">{channel.platformId}</p>
+                  </div>
+                )}
+
+                {/* Voice summary */}
+                {channel.personaPrompt && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Voice Profile</p>
+                    <p className="text-xs text-foreground leading-relaxed line-clamp-4">{channel.personaPrompt.slice(0, 300)}...</p>
+                  </div>
+                )}
+
+                {/* Credentials status */}
+                {!hasCredentials ? (
+                  <button
+                    onClick={() => setShowCredForm(true)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors text-left"
+                  >
+                    <KeyRound className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Add publishing credentials</p>
+                      <p className="text-xs text-muted-foreground">Required to publish to {channel.platform}</p>
+                    </div>
+                  </button>
+                ) : (
+                  <p className="text-xs text-green-500 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Credentials configured
+                  </p>
+                )}
+
+                <Link href={`/channels/${channel.id}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  <Pencil className="w-3 h-3" /> Edit channel settings
+                </Link>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* ── Credentials Form ───────────────────────────────────────── */}
+        {/* ── Credentials Form (modal-like inline) ───────────────────── */}
         {showCredForm && channel && sortedSchema.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
@@ -362,9 +425,83 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
           </div>
         )}
 
+        {/* ── Research Section ────────────────────────────────────────── */}
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <button
+            onClick={() => setShowResearch(!showResearch)}
+            className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-accent/30 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <span className="text-sm font-medium text-foreground">Research</span>
+                <span className="text-xs text-muted-foreground ml-2">{researcher.topics.length} topics · {researcher.keywords.length} keywords</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">{researcher.shortFormPercent}% short / {100 - researcher.shortFormPercent}% long</span>
+              {showResearch ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </button>
+
+          {showResearch && (
+            <div className="px-5 py-4 border-t border-border space-y-4">
+              {/* Topics */}
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Topics</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {researcher.topics.map(t => (
+                    <span key={t} className="text-xs px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">{t}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Keywords */}
+              {researcher.keywords.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Keywords</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {researcher.keywords.map(k => (
+                      <span key={k} className="text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground">{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sources */}
+              {(subreddits.length > 0 || substackFeeds.length > 0) && (
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Sources</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {subreddits.map(s => (
+                      <span key={s} className="text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground flex items-center gap-1">
+                        <Globe className="w-3 h-3" /> r/{s}
+                      </span>
+                    ))}
+                    {substackFeeds.map(s => (
+                      <span key={s} className="text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" /> {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Settings summary */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span>Max {researcher.maxDraftsPerRun} drafts/run</span>
+                <span>{researcher.autoDraft ? 'Auto-draft on' : 'Auto-draft off'}</span>
+              </div>
+
+              <Link href={`/research/${researcher.id}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                <Pencil className="w-3 h-3" /> Edit research config
+              </Link>
+            </div>
+          )}
+        </div>
+
         {/* ── Action Zone ────────────────────────────────────────────── */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-          {/* Primary action */}
           <div className="flex items-center gap-3">
             {phase === 'idle' && (
               <Button
@@ -411,7 +548,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
               </span>
             )}
 
-            {/* Pending drafts notice */}
             {phase === 'idle' && pendingDraftCount > 0 && (
               <Link href="/drafts" className="text-sm text-primary hover:underline flex items-center gap-1">
                 <FileText className="w-3.5 h-3.5" />
@@ -457,21 +593,11 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
           </div>
         )}
 
-        {/* ── Settings Links ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-4 pt-4 border-t border-border">
-          {channel && (
-            <Link href={`/channels/${channel.id}`} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-              <SettingsIcon className="w-3 h-3" /> Edit channel
-            </Link>
-          )}
-          <Link href={`/research/${researcher.id}`} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-            <SettingsIcon className="w-3 h-3" /> Edit researcher
+        {/* ── Automation Link ────────────────────────────────────────── */}
+        <div className="flex items-center gap-4 pt-2 border-t border-border">
+          <Link href={`/research/${researcher.id}/automation`} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+            <Clock className="w-3 h-3" /> Edit automation schedule
           </Link>
-          {channel && (
-            <Link href={`/research/${researcher.id}/automation`} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-              <Clock className="w-3 h-3" /> Edit automation
-            </Link>
-          )}
         </div>
       </div>
     </div>
