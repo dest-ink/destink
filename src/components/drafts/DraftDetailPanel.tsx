@@ -53,6 +53,13 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
 
   const sources = Array.isArray(draft.researchSources) ? draft.researchSources : [];
 
+  // Word count
+  const wordCount = [currentHook, currentBody, currentCta]
+    .filter(Boolean)
+    .join(' ')
+    .split(/\s+/)
+    .filter(w => w.length > 0).length;
+
   // ── Save manual edit ──────────────────────────────────────────────────
 
   const handleSaveEdit = async (field: 'hook' | 'body' | 'cta') => {
@@ -215,6 +222,9 @@ export function DraftDetailPanel({ draft, onActionComplete }: DraftDetailPanelPr
             <p className="text-sm text-muted-foreground">{draft.channelName}</p>
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-muted-foreground tabular-nums px-2 py-0.5 rounded bg-secondary">
+              {wordCount.toLocaleString()} words
+            </span>
             {typeof draft.voiceConfidence === 'number' && (
               <VoiceConfidenceBadge score={draft.voiceConfidence} />
             )}
