@@ -29,56 +29,55 @@ export interface GeneratedDraft {
 function buildWritingStyleInstructions(ws: ContentTypeStyle): string {
   const rules: string[] = [];
 
-  // Length is handled in the main spec, don't duplicate here
-
-  // Vocabulary
-  if (ws.vocabularyLevel) rules.push(`Vocabulary: ${ws.vocabularyLevel}`);
-  if (ws.jargonHandling === 'avoid') rules.push('Avoid jargon and technical terms');
+  // Vocabulary & language
+  rules.push(`Vocabulary level: ${ws.vocabularyLevel ?? 'accessible'}`);
+  if (ws.jargonHandling === 'avoid') rules.push('Do NOT use jargon or technical terms');
   else if (ws.jargonHandling === 'explain') rules.push('When using jargon, explain it on first use');
   else if (ws.jargonHandling === 'assume-knowledge') rules.push('Assume reader knows industry jargon');
-
-  if (ws.preferredPhrases?.length) rules.push(`Preferred phrases to use: ${ws.preferredPhrases.join(', ')}`);
+  if (ws.preferredPhrases?.length) rules.push(`Use these phrases when natural: ${ws.preferredPhrases.join(', ')}`);
   if (ws.avoidedPhrases?.length) rules.push(`NEVER use these phrases: ${ws.avoidedPhrases.join(', ')}`);
 
-  // Punctuation
-  const punctRules: string[] = [];
-  if (ws.useEmDashes) punctRules.push('use em dashes (—) for asides');
-  if (ws.useOxfordComma) punctRules.push('use Oxford comma');
-  if (!ws.useSemicolons) punctRules.push('avoid semicolons');
-  if (!ws.useExclamationMarks) punctRules.push('no exclamation marks');
-  if (!ws.useEllipsis) punctRules.push('no ellipsis');
-  if (ws.useParenheticals) punctRules.push('parenthetical asides OK');
-  if (punctRules.length) rules.push(`Punctuation: ${punctRules.join('; ')}`);
+  // Punctuation — be explicit about both what to use AND what to avoid
+  const usePunct: string[] = [];
+  const avoidPunct: string[] = [];
+  ws.useEmDashes ? usePunct.push('em dashes (—)') : avoidPunct.push('em dashes');
+  ws.useOxfordComma ? usePunct.push('Oxford comma') : avoidPunct.push('Oxford comma');
+  ws.useSemicolons ? usePunct.push('semicolons') : avoidPunct.push('semicolons');
+  ws.useExclamationMarks ? usePunct.push('exclamation marks') : avoidPunct.push('exclamation marks');
+  ws.useEllipsis ? usePunct.push('ellipsis (...)') : avoidPunct.push('ellipsis');
+  ws.useParenheticals ? usePunct.push('parenthetical asides') : avoidPunct.push('parenthetical asides');
+  if (usePunct.length) rules.push(`Punctuation to USE: ${usePunct.join(', ')}`);
+  if (avoidPunct.length) rules.push(`Punctuation to AVOID: ${avoidPunct.join(', ')}`);
 
-  // Capitalization
-  if (ws.headlineCase) rules.push(`Headlines: ${ws.headlineCase} case`);
-  if (ws.emphasisStyle) rules.push(`Emphasis: use ${ws.emphasisStyle === 'bold' ? '**bold**' : ws.emphasisStyle === 'italic' ? '*italic*' : ws.emphasisStyle === 'caps' ? 'ALL CAPS' : 'no'} formatting for emphasis`);
+  // Capitalization & emphasis
+  rules.push(`Headlines: ${ws.headlineCase ?? 'sentence'} case`);
+  const emphMap: Record<string, string> = { bold: '**bold**', italic: '*italic*', caps: 'ALL CAPS', none: 'no special' };
+  rules.push(`Emphasis: use ${emphMap[ws.emphasisStyle ?? 'bold'] ?? 'bold'} formatting`);
   if (ws.useAllCaps) rules.push('Use strategic ALL CAPS for 1-2 key words per post');
+  if (!ws.useAllCaps) rules.push('Do NOT use ALL CAPS');
 
   // Structure
-  if (ws.paragraphLength === 'short') rules.push('Keep paragraphs to 2-3 sentences');
-  else if (ws.paragraphLength === 'medium') rules.push('Paragraphs can be 4-5 sentences');
-  else if (ws.paragraphLength === 'long') rules.push('Longer paragraphs (6+) are OK');
-
-  const structRules: string[] = [];
-  if (ws.useSubheadings) structRules.push('use ## subheadings');
-  if (ws.useBulletLists) structRules.push('use bullet lists');
-  if (ws.useNumberedLists) structRules.push('use numbered lists');
-  if (ws.useBlockquotes) structRules.push('use > blockquotes for key insights');
-  if (structRules.length) rules.push(`Structure: ${structRules.join(', ')}`);
+  const paraMap: Record<string, string> = { short: '2-3 sentences max', medium: '4-5 sentences', long: '6+ sentences OK' };
+  rules.push(`Paragraph length: ${paraMap[ws.paragraphLength ?? 'short'] ?? '2-3 sentences'}`);
+  const useStruct: string[] = [];
+  const avoidStruct: string[] = [];
+  ws.useSubheadings ? useStruct.push('## subheadings') : avoidStruct.push('subheadings');
+  ws.useBulletLists ? useStruct.push('bullet lists (-)') : avoidStruct.push('bullet lists');
+  ws.useNumberedLists ? useStruct.push('numbered lists (1. 2. 3.)') : avoidStruct.push('numbered lists');
+  ws.useBlockquotes ? useStruct.push('> blockquotes') : avoidStruct.push('blockquotes');
+  if (useStruct.length) rules.push(`Structure elements to USE: ${useStruct.join(', ')}`);
+  if (avoidStruct.length) rules.push(`Structure elements to AVOID: ${avoidStruct.join(', ')}`);
 
   // Tone
-  if (ws.humorLevel && ws.humorLevel !== 'none') rules.push(`Humor: ${ws.humorLevel}`);
-  if (ws.formalityLevel) rules.push(`Formality: ${ws.formalityLevel}`);
-  if (ws.opinionStrength) rules.push(`Opinion: ${ws.opinionStrength}`);
+  rules.push(`Humor: ${ws.humorLevel ?? 'none'}`);
+  rules.push(`Formality: ${ws.formalityLevel ?? 'conversational'}`);
+  rules.push(`Opinion strength: ${ws.opinionStrength ?? 'balanced'}`);
   if (ws.ctaStyle === 'question') rules.push('End with an engaging question');
   else if (ws.ctaStyle === 'directive') rules.push('End with a direct CTA (share, comment, etc.)');
   else if (ws.ctaStyle === 'soft') rules.push('End with a soft nudge');
-  else if (ws.ctaStyle === 'none') rules.push('No call-to-action needed');
+  else if (ws.ctaStyle === 'none') rules.push('Do NOT include a call-to-action');
 
-  return rules.length > 0
-    ? `\n\nWRITING STYLE RULES:\n${rules.map(r => `- ${r}`).join('\n')}`
-    : '';
+  return `\n\nWRITING STYLE RULES (follow ALL of these precisely):\n${rules.map(r => `- ${r}`).join('\n')}`;
 }
 
 const PLATFORM_FORMATTING: Record<string, string> = {
@@ -121,15 +120,14 @@ export function buildGenerationPrompt(input: GenerationInput): string {
   const lengthMin = writingStyle?.lengthMin ?? (contentType === 'note' ? 150 : 800);
   const lengthMax = writingStyle?.lengthMax ?? (contentType === 'note' ? 300 : 2000);
 
-  const spec = contentType === 'note'
-    ? `EXACTLY ${lengthMin}–${lengthMax} words. Punchy and direct, optimized for social scroll-stopping.`
-    : `EXACTLY ${lengthMin}–${lengthMax} words. Structured argument with clear thesis, supporting points, and conclusion.`;
-
-  const formattingRules = platform && PLATFORM_FORMATTING[platform]
-    ? `\n\n${PLATFORM_FORMATTING[platform]}`
-    : '';
+  const spec = `EXACTLY ${lengthMin}–${lengthMax} words.`;
 
   const styleRules = writingStyle ? buildWritingStyleInstructions(writingStyle) : '';
+
+  // Only use hardcoded platform formatting if no writing style is configured
+  const formattingRules = !writingStyle && platform && PLATFORM_FORMATTING[platform]
+    ? `\n\n${PLATFORM_FORMATTING[platform]}`
+    : '';
 
   return `${personaPrompt}
 
