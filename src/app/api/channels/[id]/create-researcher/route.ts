@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { channels, researchers, researcherChannels, automationSchedules } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { parseOnboardingIntent } from '@/lib/onboarding/parse-intent';
 import { getNextRunAt } from '@/lib/cron-utils';
+import { getUserId } from '@/lib/auth-utils';
 
 const FREQUENCY_TO_CRON: Record<string, string> = {
   twice_daily: '0 8,20 * * *',
@@ -24,10 +25,13 @@ export const POST = auth(function POST(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id: channelId } = await (ctx?.params as Promise<{ id: string }>);
 
-      // Verify channel exists
-      const [channel] = await db.select().from(channels).where(eq(channels.id, channelId));
+      // Verify channel exists and belongs to user
+      const [channel] = await db.select().from(channels).where(and(eq(channels.id, channelId), eq(channels.userId, userId)));
       if (!channel) return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
 
       const body = await req.json();
@@ -47,6 +51,7 @@ export const POST = auth(function POST(req, ctx) {
       // Create researcher + link + schedule in transaction
       const result = await db.transaction(async (tx) => {
         const [researcher] = await tx.insert(researchers).values({
+          userId,
           name: intent.researcher.name,
           topics: intent.researcher.topics,
           keywords: intent.researcher.keywords,

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { channels, voiceProfiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 /**
  * GET /api/channels/:id/suggest-researcher
@@ -15,9 +16,12 @@ export const GET = auth(function GET(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
 
-      const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+      const [channel] = await db.select().from(channels).where(and(eq(channels.id, id), eq(channels.userId, userId)));
       if (!channel) return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
 
       // Get voice profile info

@@ -28,7 +28,7 @@ export interface ProvisionResult {
   voiceProfileId: string;
 }
 
-export async function provisionFromIntent(intent: OnboardingIntent): Promise<ProvisionResult> {
+export async function provisionFromIntent(intent: OnboardingIntent, userId: string): Promise<ProvisionResult> {
   const voiceRawInput = [
     `Describe your writing style in 3 words: ${intent.voice.style.join(', ')}`,
     intent.voice.influences.length > 0
@@ -45,6 +45,7 @@ export async function provisionFromIntent(intent: OnboardingIntent): Promise<Pro
 
   const result = await db.transaction(async (tx) => {
     const [channel] = await tx.insert(channels).values({
+      userId,
       name: intent.channelName,
       platform: intent.platform,
       platformId: intent.platformId,
@@ -58,6 +59,7 @@ export async function provisionFromIntent(intent: OnboardingIntent): Promise<Pro
     }).returning();
 
     const [researcher] = await tx.insert(researchers).values({
+      userId,
       name: intent.researcher.name,
       topics: intent.researcher.topics,
       keywords: intent.researcher.keywords,

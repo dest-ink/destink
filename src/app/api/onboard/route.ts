@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { parseOnboardingIntent } from '@/lib/onboarding/parse-intent';
 import { provisionFromIntent } from '@/lib/onboarding/provision';
+import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,8 +24,11 @@ export const POST = auth(function POST(req) {
     }
 
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const intent = await parseOnboardingIntent(body.input.trim());
-      const result = await provisionFromIntent(intent);
+      const result = await provisionFromIntent(intent, userId);
       return NextResponse.json({ intent, result }, { status: 201 });
     } catch (err) {
       const { message, status } = apiError('set up your content machine', err);

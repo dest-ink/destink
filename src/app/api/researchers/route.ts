@@ -4,13 +4,17 @@ import { researchers, researcherChannels, researchRuns, channels } from '@/db/sc
 import { desc, eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
     try {
-      const rows = await db.select().from(researchers).orderBy(desc(researchers.createdAt));
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+      const rows = await db.select().from(researchers).where(eq(researchers.userId, userId)).orderBy(desc(researchers.createdAt));
 
       // Enrich with linked channels and last run info
       const enriched = await Promise.all(
@@ -57,6 +61,9 @@ export const POST = auth(function POST(req) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const body = await req.json();
       if (!body.name || typeof body.name !== 'string') {
         return NextResponse.json({ error: 'name is required' }, { status: 400 });
@@ -65,6 +72,7 @@ export const POST = auth(function POST(req) {
       const [researcher] = await db
         .insert(researchers)
         .values({
+          userId,
           name: body.name,
           topics: body.topics ?? [],
           keywords: body.keywords ?? [],

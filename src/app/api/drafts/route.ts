@@ -1,25 +1,43 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
-import { and, eq, desc } from 'drizzle-orm';
+import { and, eq, desc, inArray } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
 import { randomUUID } from 'crypto';
 import type { ResearchSource } from '@/db/schema';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
+    const userId = await getUserId(req.auth);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const channelId = searchParams.get('channelId');
     const statusParam = searchParams.get('status') as typeof drafts.$inferSelect['status'] | null;
 
     try {
+      // Get all channel IDs owned by this user for filtering
+      const userChannels = await db.select({ id: channels.id }).from(channels).where(eq(channels.userId, userId));
+      const userChannelIds = userChannels.map(c => c.id);
+
       // Build conditions — both channelId and status can be applied simultaneously
       const conditions = [];
-      if (channelId) conditions.push(eq(drafts.channelId, channelId));
+      if (channelId) {
+        // Ensure the requested channelId belongs to this user
+        if (!userChannelIds.includes(channelId)) {
+          return NextResponse.json([], { status: 200 });
+        }
+        conditions.push(eq(drafts.channelId, channelId));
+      } else if (userChannelIds.length > 0) {
+        conditions.push(inArray(drafts.channelId, userChannelIds));
+      } else {
+        return NextResponse.json([], { status: 200 });
+      }
       if (statusParam) conditions.push(eq(drafts.status, statusParam));
 
       const rows = await db
@@ -66,7 +84,10 @@ export const POST = auth(function POST(req) {
     }
 
     try {
-      const [channel] = await db.select().from(channels).where(eq(channels.id, channelId));
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+      const [channel] = await db.select().from(channels).where(and(eq(channels.id, channelId), eq(channels.userId, userId)));
       if (!channel) return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
 
       const recentDrafts = await db

@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { callClaude } from '@/lib/ai/client';
+import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const body = await req.json();
       const { message, hook, draftBody, cta } = body as {
@@ -28,8 +32,9 @@ export const POST = auth(function POST(req, ctx) {
       const [draft] = await db.select().from(drafts).where(eq(drafts.id, id));
       if (!draft) return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
 
-      // Load channel for voice context
-      const [channel] = await db.select().from(channels).where(eq(channels.id, draft.channelId));
+      // Load channel for voice context, verifying ownership
+      const [channel] = await db.select().from(channels).where(and(eq(channels.id, draft.channelId), eq(channels.userId, userId)));
+      if (!channel) return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
       const voiceContext = channel?.personaPrompt || '';
 
       const systemPrompt = `You are an AI writing assistant helping edit a draft article.

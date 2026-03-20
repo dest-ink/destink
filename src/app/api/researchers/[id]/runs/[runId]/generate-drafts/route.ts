@@ -6,18 +6,22 @@ import { NextResponse } from 'next/server';
 import { generateDraftsForRun } from '@/lib/generation/batch';
 import type { TopicRecommendation } from '@/db/schema';
 import type { ResearchProgressEvent } from '@/lib/research/progress';
+import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
+    const userId = await getUserId(req.auth);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id, runId } = await (ctx?.params as Promise<{ id: string; runId: string }>);
 
-    // Load researcher (need full record for maxDraftsPerRun and shortFormPercent)
+    // Load researcher (need full record for maxDraftsPerRun and shortFormPercent), verifying ownership
     const [researcher] = await db
       .select()
       .from(researchers)
-      .where(eq(researchers.id, id));
+      .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
     if (!researcher) {
       return NextResponse.json({ error: 'Researcher not found' }, { status: 404 });
     }

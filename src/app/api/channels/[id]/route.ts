@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { channels, aiAuditLog } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 export const GET = auth(function GET(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
-      const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+      const [channel] = await db.select().from(channels).where(and(eq(channels.id, id), eq(channels.userId, userId)));
       if (!channel) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
       const [costResult] = await db
@@ -45,6 +49,9 @@ export const PATCH = auth(function PATCH(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const body = await req.json();
       // Build partial update — only include fields explicitly present in the request body.
@@ -57,7 +64,7 @@ export const PATCH = auth(function PATCH(req, ctx) {
 
       const [updated] = await db.update(channels)
         .set(updates)
-        .where(eq(channels.id, id))
+        .where(and(eq(channels.id, id), eq(channels.userId, userId)))
         .returning();
       if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       return NextResponse.json(updated);
@@ -73,8 +80,11 @@ export const DELETE = auth(function DELETE(_req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(_req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
-      await db.delete(channels).where(eq(channels.id, id));
+      await db.delete(channels).where(and(eq(channels.id, id), eq(channels.userId, userId)));
       return new NextResponse(null, { status: 204 });
     } catch (err) {
       const { message, status } = apiError('delete channel', err);

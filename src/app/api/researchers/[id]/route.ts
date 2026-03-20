@@ -1,20 +1,24 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { researchers, researcherChannels, researchRuns, channels } from '@/db/schema';
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql, desc, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 export const GET = auth(function GET(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const [researcher] = await db
         .select()
         .from(researchers)
-        .where(eq(researchers.id, id));
+        .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
       if (!researcher) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
       const linkedChannels = await db
@@ -55,6 +59,9 @@ export const PUT = auth(function PUT(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const body = await req.json();
 
@@ -70,7 +77,7 @@ export const PUT = auth(function PUT(req, ctx) {
       const [updated] = await db
         .update(researchers)
         .set(updates)
-        .where(eq(researchers.id, id))
+        .where(and(eq(researchers.id, id), eq(researchers.userId, userId)))
         .returning();
       if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -105,7 +112,17 @@ export const DELETE = auth(function DELETE(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
+
+      // Verify ownership before deleting
+      const [existing] = await db
+        .select({ id: researchers.id })
+        .from(researchers)
+        .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
+      if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
       // Nullify researcherId on existing runs before deleting
       await db

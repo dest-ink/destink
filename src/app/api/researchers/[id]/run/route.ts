@@ -1,23 +1,27 @@
 import { db } from '@/db/client';
 import { researchers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { initRegistries } from '@/lib/bootstrap';
 import { runResearchForResearcher } from '@/lib/research/engine';
 import type { ResearchProgressEvent } from '@/lib/research/progress';
 import { NextResponse } from 'next/server';
+import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
+    const userId = await getUserId(req.auth);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id } = await (ctx?.params as Promise<{ id: string }>);
 
-    // Verify researcher exists
+    // Verify researcher exists and belongs to user
     const [researcher] = await db
       .select({ id: researchers.id })
       .from(researchers)
-      .where(eq(researchers.id, id));
+      .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
     if (!researcher) {
       return NextResponse.json({ error: 'Researcher not found' }, { status: 404 });
     }

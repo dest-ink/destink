@@ -1,18 +1,26 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
-import { automationSchedules } from '@/db/schema';
+import { automationSchedules, researchers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { validate } from 'node-cron';
 import { getNextRunAt } from '@/lib/cron-utils';
+import { getUserId } from '@/lib/auth-utils';
 
 export const PUT = auth(function PUT(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id, scheduleId } = await (ctx?.params as Promise<{ id: string; scheduleId: string }>);
+
+      // Verify researcher ownership
+      const [researcher] = await db.select({ id: researchers.id }).from(researchers).where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
+      if (!researcher) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       const body = await req.json();
 
       const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -76,7 +84,14 @@ export const DELETE = auth(function DELETE(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id, scheduleId } = await (ctx?.params as Promise<{ id: string; scheduleId: string }>);
+
+      // Verify researcher ownership
+      const [researcher] = await db.select({ id: researchers.id }).from(researchers).where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
+      if (!researcher) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       await db
         .delete(automationSchedules)
         .where(

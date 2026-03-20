@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { channels } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { encrypt, decrypt } from '@/lib/crypto';
 import { publisherRegistry, initPublisherRegistry } from '@/lib/publishing/publisher-registry';
+import { getUserId } from '@/lib/auth-utils';
 
 /**
  * GET — returns whether credentials are configured (never returns the actual values).
@@ -15,11 +16,14 @@ export const GET = auth(function GET(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const [channel] = await db
         .select({ credentials: channels.credentials, platform: channels.platform })
         .from(channels)
-        .where(eq(channels.id, id));
+        .where(and(eq(channels.id, id), eq(channels.userId, userId)));
 
       if (!channel) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -74,6 +78,9 @@ export const PUT = auth(function PUT(req, ctx) {
 
   return (async () => {
     try {
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { id } = await (ctx?.params as Promise<{ id: string }>);
       const body = await req.json();
 
@@ -95,7 +102,7 @@ export const PUT = auth(function PUT(req, ctx) {
       const [updated] = await db
         .update(channels)
         .set({ credentials: encrypted, updatedAt: new Date() })
-        .where(eq(channels.id, id))
+        .where(and(eq(channels.id, id), eq(channels.userId, userId)))
         .returning({ id: channels.id });
 
       if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });

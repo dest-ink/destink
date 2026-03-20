@@ -4,6 +4,7 @@ import { researchers, researcherChannels, channels, voiceProfiles, researchRuns,
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 // Lower score = higher priority (needs action first)
 function getPriorityScore(p: { researcherId: string | null; channel: { hasCredentials: boolean; hasVoice: boolean } | null; lastRun: unknown; pendingDraftCount: number }): number {
@@ -20,7 +21,10 @@ export const GET = auth(function GET(req) {
 
   return (async () => {
     try {
-      const allResearchers = await db.select().from(researchers).orderBy(desc(researchers.createdAt));
+      const userId = await getUserId(req.auth);
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+      const allResearchers = await db.select().from(researchers).where(eq(researchers.userId, userId)).orderBy(desc(researchers.createdAt));
 
       const pipelines = await Promise.all(
         allResearchers.map(async (r) => {
@@ -115,7 +119,7 @@ export const GET = auth(function GET(req) {
       const allLinks = await db.select({ channelId: researcherChannels.channelId }).from(researcherChannels);
       const linkedChannelIds = new Set(allLinks.map(l => l.channelId));
 
-      const allChannels = await db.select().from(channels).orderBy(desc(channels.createdAt));
+      const allChannels = await db.select().from(channels).where(eq(channels.userId, userId)).orderBy(desc(channels.createdAt));
       const orphanChannels = allChannels.filter(ch => !linkedChannelIds.has(ch.id));
 
       const orphanPipelines = orphanChannels.map(ch => ({
