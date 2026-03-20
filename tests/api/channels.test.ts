@@ -1,8 +1,10 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { db } from '@/db/client';
-import { channels } from '@/db/schema';
+import { channels, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { ResearchConfig, ScheduleConfig } from '@/db/schema';
+
+const TEST_USER_ID_PROMISE = db.insert(users).values({ email: `test-ch-${Date.now()}@test.com`, passwordHash: 'test' }).returning().then(r => r[0].id);
 
 const testResearchConfig: ResearchConfig = {
   topics: ['AI', 'startups'],
@@ -27,7 +29,9 @@ describe('channels data layer', () => {
   let channelId: string;
 
   it('inserts a linkedin channel', async () => {
+    const testUserId = await TEST_USER_ID_PROMISE;
     const [ch] = await db.insert(channels).values({
+      userId: testUserId,
       name: 'Test LinkedIn',
       platform: 'linkedin',
       researchConfig: testResearchConfig,

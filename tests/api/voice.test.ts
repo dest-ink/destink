@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { db } from '@/db/client';
-import { channels, voiceProfiles } from '@/db/schema';
+import { channels, voiceProfiles, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Mock @/auth so that auth() wrapper passes through with a pre-authenticated session
@@ -74,8 +74,10 @@ describe('POST /api/voice', () => {
   });
 
   it('returns 201 and saves voice profile for wizard method', async () => {
-    // Create a real channel so FK is satisfied
+    // Create a real user + channel so FK is satisfied
+    const [testUser] = await db.insert(users).values({ email: `test-voice-${Date.now()}@test.com`, passwordHash: 'test' }).returning();
     const [ch] = await db.insert(channels).values({
+      userId: testUser.id,
       name: 'Voice Test Channel',
       platform: 'linkedin',
     }).returning();

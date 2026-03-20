@@ -34,6 +34,7 @@ export const queueStatusEnum = pgEnum('queue_status', [
 
 export const channels = pgTable('channels', {
   id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
   platform: platformEnum('platform').notNull(),
   platformId: text('platform_id'),
@@ -96,6 +97,7 @@ export const publishQueue = pgTable('publish_queue', {
 
 export const researchers = pgTable('researchers', {
   id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
   topics: jsonb('topics').$type<string[]>().default([]).notNull(),
   keywords: jsonb('keywords').$type<string[]>().default([]).notNull(),

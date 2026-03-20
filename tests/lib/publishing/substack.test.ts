@@ -46,6 +46,7 @@ function makeDraft(overrides: Partial<DraftRow> = {}): DraftRow {
 function makeChannel(overrides: Partial<ChannelRow> = {}): ChannelRow {
   return {
     id: 'channel-1',
+    userId: 'user-1',
     name: 'My Substack',
     platform: 'substack',
     platformId: null,

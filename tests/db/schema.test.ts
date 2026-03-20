@@ -1,13 +1,19 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { db } from '@/db/client';
-import { channels, drafts, voiceProfiles, aiAuditLog } from '@/db/schema';
+import { channels, drafts, voiceProfiles, aiAuditLog, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('database schema', () => {
   let testChannelId: string;
+  let testUserId: string;
+
+  it('creates a test user', async () => {
+    const [u] = await db.insert(users).values({ email: `test-${Date.now()}@test.com`, passwordHash: 'test' }).returning();
+    testUserId = u.id;
+  });
 
   it('inserts and queries a channel', async () => {
-    const [ch] = await db.insert(channels).values({ name: 'Test Channel', platform: 'linkedin' }).returning();
+    const [ch] = await db.insert(channels).values({ userId: testUserId!, name: 'Test Channel', platform: 'linkedin' }).returning();
     expect(ch.id).toBeDefined();
     expect(ch.platform).toBe('linkedin');
     testChannelId = ch.id;

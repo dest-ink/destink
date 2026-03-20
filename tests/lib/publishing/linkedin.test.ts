@@ -43,6 +43,7 @@ function makeDraft(overrides: Partial<DraftRow> = {}): DraftRow {
 function makeChannel(overrides: Partial<ChannelRow> = {}): ChannelRow {
   return {
     id: 'chan-1',
+    userId: 'user-1',
     name: 'Test LinkedIn Channel',
     platform: 'linkedin',
     platformId: null,

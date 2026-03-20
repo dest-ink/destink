@@ -66,6 +66,7 @@ async function main(): Promise<void> {
     const [researcher] = await db
       .insert(researchers)
       .values({
+        userId: channel.id, // placeholder — old migration, use channel owner
         name: `${channel.name} Research`,
         topics: config.topics ?? [],
         keywords: config.keywords ?? [],
