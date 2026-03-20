@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
+import { Slider } from '@/components/ui/slider';
 
 interface WritingStyleTabProps {
   channelId: string;
@@ -133,25 +134,47 @@ export function WritingStyleTab({ channelId }: WritingStyleTabProps) {
   return (
     <div className="space-y-8">
       {/* Length Preferences */}
-      <section className="space-y-4">
+      <section className="space-y-5">
         <h3 className="text-sm font-semibold text-foreground">Content Length</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Note min words</Label>
-            <Input type="number" value={prefs.noteLengthMin} onChange={e => update('noteLengthMin', Number(e.target.value))} className="bg-background" />
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Notes</Label>
+            <span className="text-sm font-mono text-muted-foreground tabular-nums">
+              {prefs.noteLengthMin}–{prefs.noteLengthMax} words
+            </span>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Note max words</Label>
-            <Input type="number" value={prefs.noteLengthMax} onChange={e => update('noteLengthMax', Number(e.target.value))} className="bg-background" />
+          <Slider
+            min={50}
+            max={1000}
+            step={10}
+            value={[prefs.noteLengthMin, prefs.noteLengthMax]}
+            onValueChange={([min, max]) => {
+              update('noteLengthMin', min);
+              update('noteLengthMax', max);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">Short-form posts, social updates, quick takes.</p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Articles</Label>
+            <span className="text-sm font-mono text-muted-foreground tabular-nums">
+              {prefs.articleLengthMin}–{prefs.articleLengthMax} words
+            </span>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Article min words</Label>
-            <Input type="number" value={prefs.articleLengthMin} onChange={e => update('articleLengthMin', Number(e.target.value))} className="bg-background" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Article max words</Label>
-            <Input type="number" value={prefs.articleLengthMax} onChange={e => update('articleLengthMax', Number(e.target.value))} className="bg-background" />
-          </div>
+          <Slider
+            min={300}
+            max={5000}
+            step={50}
+            value={[prefs.articleLengthMin, prefs.articleLengthMax]}
+            onValueChange={([min, max]) => {
+              update('articleLengthMin', min);
+              update('articleLengthMax', max);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">Long-form pieces, deep dives, structured arguments.</p>
         </div>
       </section>
 
