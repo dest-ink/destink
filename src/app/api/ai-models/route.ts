@@ -21,6 +21,8 @@ export const GET = auth(function GET(req) {
         maxOutputTokens: m.maxOutput,
         pricing: m.pricing,
         provider: m.provider,
+        tags: m.tags,
+        bestFor: m.bestFor ?? [],
       }));
 
     return NextResponse.json(models);
