@@ -292,10 +292,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
 
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div>
-          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Link>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-foreground tracking-tight">{researcher.name}</h1>
@@ -304,14 +300,17 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
               )}
             </div>
             <div className="flex items-center gap-2">
-              {schedule?.enabled && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
-                  <Clock className="w-3 h-3" />
-                  {schedule.nextRunAt
-                    ? `Next run: ${new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
-                    : 'Automation on'}
-                </span>
-              )}
+              <Link
+                href={`/research/${researcher.id}/automation`}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:border-primary/20 bg-card transition-all"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                {schedule?.enabled && schedule.nextRunAt
+                  ? `Next: ${new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
+                  : schedule?.enabled
+                    ? 'Automation on'
+                    : 'Set schedule'}
+              </Link>
               {phase === 'idle' && (
                 <Button
                   onClick={handleRunResearch}
@@ -644,12 +643,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
           </div>
         )}
 
-        {/* ── Automation Link ────────────────────────────────────────── */}
-        <div className="flex items-center gap-4 pt-2 border-t border-border">
-          <Link href={`/research/${researcher.id}/automation`} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-            <Clock className="w-3 h-3" /> Edit automation schedule
-          </Link>
-        </div>
       </div>
     </div>
   );
