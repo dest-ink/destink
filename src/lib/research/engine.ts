@@ -10,6 +10,7 @@ import {
 import { eq, desc, inArray } from 'drizzle-orm';
 import { runResearch } from './orchestrator';
 import { callClaude } from '@/lib/ai/client';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import { generateDraftsForRun } from '@/lib/generation/batch';
 import type {
   ResearchSource,
@@ -167,8 +168,9 @@ export async function runResearchForResearcher(
       recentTitles,
       guidance,
     );
+    const topicRankingModel = await getModelForUseCase(researcher.userId, 'topicRanking');
     const raw = await callClaude({
-      model: 'claude-haiku-4-5-20251001',
+      model: topicRankingModel,
       system: 'You are a content strategist. Return only valid JSON.',
       prompt: analysisPrompt,
       maxTokens: 8192,
@@ -199,7 +201,7 @@ export async function runResearchForResearcher(
         researcherId,
         sourcesSearched: allSources,
         topicsFound: topics,
-        aiModel: 'claude-haiku-4-5-20251001',
+        aiModel: topicRankingModel,
         tokensUsed: 0,
       })
       .returning();

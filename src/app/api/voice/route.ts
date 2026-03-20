@@ -10,6 +10,7 @@ import {
 import { randomUUID } from 'crypto';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
+import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,6 +35,9 @@ export const POST = auth(function POST(req) {
       return NextResponse.json({ error: 'channelId and method are required' }, { status: 400 });
     }
 
+    const userId = await getUserId(req.auth);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const profileId = randomUUID();
 
     try {
@@ -41,7 +45,7 @@ export const POST = auth(function POST(req) {
         if (!samples || samples.length === 0) {
           return NextResponse.json({ error: 'samples array required for archive/samples method' }, { status: 400 });
         }
-        const extracted = await analyzeVoice(samples, channelId, profileId);
+        const extracted = await analyzeVoice(samples, channelId, profileId, userId);
         const [profile] = await db.insert(voiceProfiles).values({
           id: profileId,
           channelId,

@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { drafts, channels, researchRuns, draftPreferences } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import type { TopicRecommendation } from '@/db/schema';
 import type { OnProgress } from '@/lib/research/progress';
 
@@ -64,7 +65,7 @@ export async function generateDraftsForRun(
 ): Promise<DraftBatchResult> {
   // Load channel for persona prompt and platform
   const [channel] = await db
-    .select({ personaPrompt: channels.personaPrompt, platform: channels.platform })
+    .select({ personaPrompt: channels.personaPrompt, platform: channels.platform, userId: channels.userId })
     .from(channels)
     .where(eq(channels.id, channelId));
 
@@ -94,6 +95,8 @@ export async function generateDraftsForRun(
   // Assign content types deterministically
   const assignments = assignContentTypes(topics, maxDraftsPerRun, shortFormPercent);
   const total = assignments.length;
+
+  const draftGenerationModel = await getModelForUseCase(channel.userId, 'draftGeneration');
 
   const generatedIds: string[] = [];
   let failedCount = 0;
@@ -127,7 +130,8 @@ export async function generateDraftsForRun(
             : (stylePrefs?.articleStyle ?? undefined),
         },
         channelId,
-        draftId
+        draftId,
+        channel.userId
       );
 
       await db.insert(drafts).values({
@@ -142,7 +146,7 @@ export async function generateDraftsForRun(
         cta: generated.cta,
         voiceConfidence: generated.voiceConfidence,
         researchSources: topic.sources,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: draftGenerationModel,
         status: 'pending_review',
       });
 

@@ -1,4 +1,5 @@
 import { callClaude } from '@/lib/ai/client';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import type { ResearchSourceConfig } from '@/db/schema';
 
 export interface OnboardingIntent {
@@ -51,9 +52,10 @@ Rules:
 
 Respond with ONLY valid JSON matching the schema. No markdown, no explanation.`;
 
-export async function parseOnboardingIntent(userInput: string): Promise<OnboardingIntent> {
+export async function parseOnboardingIntent(userInput: string, userId: string): Promise<OnboardingIntent> {
+  const model = await getModelForUseCase(userId, 'onboarding');
   const raw = await callClaude({
-    model: 'claude-sonnet-4-6',
+    model,
     system: SYSTEM_PROMPT,
     prompt: userInput,
     maxTokens: 2048,

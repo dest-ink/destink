@@ -27,7 +27,7 @@ export const POST = auth(function POST(req) {
       const userId = await getUserId(req.auth);
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-      const intent = await parseOnboardingIntent(body.input.trim());
+      const intent = await parseOnboardingIntent(body.input.trim(), userId);
       const result = await provisionFromIntent(intent, userId);
       return NextResponse.json({ intent, result }, { status: 201 });
     } catch (err) {

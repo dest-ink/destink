@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
 import { and, eq, desc, inArray } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import { randomUUID } from 'crypto';
 import type { ResearchSource } from '@/db/schema';
 import { auth } from '@/auth';
@@ -109,7 +110,8 @@ export const POST = auth(function POST(req) {
           regenerationNote,
         },
         channelId,
-        draftId
+        draftId,
+        userId
       );
 
       const [draft] = await db
@@ -125,7 +127,7 @@ export const POST = auth(function POST(req) {
           cta: generated.cta,
           voiceConfidence: generated.voiceConfidence,
           researchSources: sources ?? [],
-          aiModel: 'claude-sonnet-4-6',
+          aiModel: await getModelForUseCase(userId, 'draftGeneration'),
           status: 'pending_review',
           regenerationNote: regenerationNote ?? null,
         })

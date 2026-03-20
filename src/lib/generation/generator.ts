@@ -1,4 +1,5 @@
 import { callClaude } from '@/lib/ai/client';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import type { ResearchSource, ContentTypeStyle } from '@/db/schema';
 
 export type { ContentTypeStyle as WritingStylePrefs } from '@/db/schema';
@@ -156,11 +157,13 @@ voiceConfidence is your self-assessment (0-100) of how well this matches the per
 export async function generateDraft(
   input: GenerationInput,
   channelId: string,
-  draftId: string
+  draftId: string,
+  userId: string
 ): Promise<GeneratedDraft> {
   const prompt = buildGenerationPrompt(input);
+  const model = await getModelForUseCase(userId, 'draftGeneration');
   const raw = await callClaude({
-    model: 'claude-sonnet-4-6',
+    model,
     system: 'You are a ghostwriter. Return only valid JSON, no preamble.',
     prompt,
     maxTokens: 4096,

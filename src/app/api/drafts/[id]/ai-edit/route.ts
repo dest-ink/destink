@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { apiError } from '@/lib/errors';
 import { callClaude } from '@/lib/ai/client';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import { getUserId } from '@/lib/auth-utils';
 
 export const POST = auth(function POST(req, ctx) {
@@ -65,8 +66,9 @@ ${cta || draft.cta || ''}
 
 User request: ${message}`;
 
+      const draftEditingModel = await getModelForUseCase(userId, 'draftEditing');
       const raw = await callClaude({
-        model: 'claude-sonnet-4-6',
+        model: draftEditingModel,
         system: systemPrompt,
         prompt: userPrompt,
         maxTokens: 4096,

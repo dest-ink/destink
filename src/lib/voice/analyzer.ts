@@ -1,4 +1,5 @@
 import { callClaude } from '@/lib/ai/client';
+import { getModelForUseCase } from '@/lib/ai/model-settings';
 import type { VoiceProfile } from '@/db/schema';
 
 export function buildVoiceAnalysisPrompt(samples: string[]): string {
@@ -26,11 +27,13 @@ ${joined}`;
 export async function analyzeVoice(
   samples: string[],
   channelId: string,
-  voiceProfileId: string
+  voiceProfileId: string,
+  userId: string
 ): Promise<VoiceProfile> {
   const prompt = buildVoiceAnalysisPrompt(samples);
+  const model = await getModelForUseCase(userId, 'voiceAnalysis');
   const raw = await callClaude({
-    model: 'claude-haiku-4-5-20251001',
+    model,
     system: 'You are a writing style analyst. Return only valid JSON, no explanation.',
     prompt,
     maxTokens: 1024,

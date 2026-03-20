@@ -43,7 +43,7 @@ export const POST = auth(function POST(req, ctx) {
       }
 
       // Parse intent with AI
-      const intent = await parseOnboardingIntent(body.input.trim());
+      const intent = await parseOnboardingIntent(body.input.trim(), userId);
 
       const cronExpression = FREQUENCY_TO_CRON[intent.schedule.frequency] ?? FREQUENCY_TO_CRON.daily;
       const nextRunAt = getNextRunAt(cronExpression) ?? new Date();

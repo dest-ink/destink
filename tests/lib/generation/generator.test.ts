@@ -7,6 +7,10 @@ vi.mock('@/lib/ai/client', () => ({
   callClaude: vi.fn(),
 }));
 
+vi.mock('@/lib/ai/model-settings', () => ({
+  getModelForUseCase: vi.fn().mockResolvedValue('claude-sonnet-4-6'),
+}));
+
 import { generateDraft } from '@/lib/generation/generator';
 import { callClaude } from '@/lib/ai/client';
 
@@ -92,7 +96,7 @@ describe('generateDraft', () => {
   it('returns GeneratedDraft on success', async () => {
     mockCallClaude.mockResolvedValue(validDraftJson);
 
-    const result = await generateDraft(baseInput, 'chan-id', 'draft-id');
+    const result = await generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id');
 
     expect(result.hook).toBe('AI agents are reshaping engineering.');
     expect(result.body).toBe('Full body content here.');
@@ -104,7 +108,7 @@ describe('generateDraft', () => {
   it('calls callClaude with claude-sonnet-4-6 and correct audit fields', async () => {
     mockCallClaude.mockResolvedValue(validDraftJson);
 
-    await generateDraft(baseInput, 'chan-id', 'draft-id');
+    await generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id');
 
     expect(mockCallClaude).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -121,12 +125,12 @@ describe('generateDraft', () => {
 
   it('throws on invalid JSON response', async () => {
     mockCallClaude.mockResolvedValue('not json');
-    await expect(generateDraft(baseInput, 'chan-id', 'draft-id')).rejects.toThrow(/invalid JSON/i);
+    await expect(generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id')).rejects.toThrow(/invalid JSON/i);
   });
 
   it('throws when required fields are missing', async () => {
     mockCallClaude.mockResolvedValue(JSON.stringify({ hook: 'Only hook, no body' }));
-    await expect(generateDraft(baseInput, 'chan-id', 'draft-id')).rejects.toThrow(/unexpected JSON shape/i);
+    await expect(generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id')).rejects.toThrow(/unexpected JSON shape/i);
   });
 
   it('throws when cta is missing', async () => {
@@ -137,7 +141,7 @@ describe('generateDraft', () => {
       voiceConfidence: 80,
       // cta missing
     }));
-    await expect(generateDraft(baseInput, 'chan-id', 'draft-id')).rejects.toThrow(/unexpected JSON shape/i);
+    await expect(generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id')).rejects.toThrow(/unexpected JSON shape/i);
   });
 
   it('throws when voiceConfidence is not a number', async () => {
@@ -148,6 +152,6 @@ describe('generateDraft', () => {
       cta: 'cta',
       voiceConfidence: 'high', // wrong type
     }));
-    await expect(generateDraft(baseInput, 'chan-id', 'draft-id')).rejects.toThrow(/unexpected JSON shape/i);
+    await expect(generateDraft(baseInput, 'chan-id', 'draft-id', 'user-id')).rejects.toThrow(/unexpected JSON shape/i);
   });
 });
