@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { AiSettingsSection } from './AiSettingsSection';
 
 interface Channel {
   id: string;
@@ -145,17 +146,8 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
           </div>
         </div>
 
-        {/* AI Usage */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">AI Usage</h2>
-          <Link
-            href="/audit"
-            className="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-card hover:border-primary/20 transition-colors"
-          >
-            <span className="text-sm text-foreground">View AI usage & costs</span>
-            <span className="text-xs text-muted-foreground">→</span>
-          </Link>
-        </div>
+        {/* AI Settings */}
+        <AiSettingsSection />
       </div>
 
       {/* Confirm dialog */}

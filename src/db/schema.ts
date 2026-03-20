@@ -119,6 +119,17 @@ export const researcherChannels = pgTable('researcher_channels', {
     .notNull(),
 });
 
+export const aiModelSettings = pgTable('ai_model_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  settings: jsonb('settings').$type<AiModelSettingsConfig>().notNull(),
+  createdAt: timestamptz('created_at').defaultNow().notNull(),
+  updatedAt: timestamptz('updated_at').defaultNow().notNull(),
+});
+
 export const draftPreferences = pgTable('draft_preferences', {
   id: uuid('id').primaryKey().defaultRandom(),
   channelId: uuid('channel_id')
@@ -218,6 +229,14 @@ export interface VoiceProfile {
   topicsToAvoid: string[];
   vocabularyNotes: string;
   idealReader: string;
+}
+
+export interface AiModelSettingsConfig {
+  topicRanking: string;      // model ID for ranking research topics
+  draftGeneration: string;   // model ID for writing drafts
+  voiceAnalysis: string;     // model ID for analyzing voice samples
+  onboarding: string;        // model ID for parsing onboarding intent
+  draftEditing: string;      // model ID for AI draft editing chat
 }
 
 export interface ContentTypeStyle {
