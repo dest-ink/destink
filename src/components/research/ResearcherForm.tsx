@@ -127,6 +127,7 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels, lock
 
       const result = await res.json();
       toast.success(isEdit ? 'Researcher updated' : 'Researcher created');
+      window.dispatchEvent(new Event('pipelines-changed'));
       router.push(`/research/${isEdit ? researcher.id : result.id}`);
       router.refresh();
     } catch {

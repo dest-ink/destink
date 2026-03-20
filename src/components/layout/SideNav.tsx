@@ -50,15 +50,23 @@ export function SideNav() {
 
   useEffect(() => setMounted(true), []);
 
-  // Fetch pipelines for nav — re-fetch on navigation (catches name changes, new pipelines)
-  useEffect(() => {
+  // Fetch pipelines for nav
+  const fetchPipelines = () => {
     fetch('/api/dashboard')
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setPipelines(data);
       })
       .catch(() => {});
-  }, [path]);
+  };
+
+  // Re-fetch on navigation and on custom 'pipelines-changed' event
+  useEffect(() => { fetchPipelines(); }, [path]);
+  useEffect(() => {
+    const handler = () => fetchPipelines();
+    window.addEventListener('pipelines-changed', handler);
+    return () => window.removeEventListener('pipelines-changed', handler);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {

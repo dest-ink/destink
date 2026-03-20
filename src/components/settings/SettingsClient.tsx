@@ -41,6 +41,7 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
       }
       toast.success(`Deleted "${name}"`);
       setChannels(prev => prev.filter(c => c.id !== id));
+      window.dispatchEvent(new Event('pipelines-changed'));
       router.refresh();
     } catch {
       toast.error('Failed to delete channel');
@@ -60,6 +61,7 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
       }
       toast.success(`Deleted "${name}"`);
       setResearchers(prev => prev.filter(r => r.id !== id));
+      window.dispatchEvent(new Event('pipelines-changed'));
       router.refresh();
     } catch {
       toast.error('Failed to delete researcher');
