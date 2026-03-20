@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
-import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical, CircleDot } from 'lucide-react';
+import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical, User, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 
 interface PipelineNav {
@@ -40,13 +40,19 @@ function getPipelineStatusColor(p: PipelineNav): string {
   return 'bg-green-500';
 }
 
-export function SideNav() {
+interface SideNavProps {
+  userEmail?: string;
+}
+
+export function SideNav({ userEmail }: SideNavProps) {
   const path = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pipelines, setPipelines] = useState<PipelineNav[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -78,6 +84,17 @@ export function SideNav() {
     if (newMenuOpen) document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [newMenuOpen]);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [userMenuOpen]);
 
   function toggleTheme() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -229,29 +246,65 @@ export function SideNav() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-border shrink-0">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-[10px] text-muted-foreground/60 tracking-widest uppercase">v0.1.0</p>
-          <div className="flex items-center gap-1.5">
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      {/* User menu */}
+      <div className="px-3 pb-3 pt-2 border-t border-border shrink-0 relative" ref={userMenuRef}>
+        {/* Dropdown (pops up) */}
+        {userMenuOpen && (
+          <div className="absolute bottom-full left-3 right-3 mb-2 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+            <div className="p-2 space-y-0.5">
+              {/* User profile */}
+              <Link
+                href="/settings"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-foreground hover:bg-accent transition-colors"
               >
-                {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                <User className="w-4 h-4 text-muted-foreground" />
+                Profile & Settings
+              </Link>
+
+              {/* Theme toggle */}
+              {mounted && (
+                <button
+                  onClick={() => { toggleTheme(); setUserMenuOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-foreground hover:bg-accent transition-colors text-left"
+                >
+                  {theme === 'dark' ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                </button>
+              )}
+
+              {/* Sign out */}
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign out
               </button>
-            )}
-            <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+            </div>
+
+            {/* Version */}
+            <div className="px-3 py-2 border-t border-border">
+              <p className="font-mono text-[10px] text-muted-foreground/50 tracking-widest uppercase">Destink v0.1.0</p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Trigger button */}
+        <button
+          onClick={() => setUserMenuOpen(!userMenuOpen)}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-accent/60 transition-all duration-200 text-left"
+        >
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-foreground truncate">
+              {userEmail ?? 'Account'}
+            </p>
+          </div>
+          <ChevronUp className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+        </button>
       </div>
     </nav>
   );
