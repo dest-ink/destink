@@ -1,4 +1,5 @@
 import { callClaude } from '@/lib/ai/client';
+import { CURRENT_MODELS } from '@/lib/ai/models';
 import type { ResearchConfig, ResearchSource, VoiceProfile } from '@/db/schema';
 
 /**
@@ -30,7 +31,7 @@ Return as JSON array:
 Return ONLY the JSON array, no explanation.`;
 
   const raw = await callClaude({
-    model: 'claude-haiku-4-5-20251001',
+    model: CURRENT_MODELS[2].id, // Haiku — fast brainstorming
     system: 'You are a content strategist. Return only valid JSON.',
     prompt,
     maxTokens: 1024,

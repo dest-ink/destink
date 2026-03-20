@@ -3,13 +3,18 @@ import { aiModelSettings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { AiModelSettingsConfig } from '@/db/schema';
 import type { ClaudeModel } from './client';
+import { CURRENT_MODELS } from './models';
+
+// Default model IDs — reference the constants, not hardcoded strings
+const OPUS = CURRENT_MODELS[0].id;   // claude-opus-4-6
+const SONNET = CURRENT_MODELS[1].id; // claude-sonnet-4-6
 
 export const DEFAULT_SETTINGS: AiModelSettingsConfig = {
-  topicRanking: 'claude-sonnet-4-6',
-  draftGeneration: 'claude-opus-4-6',
-  voiceAnalysis: 'claude-sonnet-4-6',
-  onboarding: 'claude-sonnet-4-6',
-  draftEditing: 'claude-sonnet-4-6',
+  topicRanking: SONNET,
+  draftGeneration: OPUS,
+  voiceAnalysis: SONNET,
+  onboarding: SONNET,
+  draftEditing: SONNET,
 };
 
 export type AiUseCase = keyof AiModelSettingsConfig;

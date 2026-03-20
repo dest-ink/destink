@@ -5,17 +5,9 @@ export const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-export type ClaudeModel =
-  | 'claude-opus-4-6'
-  | 'claude-sonnet-4-6'
-  | 'claude-haiku-4-5-20251001'
-  | 'claude-haiku-4-5'
-  | 'claude-opus-4-5'
-  | 'claude-sonnet-4-5'
-  | 'claude-opus-4-1'
-  | 'claude-sonnet-4-0'
-  | 'claude-opus-4-0'
-  | (string & {});
+// Model IDs are defined in src/lib/ai/models.ts — the single source of truth.
+// This type accepts any string to support dynamically-loaded models from the API.
+export type ClaudeModel = string;
 
 export interface CallClaudeOptions {
   model: ClaudeModel;

@@ -11,6 +11,7 @@ import { eq, desc, inArray } from 'drizzle-orm';
 import { runResearch } from './orchestrator';
 import { callClaude } from '@/lib/ai/client';
 import { getModelForUseCase } from '@/lib/ai/model-settings';
+import { CURRENT_MODELS } from '@/lib/ai/models';
 import { generateDraftsForRun } from '@/lib/generation/batch';
 import type {
   ResearchSource,
@@ -291,7 +292,7 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
   // AI analysis: rank and filter sources into content opportunities
   const analysisPrompt = buildAnalysisPrompt(allSources, channel.personaPrompt ?? '', recentTitles);
   const raw = await callClaude({
-    model: 'claude-haiku-4-5-20251001',
+    model: CURRENT_MODELS[2].id, // Haiku — cost-effective for daemon ranking
     system: 'You are a content strategist. Return only valid JSON.',
     prompt: analysisPrompt,
     maxTokens: 8192,
@@ -317,7 +318,7 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
       channelId,
       sourcesSearched: allSources,
       topicsFound: topics,
-      aiModel: 'claude-haiku-4-5-20251001',
+      aiModel: CURRENT_MODELS[2].id,
       tokensUsed: 0, // actual token cost captured via ai_audit_log
     })
     .returning();

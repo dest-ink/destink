@@ -1,17 +1,13 @@
 import { db } from '@/db/client';
 import { aiAuditLog } from '@/db/schema';
-
-// Anthropic pricing (USD per token) — verify at console.anthropic.com/pricing
-const PRICING: Record<string, { input: number; output: number }> = {
-  'claude-opus-4-6':           { input: 15 / 1_000_000,  output: 75 / 1_000_000 },
-  'claude-sonnet-4-6':         { input: 3 / 1_000_000,   output: 15 / 1_000_000 },
-  'claude-haiku-4-5-20251001': { input: 0.8 / 1_000_000, output: 4 / 1_000_000  },
-};
+import { getModelPricing } from './models';
 
 export function computeCost(model: string, promptTokens: number, completionTokens: number): number {
-  const pricing = PRICING[model];
+  const pricing = getModelPricing(model);
   if (!pricing) return 0;
-  return pricing.input * promptTokens + pricing.output * completionTokens;
+  const inputCost = (pricing.inputPer1M / 1_000_000) * promptTokens;
+  const outputCost = (pricing.outputPer1M / 1_000_000) * completionTokens;
+  return inputCost + outputCost;
 }
 
 export interface AuditEntry {
