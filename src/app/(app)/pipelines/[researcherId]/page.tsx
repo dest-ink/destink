@@ -63,14 +63,29 @@ export default async function PipelineDetailPage({ params }: Props) {
     .orderBy(desc(researchRuns.runAt))
     .limit(5);
 
-  // Count pending drafts
+  // Fetch drafts for this channel (recent 20)
+  let channelDrafts: { id: string; title: string | null; status: string; contentType: string; createdAt: string; voiceConfidence: number | null }[] = [];
   let pendingDraftCount = 0;
   if (channel) {
-    const [count] = await db
-      .select({ count: sql<number>`count(*)` })
+    const draftRows = await db
+      .select({
+        id: drafts.id,
+        title: drafts.title,
+        status: drafts.status,
+        contentType: drafts.contentType,
+        createdAt: drafts.createdAt,
+        voiceConfidence: drafts.voiceConfidence,
+      })
       .from(drafts)
-      .where(and(eq(drafts.channelId, channel.id), eq(drafts.status, 'pending_review')));
-    pendingDraftCount = Number(count?.count ?? 0);
+      .where(eq(drafts.channelId, channel.id))
+      .orderBy(desc(drafts.createdAt))
+      .limit(20);
+
+    channelDrafts = draftRows.map(d => ({
+      ...d,
+      createdAt: d.createdAt.toISOString(),
+    }));
+    pendingDraftCount = draftRows.filter(d => d.status === 'pending_review').length;
   }
 
   const serializedRuns = runs.map(r => ({
@@ -101,6 +116,7 @@ export default async function PipelineDetailPage({ params }: Props) {
         nextRunAt: schedule.nextRunAt?.toISOString() ?? null,
       } : null}
       runs={serializedRuns}
+      drafts={channelDrafts}
       pendingDraftCount={pendingDraftCount}
     />
   );

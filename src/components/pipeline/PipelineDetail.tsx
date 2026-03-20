@@ -52,6 +52,14 @@ interface PipelineDetailProps {
     draftsGenerated: string[] | null;
     channelId: string;
   }[];
+  drafts: {
+    id: string;
+    title: string | null;
+    status: string;
+    contentType: string;
+    createdAt: string;
+    voiceConfidence: number | null;
+  }[];
   pendingDraftCount: number;
 }
 
@@ -71,7 +79,7 @@ type ActionPhase = 'idle' | 'researching' | 'topics' | 'generating' | 'done';
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function PipelineDetail({ researcher, channel, schedule, runs, pendingDraftCount }: PipelineDetailProps) {
+export function PipelineDetail({ researcher, channel, schedule, runs, drafts: channelDrafts, pendingDraftCount }: PipelineDetailProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<ActionPhase>('idle');
   const [logs, setLogs] = useState<LogLine[]>([]);
@@ -295,14 +303,50 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
                 <p className="text-sm text-muted-foreground mt-0.5 capitalize">{channel.platform} · {channel.name}</p>
               )}
             </div>
-            {schedule?.enabled && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
-                <Clock className="w-3 h-3" />
-                {schedule.nextRunAt
-                  ? new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
-                  : 'Scheduled'}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {schedule?.enabled && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
+                  <Clock className="w-3 h-3" />
+                  {schedule.nextRunAt
+                    ? new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+                    : 'Scheduled'}
+                </span>
+              )}
+              {phase === 'idle' && (
+                <Button
+                  onClick={handleRunResearch}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Run research
+                </Button>
+              )}
+              {isRunning && (
+                <span className="text-sm text-muted-foreground flex items-center gap-2 px-3">
+                  <span className="w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  {phase === 'researching' ? 'Researching...' : 'Generating...'}
+                </span>
+              )}
+              {phase === 'topics' && (
+                <Button
+                  onClick={handleGenerateDrafts}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate drafts
+                </Button>
+              )}
+              {phase === 'done' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setPhase('idle'); setLogs([]); setRunId(null); }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Run again
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -492,64 +536,9 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
           )}
         </div>
 
-        {/* ── Action Zone ────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            {phase === 'idle' && (
-              <Button
-                onClick={handleRunResearch}
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Run research
-              </Button>
-            )}
-            {phase === 'topics' && (
-              <Button
-                onClick={handleGenerateDrafts}
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Generate drafts
-              </Button>
-            )}
-            {phase === 'done' && (
-              <div className="flex items-center gap-3">
-                <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Link href="/drafts">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Review {draftCount} draft{draftCount !== 1 ? 's' : ''}
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setPhase('idle'); setLogs([]); setRunId(null); }}
-                >
-                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                  Run again
-                </Button>
-              </div>
-            )}
-            {isRunning && (
-              <span className="text-sm text-muted-foreground flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                {phase === 'researching' ? 'Researching...' : 'Generating drafts...'}
-              </span>
-            )}
-
-            {phase === 'idle' && pendingDraftCount > 0 && (
-              <Link href="/drafts" className="text-sm text-primary hover:underline flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5" />
-                {pendingDraftCount} pending draft{pendingDraftCount !== 1 ? 's' : ''}
-              </Link>
-            )}
-          </div>
-
-          {/* SSE Log */}
-          {logs.length > 0 && (
+        {/* ── SSE Log (when running) ──────────────────────────────── */}
+        {logs.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div
               ref={logRef}
               className="rounded-lg bg-background border border-border p-3 max-h-48 overflow-y-auto font-mono text-xs space-y-0.5"
@@ -558,8 +547,54 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
                 <div key={i} className={line.color}>{line.message}</div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── Drafts ─────────────────────────────────────────────────── */}
+        {channelDrafts.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">
+                Drafts
+                {pendingDraftCount > 0 && (
+                  <span className="text-xs font-normal text-primary ml-2">{pendingDraftCount} pending review</span>
+                )}
+              </h3>
+              <Link href="/drafts" className="text-xs text-primary hover:underline">View all →</Link>
+            </div>
+            <div className="space-y-1.5">
+              {channelDrafts.map(draft => {
+                const isPending = draft.status === 'pending_review';
+                const statusLabel = draft.status === 'pending_review' ? 'Pending' : draft.status === 'approved' ? 'Approved' : draft.status === 'published' ? 'Published' : draft.status === 'rejected' ? 'Rejected' : draft.status;
+                const statusColor = draft.status === 'pending_review' ? 'text-amber-500' : draft.status === 'approved' ? 'text-green-500' : draft.status === 'published' ? 'text-green-500' : draft.status === 'rejected' ? 'text-muted-foreground' : 'text-muted-foreground';
+
+                return (
+                  <Link
+                    key={draft.id}
+                    href={`/drafts?draft=${draft.id}`}
+                    className={`flex items-center justify-between px-4 py-2.5 rounded-lg border bg-card transition-all duration-200 group ${
+                      isPending ? 'border-amber-500/20 hover:border-amber-500/40' : 'border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`text-[10px] font-medium uppercase tracking-wider ${statusColor}`}>{statusLabel}</span>
+                      <span className="text-sm text-foreground truncate">{draft.title ?? 'Untitled'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-[10px] text-muted-foreground uppercase">{draft.contentType}</span>
+                      {draft.voiceConfidence !== null && (
+                        <span className="text-[10px] text-muted-foreground">{draft.voiceConfidence}%</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(draft.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Past Runs ──────────────────────────────────────────────── */}
         {runs.length > 0 && (
