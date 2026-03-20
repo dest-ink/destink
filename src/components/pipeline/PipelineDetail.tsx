@@ -309,11 +309,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
                 className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:border-primary/20 bg-card transition-all"
               >
                 <Clock className="w-3.5 h-3.5" />
-                {schedule?.enabled && schedule.nextRunAt
-                  ? `Next: ${new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
-                  : schedule?.enabled
-                    ? 'Automation on'
-                    : 'Set schedule'}
+                Schedule
               </Link>
               {phase === 'idle' && (
                 <Button
