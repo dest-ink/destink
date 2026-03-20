@@ -1,56 +1,43 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { logAiCall, type AuditEntry } from './audit';
-
-export const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { resolveProvider } from './providers/registry';
+import type { AiCallOptions } from './providers/types';
 
 // Model IDs are defined in src/lib/ai/models.ts — the single source of truth.
-// This type accepts any string to support dynamically-loaded models from the API.
 export type ClaudeModel = string;
 
-export interface CallClaudeOptions {
-  model: ClaudeModel;
-  system: string;
-  prompt: string;
-  maxTokens?: number;
+export interface CallModelOptions extends AiCallOptions {
   audit: Omit<AuditEntry, 'model' | 'promptTokens' | 'completionTokens'>;
 }
 
 /**
- * Calls Claude and automatically logs usage to ai_audit_log.
- * Returns the text content of the response.
+ * Universal model caller — routes to the correct provider (Anthropic, OpenRouter, etc.)
+ * based on the model ID, and logs usage to ai_audit_log.
+ *
+ * This is the ONLY function the rest of the app should call for AI completions.
  */
-export async function callClaude(options: CallClaudeOptions): Promise<string> {
-  const { model, system, prompt, maxTokens = 4096, audit } = options;
+export async function callClaude(options: CallModelOptions): Promise<string> {
+  const { model, system, prompt, maxTokens, audit } = options;
 
-  const response = await anthropic.messages.create({
-    model,
-    max_tokens: maxTokens,
-    system,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const provider = resolveProvider(model);
+  const result = await provider.call({ model, system, prompt, maxTokens });
 
-  // Always log token usage — even on unexpected response types
+  // Log usage
   try {
     await logAiCall({
       ...audit,
-      model,
-      promptTokens: response.usage.input_tokens,
-      completionTokens: response.usage.output_tokens,
+      model: result.model,
+      promptTokens: result.inputTokens,
+      completionTokens: result.outputTokens,
     });
   } catch (err) {
-    // Audit failure must never mask a successful AI response
     console.error('[callClaude] audit log failed:', err);
   }
 
-  const content = response.content[0];
-  if (content.type !== 'text') {
-    throw new Error(`Unexpected Claude response type: ${content.type}`);
-  }
-
-  return stripCodeFences(content.text);
+  return stripCodeFences(result.text);
 }
+
+// Keep backward compatibility — same export name, same interface
+export { callClaude as callModel };
 
 /** Strip markdown code fences (```json ... ```) that models sometimes add. */
 function stripCodeFences(text: string): string {
