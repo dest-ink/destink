@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { db } from '@/db/client';
-import { drafts, channels, researchRuns } from '@/db/schema';
+import { drafts, channels, researchRuns, draftPreferences } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
 import type { TopicRecommendation } from '@/db/schema';
@@ -72,6 +72,10 @@ export async function generateDraftsForRun(
     throw new Error(`Channel not found: ${channelId}`);
   }
 
+  // Load writing style preferences
+  const [stylePrefs] = await db.select().from(draftPreferences)
+    .where(eq(draftPreferences.channelId, channelId));
+
   // Load recent draft titles for dedup
   const recentDrafts = await db
     .select({ title: drafts.title })
@@ -118,6 +122,7 @@ export async function generateDraftsForRun(
           sources: topic.sources,
           recentTitles,
           platform: channel.platform as 'linkedin' | 'substack',
+          writingStyle: stylePrefs ?? undefined,
         },
         channelId,
         draftId

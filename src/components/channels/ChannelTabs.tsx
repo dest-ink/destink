@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewTab } from '@/components/channels/OverviewTab';
 import { VoiceTab } from '@/components/channels/VoiceTab';
 import { SettingsTab } from '@/components/channels/SettingsTab';
+import { WritingStyleTab } from '@/components/channels/WritingStyleTab';
 import type { CostSummary } from '@/components/channels/ChannelCostSummary';
 
 interface LastResearchRun {
@@ -32,6 +33,7 @@ export function ChannelTabs({
       <TabsList>
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="voice">Voice</TabsTrigger>
+        <TabsTrigger value="writing">Writing Style</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
 
@@ -45,6 +47,10 @@ export function ChannelTabs({
 
       <TabsContent value="voice">
         <VoiceTab channelId={channelId} personaPrompt={personaPrompt} />
+      </TabsContent>
+
+      <TabsContent value="writing">
+        <WritingStyleTab channelId={channelId} />
       </TabsContent>
 
       <TabsContent value="settings">
