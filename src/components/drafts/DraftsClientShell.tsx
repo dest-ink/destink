@@ -14,11 +14,12 @@ import {
 interface DraftsClientShellProps {
   drafts: DraftWithChannel[];
   channelOptions: { id: string; name: string }[];
+  initialChannelFilter?: string;
 }
 
-export function DraftsClientShell({ drafts, channelOptions }: DraftsClientShellProps) {
+export function DraftsClientShell({ drafts, channelOptions, initialChannelFilter }: DraftsClientShellProps) {
   const [selectedId, setSelectedId] = useState<string | null>(drafts[0]?.id ?? null);
-  const [filterChannel, setFilterChannel] = useState<string>('all');
+  const [filterChannel, setFilterChannel] = useState<string>(initialChannelFilter ?? 'all');
   const [filterContentType, setFilterContentType] = useState<string>('all');
   const [filterConfidence, setFilterConfidence] = useState<string>('all');
 

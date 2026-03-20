@@ -200,6 +200,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
         }
       }
       setPhase(prev => prev === 'researching' ? 'topics' : prev);
+      router.refresh(); // Refresh to show new run in past runs
     } catch (err) {
       addLog(`Error: ${err instanceof Error ? err.message : String(err)}`, 'text-destructive');
       setPhase('idle');
@@ -282,6 +283,8 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
       case 'drafts-done':
         addLog(`${event.generated} draft${(event.generated as number) !== 1 ? 's' : ''} ready`, 'text-green-500');
         setPhase('done');
+        // Refresh server data to show new drafts and runs
+        router.refresh();
         break;
     }
   };
@@ -569,6 +572,21 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
           </div>
         )}
 
+        {/* ── New drafts CTA ──────────────────────────────────────────── */}
+        {phase === 'done' && draftCount > 0 && channel && (
+          <Link
+            href={`/drafts?channel=${channel.id}`}
+            className="flex items-center gap-3 p-4 rounded-xl border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 transition-colors"
+          >
+            <FileText className="w-5 h-5 text-green-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">{draftCount} new draft{draftCount !== 1 ? 's' : ''} ready for review</p>
+              <p className="text-xs text-muted-foreground">Click to review and approve your new drafts</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-green-500 shrink-0" />
+          </Link>
+        )}
+
         {/* ── Drafts ─────────────────────────────────────────────────── */}
         {channelDrafts.length > 0 && (
           <div className="space-y-3">
@@ -579,7 +597,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
                   <span className="text-xs font-normal text-primary ml-2">{pendingDraftCount} pending review</span>
                 )}
               </h3>
-              <Link href="/drafts" className="text-xs text-primary hover:underline">View all →</Link>
+              <Link href={channel ? `/drafts?channel=${channel.id}` : '/drafts'} className="text-xs text-primary hover:underline">View all →</Link>
             </div>
             <div className="space-y-1.5">
               {channelDrafts.map(draft => {

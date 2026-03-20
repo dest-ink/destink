@@ -11,10 +11,16 @@ import type { DraftWithChannel } from '@/components/drafts/DraftCard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DraftsPage() {
+interface DraftsPageProps {
+  searchParams: Promise<{ channel?: string }>;
+}
+
+export default async function DraftsPage({ searchParams }: DraftsPageProps) {
   const session = await auth();
   const userId = await getUserId(session);
   if (!userId) redirect('/login');
+
+  const { channel: filterChannelId } = await searchParams;
 
   let rows: DraftWithChannel[] = [];
   let channelOptions: { id: string; name: string }[] = [];
@@ -103,7 +109,7 @@ export default async function DraftsPage() {
       {/* Main shell with filter bar + cards + detail panel */}
       {!fetchError && rows.length > 0 && (
         <div className="flex-1 min-h-0">
-          <DraftsClientShell drafts={rows} channelOptions={channelOptions} />
+          <DraftsClientShell drafts={rows} channelOptions={channelOptions} initialChannelFilter={filterChannelId} />
         </div>
       )}
     </div>
