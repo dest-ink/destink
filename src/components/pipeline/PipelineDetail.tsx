@@ -350,14 +350,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, pendingDra
 
             {showChannel && (
               <div className="px-5 py-4 border-t border-border space-y-4">
-                {/* Platform ID */}
-                {channel.platformId && (
-                  <div>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Handle</p>
-                    <p className="text-sm text-foreground font-mono">{channel.platformId}</p>
-                  </div>
-                )}
-
                 {/* Voice summary */}
                 {channel.personaPrompt && (
                   <div>
