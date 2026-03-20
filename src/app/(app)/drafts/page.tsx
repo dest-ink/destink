@@ -59,14 +59,13 @@ export default async function DraftsPage({ searchParams }: DraftsPageProps) {
 
     rows = result as DraftWithChannel[];
 
-    // Build unique channel options for the filter
-    const seen = new Set<string>();
-    for (const r of rows) {
-      if (!seen.has(r.channelId)) {
-        seen.add(r.channelId);
-        channelOptions.push({ id: r.channelId, name: r.channelName });
-      }
-    }
+    // Build channel options from ALL user channels (not just those with pending drafts)
+    const allUserChannels = await db
+      .select({ id: channels.id, name: channels.name })
+      .from(channels)
+      .where(eq(channels.userId, userId))
+      .orderBy(desc(channels.createdAt));
+    channelOptions = allUserChannels;
   } catch (e) {
     console.error('[DraftsPage] DB fetch failed:', e);
     fetchError = true;
