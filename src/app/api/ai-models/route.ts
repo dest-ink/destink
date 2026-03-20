@@ -8,7 +8,8 @@ export const GET = auth(function GET(req) {
 
   return (async () => {
     // Only show models from providers that are configured (have API keys)
-    const configuredProviders = new Set(getConfiguredProviders().map(p => p.id));
+    const configured = await getConfiguredProviders();
+    const configuredProviders = new Set(configured.map(p => p.id));
 
     const models = CURRENT_MODELS
       .filter(m => configuredProviders.has(m.provider))

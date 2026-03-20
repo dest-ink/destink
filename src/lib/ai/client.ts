@@ -18,7 +18,7 @@ export interface CallModelOptions extends AiCallOptions {
 export async function callClaude(options: CallModelOptions): Promise<string> {
   const { model, system, prompt, maxTokens, audit } = options;
 
-  const provider = resolveProvider(model);
+  const provider = await resolveProvider(model);
   const result = await provider.call({ model, system, prompt, maxTokens });
 
   // Log usage
