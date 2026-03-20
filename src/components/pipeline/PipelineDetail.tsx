@@ -354,6 +354,35 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
         </div>
 
 
+        {/* ── Alerts ──────────────────────────────────────────────────── */}
+        {channel && !hasCredentials && !showCredForm && (
+          <button
+            onClick={() => setShowCredForm(true)}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors text-left"
+          >
+            <KeyRound className="w-5 h-5 text-amber-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Publishing credentials missing</p>
+              <p className="text-xs text-muted-foreground">Add your {channel.platform === 'linkedin' ? 'LinkedIn' : 'Substack'} credentials to publish approved drafts.</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+        )}
+
+        {channel && !channel.hasVoice && (
+          <Link
+            href={`/channels/${channel.id}`}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
+          >
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Voice profile not set</p>
+              <p className="text-xs text-muted-foreground">Set up a voice profile so drafts match your writing style.</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </Link>
+        )}
+
         {/* ── Channel Section ────────────────────────────────────────── */}
         {channel && (
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
