@@ -13,17 +13,23 @@ export const GET = auth(function GET(req) {
 
     const models = CURRENT_MODELS
       .filter(m => configuredIds.has(m.provider) || (m.fallbackProvider && configuredIds.has(m.fallbackProvider)))
-      .map(m => ({
-        id: m.id,
-        displayName: m.displayName,
-        description: m.description,
-        maxInputTokens: m.contextWindow,
-        maxOutputTokens: m.maxOutput,
-        pricing: m.pricing,
-        provider: m.provider,
-        tags: m.tags,
-        bestFor: m.bestFor ?? [],
-      }));
+      .map(m => {
+        // Show the actual provider being used, not the preferred one
+        const effectiveProvider = configuredIds.has(m.provider)
+          ? m.provider
+          : m.fallbackProvider ?? m.provider;
+        return {
+          id: m.id,
+          displayName: m.displayName,
+          description: m.description,
+          maxInputTokens: m.contextWindow,
+          maxOutputTokens: m.maxOutput,
+          pricing: m.pricing,
+          provider: effectiveProvider,
+          tags: m.tags,
+          bestFor: m.bestFor ?? [],
+        };
+      });
 
     return NextResponse.json(models);
   })();
