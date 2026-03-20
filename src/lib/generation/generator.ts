@@ -29,8 +29,7 @@ export interface GeneratedDraft {
 function buildWritingStyleInstructions(ws: ContentTypeStyle): string {
   const rules: string[] = [];
 
-  // Length
-  rules.push(`Target length: ${ws.lengthMin}–${ws.lengthMax} words`);
+  // Length is handled in the main spec, don't duplicate here
 
   // Vocabulary
   if (ws.vocabularyLevel) rules.push(`Vocabulary: ${ws.vocabularyLevel}`);
@@ -118,9 +117,13 @@ export function buildGenerationPrompt(input: GenerationInput): string {
     ? `\n\nREVISION REQUEST: ${regenerationNote}`
     : '';
 
+  // Use writing style length if available, otherwise fall back to defaults
+  const lengthMin = writingStyle?.lengthMin ?? (contentType === 'note' ? 150 : 800);
+  const lengthMax = writingStyle?.lengthMax ?? (contentType === 'note' ? 300 : 2000);
+
   const spec = contentType === 'note'
-    ? '150–300 words, punchy and direct, optimized for social scroll-stopping'
-    : '800–2000 words, structured argument with clear thesis, supporting points, and conclusion';
+    ? `EXACTLY ${lengthMin}–${lengthMax} words. Punchy and direct, optimized for social scroll-stopping.`
+    : `EXACTLY ${lengthMin}–${lengthMax} words. Structured argument with clear thesis, supporting points, and conclusion.`;
 
   const formattingRules = platform && PLATFORM_FORMATTING[platform]
     ? `\n\n${PLATFORM_FORMATTING[platform]}`
@@ -130,9 +133,11 @@ export function buildGenerationPrompt(input: GenerationInput): string {
 
   return `${personaPrompt}
 
+IMPORTANT: Your voice profile defines your STYLE of writing (tone, beliefs, humor). It does NOT define WHAT you write about. Write about the specific topic below, not about your personal beliefs or recurring themes. Bring variety and fresh angles.
+
 TASK: Write a ${contentType} about "${topicTitle}".
 ANGLE: ${topicAngle}
-LENGTH/FORMAT: ${spec}${formattingRules}${styleRules}${sourceContext}${recentContext}${regenContext}
+LENGTH: ${spec} THIS IS A HARD LIMIT — do NOT exceed ${lengthMax} words.${formattingRules}${styleRules}${sourceContext}${recentContext}${regenContext}
 
 Return ONLY valid JSON:
 {

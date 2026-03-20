@@ -41,16 +41,18 @@ export function buildAnalysisPrompt(
 
   return `You are analyzing research for a content creator. Given their persona and these sources, rank the best content opportunities.
 
-PERSONA:
+CRITICAL: Each topic MUST be meaningfully different from the others. Do NOT suggest multiple variations of the same theme. Prioritize VARIETY — different subjects, different angles, different industries or applications. If the persona has strong recurring beliefs, use those as TONE/STYLE guides, not as the topic itself.
+
+PERSONA (use for voice/style, NOT as the topic):
 ${personaPrompt}
 ${guidanceSection}
-RECENT POSTS (avoid repeating themes):
+RECENT POSTS (NEVER repeat these themes or similar angles):
 ${recentTitles.map(t => `- ${t}`).join('\n') || 'None'}
 
 SOURCES:
 ${sourcesText}
 
-Return a JSON array of up to 10 topic recommendations:
+Return a JSON array of up to 10 topic recommendations. Each topic MUST cover a DIFFERENT subject:
 [{
   "title": "Suggested post title",
   "angle": "Specific angle this writer should take",
