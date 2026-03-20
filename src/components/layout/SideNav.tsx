@@ -4,15 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
-import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical, CircleDot } from 'lucide-react';
 import Image from 'next/image';
 
-const navLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/drafts', label: 'Drafts', icon: FileText },
-  { href: '/queue', label: 'Queue', icon: Clock },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
+interface PipelineNav {
+  researcherId: string | null;
+  researcherName: string | null;
+  channel: {
+    id: string;
+    name: string;
+    platform: string;
+    hasVoice: boolean;
+    hasCredentials: boolean;
+  } | null;
+  lastRun: { id: string } | null;
+  pendingDraftCount: number;
+}
 
 const newMenuItems = {
   workflows: [
@@ -25,14 +32,33 @@ const newMenuItems = {
   ],
 };
 
+function getPipelineStatusColor(p: PipelineNav): string {
+  if (!p.researcherId) return 'bg-amber-500'; // orphan channel
+  if (!p.channel?.hasCredentials) return 'bg-amber-500';
+  if (!p.lastRun) return 'bg-muted-foreground/30';
+  if (p.pendingDraftCount > 0) return 'bg-blue-500';
+  return 'bg-green-500';
+}
+
 export function SideNav() {
   const path = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [pipelines, setPipelines] = useState<PipelineNav[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Fetch pipelines for nav
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setPipelines(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -112,29 +138,91 @@ export function SideNav() {
         )}
       </div>
 
-      {/* Nav links */}
-      <div className="flex flex-col gap-1 px-3 pt-2 flex-1">
-        {navLinks.map(l => {
-          const active = path === l.href || path.startsWith(l.href + '/');
-          return (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                active
-                  ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px] shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:translate-x-0.5'
-              }`}
-            >
-              <l.icon className={`w-[18px] h-[18px] ${active ? 'text-primary' : ''}`} />
-              {l.label}
-            </Link>
-          );
-        })}
+      {/* Main nav + pipelines in scrollable area */}
+      <div className="flex flex-col flex-1 overflow-y-auto px-3 pt-2">
+        {/* Dashboard */}
+        <Link
+          href="/dashboard"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            path === '/dashboard'
+              ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px] shadow-xs'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:translate-x-0.5'
+          }`}
+        >
+          <LayoutDashboard className={`w-[18px] h-[18px] ${path === '/dashboard' ? 'text-primary' : ''}`} />
+          Dashboard
+        </Link>
+
+        {/* Pipelines section */}
+        {pipelines.length > 0 && (
+          <div className="mt-3 mb-1">
+            <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Pipelines
+            </p>
+            <div className="flex flex-col gap-0.5 mt-1">
+              {pipelines.map(p => {
+                const id = p.researcherId ?? p.channel?.id ?? '';
+                const href = p.researcherId ? `/pipelines/${p.researcherId}` : `/research/new?channelId=${p.channel?.id}`;
+                const name = p.researcherName ?? p.channel?.name ?? 'Untitled';
+                const platform = p.channel?.platform ?? '';
+                const active = path === href || (p.researcherId && path === `/pipelines/${p.researcherId}`);
+                const statusColor = getPipelineStatusColor(p);
+
+                return (
+                  <Link
+                    key={id}
+                    href={href}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                      active
+                        ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:translate-x-0.5'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${statusColor}`} />
+                    <span className="truncate">{name}</span>
+                    {platform && (
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50 ml-auto shrink-0">
+                        {platform.slice(0, 2)}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Separator */}
+        <div className="h-px bg-border my-2" />
+
+        {/* Other nav links */}
+        <div className="flex flex-col gap-1">
+          {[
+            { href: '/drafts', label: 'Drafts', icon: FileText },
+            { href: '/queue', label: 'Queue', icon: Clock },
+            { href: '/settings', label: 'Settings', icon: Settings },
+          ].map(l => {
+            const active = path === l.href || path.startsWith(l.href + '/');
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  active
+                    ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px] shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:translate-x-0.5'
+                }`}
+              >
+                <l.icon className={`w-[18px] h-[18px] ${active ? 'text-primary' : ''}`} />
+                {l.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-border shrink-0">
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] text-muted-foreground/60 tracking-widest uppercase">v0.1.0</p>
           <div className="flex items-center gap-1.5">
