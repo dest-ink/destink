@@ -39,9 +39,11 @@ interface ResearcherFormProps {
   linkedChannelIds?: string[];
   /** All available channels for multi-select */
   allChannels: Channel[];
+  /** If set, lock to this channel and hide the channel selector */
+  lockedChannelId?: string;
 }
 
-export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: ResearcherFormProps) {
+export function ResearcherForm({ researcher, linkedChannelIds, allChannels, lockedChannelId }: ResearcherFormProps) {
   const router = useRouter();
   const isEdit = !!researcher;
 
@@ -274,41 +276,53 @@ export function ResearcherForm({ researcher, linkedChannelIds, allChannels }: Re
       <div className="border-t border-border" />
 
       {/* Section 4: Channels */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground">Channels</h3>
-
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Research results will be applied to selected channels.
-          </p>
-          {allChannels.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              No channels available. Create a channel first.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2 mt-1">
-              {allChannels.map((ch) => {
-                const selected = selectedChannelIds.includes(ch.id);
-                return (
-                  <button
-                    key={ch.id}
-                    type="button"
-                    onClick={() => toggleChannel(ch.id)}
-                    className={[
-                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
-                      selected
-                        ? 'bg-primary/10 text-primary border-primary/30'
-                        : 'bg-card text-muted-foreground border-border hover:border-primary/20',
-                    ].join(' ')}
-                  >
-                    {ch.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+      {lockedChannelId ? (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Channel</h3>
+          <div className="flex flex-wrap gap-2">
+            {allChannels.filter(ch => ch.id === lockedChannelId).map(ch => (
+              <span key={ch.id} className="px-3 py-1.5 text-xs rounded-md border bg-primary/10 text-primary border-primary/30">
+                {ch.name}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Channels</h3>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Research results will be applied to selected channels.
+            </p>
+            {allChannels.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">
+                No channels available. Create a channel first.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {allChannels.map((ch) => {
+                  const selected = selectedChannelIds.includes(ch.id);
+                  return (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => toggleChannel(ch.id)}
+                      className={[
+                        'px-3 py-1.5 text-xs rounded-md border transition-colors',
+                        selected
+                          ? 'bg-primary/10 text-primary border-primary/30'
+                          : 'bg-card text-muted-foreground border-border hover:border-primary/20',
+                      ].join(' ')}
+                    >
+                      {ch.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

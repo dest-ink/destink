@@ -3,7 +3,7 @@ import { db } from '@/db/client';
 import { channels } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
-import { ResearcherForm } from '@/components/research/ResearcherForm';
+import { NewResearcherClient } from '@/components/research/NewResearcherClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +19,6 @@ export default async function NewResearcherPage({ searchParams }: Props) {
     .from(channels)
     .orderBy(desc(channels.createdAt));
 
-  // Pre-select channel if channelId is provided via query param
-  const preSelectedChannelIds = channelId && allChannels.some(ch => ch.id === channelId)
-    ? [channelId]
-    : undefined;
-
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
@@ -35,7 +30,10 @@ export default async function NewResearcherPage({ searchParams }: Props) {
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <ResearcherForm allChannels={allChannels} linkedChannelIds={preSelectedChannelIds} />
+        <NewResearcherClient
+          allChannels={allChannels}
+          channelId={channelId}
+        />
       </div>
     </div>
   );
