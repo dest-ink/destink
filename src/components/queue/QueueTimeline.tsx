@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { QueueItem } from './QueueItem';
@@ -19,6 +19,28 @@ interface QueueTimelineProps {
 export function QueueTimeline({ groups: initialGroups }: QueueTimelineProps) {
   const router = useRouter();
   const [groups, setGroups] = useState(initialGroups);
+
+  // Sync with server data when props change (e.g. from router.refresh)
+  const prevGroupsRef = useRef(initialGroups);
+  useEffect(() => {
+    if (prevGroupsRef.current !== initialGroups) {
+      setGroups(initialGroups);
+      prevGroupsRef.current = initialGroups;
+    }
+  }, [initialGroups]);
+
+  // Poll for updates every 30 seconds (catches background daemon publishes)
+  useEffect(() => {
+    const hasActiveItems = initialGroups.some(g =>
+      g.items.some(item => item.status === 'queued' || item.status === 'publishing')
+    );
+    if (!hasActiveItems) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [initialGroups, router]);
 
   function handleRemoved(id: string) {
     setGroups(prev =>

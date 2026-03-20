@@ -62,9 +62,9 @@ export async function generateDraftsForRun(
   shortFormPercent: number,
   onProgress?: OnProgress
 ): Promise<DraftBatchResult> {
-  // Load channel for persona prompt
+  // Load channel for persona prompt and platform
   const [channel] = await db
-    .select({ personaPrompt: channels.personaPrompt })
+    .select({ personaPrompt: channels.personaPrompt, platform: channels.platform })
     .from(channels)
     .where(eq(channels.id, channelId));
 
@@ -117,6 +117,7 @@ export async function generateDraftsForRun(
           topicAngle: topic.angle,
           sources: topic.sources,
           recentTitles,
+          platform: channel.platform as 'linkedin' | 'substack',
         },
         channelId,
         draftId
