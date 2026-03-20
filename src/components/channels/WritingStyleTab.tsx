@@ -62,7 +62,7 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
   );
 }
 
-function StyleForm({ style, onChange }: { style: ContentTypeStyle; onChange: (s: ContentTypeStyle) => void }) {
+function StyleForm({ style, onChange, sliderMin = 50, sliderMax = 5000, sliderStep = 10 }: { style: ContentTypeStyle; onChange: (s: ContentTypeStyle) => void; sliderMin?: number; sliderMax?: number; sliderStep?: number }) {
   const u = <K extends keyof ContentTypeStyle>(key: K, value: ContentTypeStyle[K]) => onChange({ ...style, [key]: value });
 
   return (
@@ -73,7 +73,7 @@ function StyleForm({ style, onChange }: { style: ContentTypeStyle; onChange: (s:
           <Label className="text-sm">Length</Label>
           <span className="text-sm font-mono text-muted-foreground tabular-nums">{style.lengthMin}–{style.lengthMax} words</span>
         </div>
-        <Slider min={50} max={5000} step={10} value={[style.lengthMin, style.lengthMax]}
+        <Slider min={sliderMin} max={sliderMax} step={sliderStep} minStepsBetweenThumbs={1} value={[style.lengthMin, style.lengthMax]}
           onValueChange={([min, max]) => onChange({ ...style, lengthMin: min, lengthMax: max })} />
       </div>
 
@@ -217,8 +217,8 @@ export function WritingStyleTab({ channelId }: WritingStyleTabProps) {
       </div>
 
       {/* Form */}
-      {tab === 'note' && <StyleForm style={noteStyle} onChange={setNoteStyle} />}
-      {tab === 'article' && <StyleForm style={articleStyle} onChange={setArticleStyle} />}
+      {tab === 'note' && <StyleForm style={noteStyle} onChange={setNoteStyle} sliderMin={50} sliderMax={1000} sliderStep={10} />}
+      {tab === 'article' && <StyleForm style={articleStyle} onChange={setArticleStyle} sliderMin={300} sliderMax={5000} sliderStep={50} />}
 
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
         {saving ? 'Saving...' : 'Save writing style'}

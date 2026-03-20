@@ -5,7 +5,9 @@ import {
   researchers,
   researcherChannels,
   automationSchedules,
+  draftPreferences,
 } from '@/db/schema';
+import type { ContentTypeStyle } from '@/db/schema';
 import { assembleAndSavePersonaPrompt } from '@/lib/voice/assembler';
 import { getNextRunAt } from '@/lib/cron-utils';
 import type { OnboardingIntent } from './parse-intent';
@@ -96,6 +98,49 @@ export async function provisionFromIntent(intent: OnboardingIntent, userId: stri
   });
 
   await assembleAndSavePersonaPrompt(result.channelId);
+
+  // Create default writing style preferences based on platform
+  const isLinkedIn = intent.platform === 'linkedin';
+  const baseStyle: ContentTypeStyle = {
+    lengthMin: 150, lengthMax: 300,
+    vocabularyLevel: 'accessible', jargonHandling: 'explain',
+    preferredPhrases: [], avoidedPhrases: [],
+    useEmDashes: true, useOxfordComma: true, useSemicolons: false,
+    useExclamationMarks: false, useEllipsis: false, useParenheticals: true,
+    headlineCase: 'sentence', emphasisStyle: isLinkedIn ? 'caps' : 'bold',
+    useAllCaps: isLinkedIn,
+    paragraphLength: 'short', useSubheadings: false,
+    useBulletLists: isLinkedIn, useNumberedLists: false, useBlockquotes: false,
+    humorLevel: 'none', formalityLevel: 'conversational',
+    opinionStrength: 'balanced', ctaStyle: 'question',
+  };
+
+  const noteStyle: ContentTypeStyle = {
+    ...baseStyle,
+    lengthMin: isLinkedIn ? 100 : 150,
+    lengthMax: isLinkedIn ? 280 : 400,
+    useSubheadings: false,
+    useBulletLists: isLinkedIn,
+  };
+
+  const articleStyle: ContentTypeStyle = {
+    ...baseStyle,
+    lengthMin: isLinkedIn ? 600 : 800,
+    lengthMax: isLinkedIn ? 1200 : 2500,
+    paragraphLength: 'medium',
+    useSubheadings: true,
+    useBulletLists: true,
+    useBlockquotes: !isLinkedIn,
+  };
+
+  await db.insert(draftPreferences).values({
+    channelId: result.channelId,
+    noteStyle,
+    articleStyle,
+  }).onConflictDoUpdate({
+    target: draftPreferences.channelId,
+    set: { noteStyle, articleStyle, updatedAt: new Date() },
+  });
 
   return result;
 }
