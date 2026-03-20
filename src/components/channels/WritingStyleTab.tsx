@@ -217,8 +217,8 @@ export function WritingStyleTab({ channelId }: WritingStyleTabProps) {
       </div>
 
       {/* Form */}
-      {tab === 'note' && <StyleForm style={noteStyle} onChange={setNoteStyle} sliderMin={50} sliderMax={1000} sliderStep={10} />}
-      {tab === 'article' && <StyleForm style={articleStyle} onChange={setArticleStyle} sliderMin={300} sliderMax={5000} sliderStep={50} />}
+      {tab === 'note' && <StyleForm style={noteStyle} onChange={setNoteStyle} sliderMin={1} sliderMax={1000} sliderStep={1} />}
+      {tab === 'article' && <StyleForm style={articleStyle} onChange={setArticleStyle} sliderMin={1} sliderMax={5000} sliderStep={1} />}
 
       <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
         {saving ? 'Saving...' : 'Save writing style'}
