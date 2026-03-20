@@ -26,6 +26,17 @@ export const POST = auth(function POST(req, ctx) {
       return NextResponse.json({ error: 'Researcher not found' }, { status: 404 });
     }
 
+    // Parse optional guidance from request body
+    let guidance: string | undefined;
+    try {
+      const body = await req.json();
+      if (body.guidance && typeof body.guidance === 'string') {
+        guidance = body.guidance.trim() || undefined;
+      }
+    } catch {
+      // No body or invalid JSON — that's fine, guidance is optional
+    }
+
     // Ensure adapters are initialized
     await initRegistries();
 
@@ -36,7 +47,7 @@ export const POST = auth(function POST(req, ctx) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         }
 
-        runResearchForResearcher(id, send)
+        runResearchForResearcher(id, send, guidance)
           .then(() => {
             controller.close();
           })

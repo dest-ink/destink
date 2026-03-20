@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   ArrowLeft, Play, FileText, Clock, Settings as SettingsIcon,
   CheckCircle2, AlertCircle, Circle, KeyRound, ArrowRight, RotateCcw,
@@ -93,6 +95,10 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
   const [showChannel, setShowChannel] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
 
+  // Research prompt dialog
+  const [showRunPrompt, setShowRunPrompt] = useState(false);
+  const [researchGuidance, setResearchGuidance] = useState('');
+
   // Credentials
   const [credSchema, setCredSchema] = useState<ConfigField[]>([]);
   const [credValues, setCredValues] = useState<Record<string, string>>({});
@@ -155,14 +161,20 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
 
   // ── Research ──────────────────────────────────────────────────────────────
 
-  const handleRunResearch = async () => {
+  const handleRunResearch = async (guidance?: string) => {
+    setShowRunPrompt(false);
     setPhase('researching');
     setLogs([]);
     setDraftCount(0);
+    if (guidance) addLog(`Direction: ${guidance}`, 'text-muted-foreground');
     addLog('Starting research run...', 'text-muted-foreground');
 
     try {
-      const res = await fetch(`/api/researchers/${researcher.id}/run`, { method: 'POST' });
+      const res = await fetch(`/api/researchers/${researcher.id}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guidance: guidance || undefined }),
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         addLog(`Error: ${(data as { error?: string }).error || `HTTP ${res.status}`}`, 'text-destructive');
@@ -312,7 +324,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
               </Button>
               {phase === 'idle' && (
                 <Button
-                  onClick={handleRunResearch}
+                  onClick={() => { setResearchGuidance(''); setShowRunPrompt(true); }}
                   className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
                 >
                   <Play className="w-4 h-4 mr-2" />
@@ -652,6 +664,41 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
         )}
 
       </div>
+
+      {/* Research guidance dialog */}
+      <Dialog open={showRunPrompt} onOpenChange={setShowRunPrompt}>
+        <DialogContent className="sm:max-w-lg bg-card border-border shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">Run Research</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Give the AI a direction for this research run, or just run it with the default topics.
+            </p>
+          </DialogHeader>
+          <Textarea
+            value={researchGuidance}
+            onChange={e => setResearchGuidance(e.target.value)}
+            placeholder="e.g. Focus on recent AI agent frameworks, especially ones that compete with LangChain. I want contrarian takes."
+            className="min-h-[100px] resize-none bg-background border-border text-sm"
+            autoFocus
+          />
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleRunResearch()}
+            >
+              Just run it
+            </Button>
+            <Button
+              onClick={() => handleRunResearch(researchGuidance)}
+              disabled={!researchGuidance.trim()}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Run with guidance
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

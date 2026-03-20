@@ -28,17 +28,22 @@ import type { OnProgress } from './progress';
 export function buildAnalysisPrompt(
   sources: ResearchSource[],
   personaPrompt: string,
-  recentTitles: string[]
+  recentTitles: string[],
+  guidance?: string,
 ): string {
   const sourcesText = sources
     .map((s, i) => `[${i + 1}] ${s.title}\nURL: ${s.url}\nSummary: ${s.summary}`)
     .join('\n\n');
 
+  const guidanceSection = guidance?.trim()
+    ? `\n\nUSER GUIDANCE (prioritize this direction):\n${guidance.trim()}\n`
+    : '';
+
   return `You are analyzing research for a content creator. Given their persona and these sources, rank the best content opportunities.
 
 PERSONA:
 ${personaPrompt}
-
+${guidanceSection}
 RECENT POSTS (avoid repeating themes):
 ${recentTitles.map(t => `- ${t}`).join('\n') || 'None'}
 
@@ -97,6 +102,7 @@ function buildResearchConfig(
 export async function runResearchForResearcher(
   researcherId: string,
   onProgress?: OnProgress,
+  guidance?: string,
 ): Promise<void> {
   // Load the researcher
   const [researcher] = await db
@@ -157,6 +163,7 @@ export async function runResearchForResearcher(
       allSources,
       channel.personaPrompt ?? '',
       recentTitles,
+      guidance,
     );
     const raw = await callClaude({
       model: 'claude-haiku-4-5-20251001',
