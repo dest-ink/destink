@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 interface ModelInfo {
   id: string;
   displayName: string;
+  description?: string;
   pricing: { inputPer1M: number; outputPer1M: number } | null;
   maxInputTokens: number | null;
   maxOutputTokens: number | null;
@@ -133,16 +134,23 @@ export function AiSettingsSection() {
                     {models.map(m => (
                       <option key={m.id} value={m.id}>
                         {m.displayName}
-                        {m.pricing ? ` — $${m.pricing.inputPer1M} in / $${m.pricing.outputPer1M} out per 1M tokens` : ''}
+                        {m.pricing ? ` — $${m.pricing.inputPer1M}/$${m.pricing.outputPer1M} per 1M` : ''}
                       </option>
                     ))}
                   </select>
-                  {currentModelInfo?.pricing && (
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <DollarSign className="w-3 h-3" />
-                      ${currentModelInfo.pricing.inputPer1M}/1M input · ${currentModelInfo.pricing.outputPer1M}/1M output
-                      {currentModelInfo.maxOutputTokens && ` · ${(currentModelInfo.maxOutputTokens / 1000).toFixed(0)}K max output`}
-                    </p>
+                  {currentModelInfo && (
+                    <div className="space-y-0.5">
+                      {currentModelInfo.description && (
+                        <p className="text-[10px] text-muted-foreground">{currentModelInfo.description}</p>
+                      )}
+                      {currentModelInfo.pricing && (
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <DollarSign className="w-3 h-3" />
+                          ${currentModelInfo.pricing.inputPer1M}/1M input · ${currentModelInfo.pricing.outputPer1M}/1M output
+                          {currentModelInfo.maxOutputTokens && ` · ${(currentModelInfo.maxOutputTokens / 1000).toFixed(0)}K max output`}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               );
