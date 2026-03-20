@@ -599,23 +599,47 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
         {/* ── Past Runs ──────────────────────────────────────────────── */}
         {runs.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Past Runs</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Past Runs</h3>
+              <Link href={`/research/${researcher.id}/runs`} className="text-xs text-primary hover:underline">View all →</Link>
+            </div>
             <div className="space-y-2">
-              {runs.map(run => (
-                <div key={run.id} className="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-card text-sm">
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground">
-                      {new Date(run.runAt).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                      })}
-                    </span>
-                    <span className="text-foreground">{run.topicCount} topics · {run.sourceCount} sources</span>
-                  </div>
-                  {run.draftsGenerated && run.draftsGenerated.length > 0 && (
-                    <span className="text-xs text-muted-foreground">{run.draftsGenerated.length} drafts</span>
-                  )}
-                </div>
-              ))}
+              {runs.map(run => {
+                const draftCount = run.draftsGenerated?.length ?? 0;
+                return (
+                  <Link
+                    key={run.id}
+                    href={`/research/${researcher.id}/runs/${run.id}`}
+                    className="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-card text-sm hover:border-primary/20 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                        {new Date(run.runAt).toLocaleDateString('en-US', {
+                          month: 'numeric', day: 'numeric', year: 'numeric',
+                        })}{' '}
+                        {new Date(run.runAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                      {channel && (
+                        <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                          {channel.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">{run.sourceCount} sources</span>
+                      <span className="text-xs text-muted-foreground">{run.topicCount} topics</span>
+                      {draftCount > 0 && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 border border-green-500/20">
+                          {draftCount} drafts
+                        </span>
+                      )}
+                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
