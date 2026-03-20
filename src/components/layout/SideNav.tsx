@@ -50,7 +50,7 @@ export function SideNav() {
 
   useEffect(() => setMounted(true), []);
 
-  // Fetch pipelines for nav
+  // Fetch pipelines for nav — re-fetch on navigation (catches name changes, new pipelines)
   useEffect(() => {
     fetch('/api/dashboard')
       .then(r => r.json())
@@ -58,7 +58,7 @@ export function SideNav() {
         if (Array.isArray(data)) setPipelines(data);
       })
       .catch(() => {});
-  }, []);
+  }, [path]);
 
   // Close dropdown on outside click
   useEffect(() => {
