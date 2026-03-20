@@ -122,7 +122,9 @@ export async function generateDraftsForRun(
           sources: topic.sources,
           recentTitles,
           platform: channel.platform as 'linkedin' | 'substack',
-          writingStyle: stylePrefs ?? undefined,
+          writingStyle: contentType === 'note'
+            ? (stylePrefs?.noteStyle ?? undefined)
+            : (stylePrefs?.articleStyle ?? undefined),
         },
         channelId,
         draftId

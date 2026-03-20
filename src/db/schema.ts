@@ -125,45 +125,8 @@ export const draftPreferences = pgTable('draft_preferences', {
     .references(() => channels.id, { onDelete: 'cascade' })
     .notNull()
     .unique(),
-
-  // Length preferences
-  noteLengthMin: integer('note_length_min').default(150),       // min words for notes
-  noteLengthMax: integer('note_length_max').default(300),       // max words for notes
-  articleLengthMin: integer('article_length_min').default(800),  // min words for articles
-  articleLengthMax: integer('article_length_max').default(2000), // max words for articles
-
-  // Vocabulary & language
-  vocabularyLevel: text('vocabulary_level').default('accessible'),  // simple, accessible, technical, academic
-  jargonHandling: text('jargon_handling').default('explain'),       // avoid, explain, assume-knowledge
-  preferredPhrases: jsonb('preferred_phrases').$type<string[]>().default([]),   // phrases to use often
-  avoidedPhrases: jsonb('avoided_phrases').$type<string[]>().default([]),       // phrases to never use
-
-  // Punctuation & formatting
-  useEmDashes: boolean('use_em_dashes').default(true),
-  useOxfordComma: boolean('use_oxford_comma').default(true),
-  useSemicolons: boolean('use_semicolons').default(false),
-  useExclamationMarks: boolean('use_exclamation_marks').default(false),
-  useEllipsis: boolean('use_ellipsis').default(false),
-  useParenheticals: boolean('use_parentheticals').default(true),
-
-  // Capitalization & emphasis
-  headlineCase: text('headline_case').default('sentence'),    // sentence, title, lowercase, uppercase
-  emphasisStyle: text('emphasis_style').default('bold'),       // bold, italic, caps, none
-  useAllCaps: boolean('use_all_caps').default(false),          // for emphasis in social posts
-
-  // Structure preferences
-  paragraphLength: text('paragraph_length').default('short'),  // short (2-3 sentences), medium (4-5), long (6+)
-  useSubheadings: boolean('use_subheadings').default(true),
-  useBulletLists: boolean('use_bullet_lists').default(true),
-  useNumberedLists: boolean('use_numbered_lists').default(false),
-  useBlockquotes: boolean('use_blockquotes').default(false),
-
-  // Tone modifiers
-  humorLevel: text('humor_level').default('none'),            // none, subtle, moderate, heavy
-  formalityLevel: text('formality_level').default('conversational'), // formal, professional, conversational, casual
-  opinionStrength: text('opinion_strength').default('balanced'),     // neutral, balanced, strong, provocative
-  ctaStyle: text('cta_style').default('question'),            // question, directive, soft, none
-
+  noteStyle: jsonb('note_style').$type<ContentTypeStyle>(),
+  articleStyle: jsonb('article_style').$type<ContentTypeStyle>(),
   createdAt: timestamptz('created_at').defaultNow().notNull(),
   updatedAt: timestamptz('updated_at').defaultNow().notNull(),
 });
@@ -255,6 +218,39 @@ export interface VoiceProfile {
   topicsToAvoid: string[];
   vocabularyNotes: string;
   idealReader: string;
+}
+
+export interface ContentTypeStyle {
+  // Length
+  lengthMin: number;
+  lengthMax: number;
+  // Vocabulary
+  vocabularyLevel: 'simple' | 'accessible' | 'technical' | 'academic';
+  jargonHandling: 'avoid' | 'explain' | 'assume-knowledge';
+  preferredPhrases: string[];
+  avoidedPhrases: string[];
+  // Punctuation
+  useEmDashes: boolean;
+  useOxfordComma: boolean;
+  useSemicolons: boolean;
+  useExclamationMarks: boolean;
+  useEllipsis: boolean;
+  useParenheticals: boolean;
+  // Capitalization & emphasis
+  headlineCase: 'sentence' | 'title' | 'lowercase' | 'uppercase';
+  emphasisStyle: 'bold' | 'italic' | 'caps' | 'none';
+  useAllCaps: boolean;
+  // Structure
+  paragraphLength: 'short' | 'medium' | 'long';
+  useSubheadings: boolean;
+  useBulletLists: boolean;
+  useNumberedLists: boolean;
+  useBlockquotes: boolean;
+  // Tone
+  humorLevel: 'none' | 'subtle' | 'moderate' | 'heavy';
+  formalityLevel: 'formal' | 'professional' | 'conversational' | 'casual';
+  opinionStrength: 'neutral' | 'balanced' | 'strong' | 'provocative';
+  ctaStyle: 'question' | 'directive' | 'soft' | 'none';
 }
 
 export interface ResearchSourceConfig {

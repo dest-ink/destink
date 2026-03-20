@@ -1,34 +1,7 @@
 import { callClaude } from '@/lib/ai/client';
-import type { ResearchSource } from '@/db/schema';
+import type { ResearchSource, ContentTypeStyle } from '@/db/schema';
 
-export interface WritingStylePrefs {
-  noteLengthMin?: number | null;
-  noteLengthMax?: number | null;
-  articleLengthMin?: number | null;
-  articleLengthMax?: number | null;
-  vocabularyLevel?: string | null;
-  jargonHandling?: string | null;
-  preferredPhrases?: string[] | null;
-  avoidedPhrases?: string[] | null;
-  useEmDashes?: boolean | null;
-  useOxfordComma?: boolean | null;
-  useSemicolons?: boolean | null;
-  useExclamationMarks?: boolean | null;
-  useEllipsis?: boolean | null;
-  useParenheticals?: boolean | null;
-  headlineCase?: string | null;
-  emphasisStyle?: string | null;
-  useAllCaps?: boolean | null;
-  paragraphLength?: string | null;
-  useSubheadings?: boolean | null;
-  useBulletLists?: boolean | null;
-  useNumberedLists?: boolean | null;
-  useBlockquotes?: boolean | null;
-  humorLevel?: string | null;
-  formalityLevel?: string | null;
-  opinionStrength?: string | null;
-  ctaStyle?: string | null;
-}
+export type { ContentTypeStyle as WritingStylePrefs } from '@/db/schema';
 
 export interface GenerationInput {
   contentType: 'note' | 'article';
@@ -39,7 +12,7 @@ export interface GenerationInput {
   recentTitles: string[];
   regenerationNote?: string;
   platform?: 'linkedin' | 'substack';
-  writingStyle?: WritingStylePrefs;
+  writingStyle?: ContentTypeStyle | null;
 }
 
 export interface GeneratedDraft {
@@ -53,13 +26,11 @@ export interface GeneratedDraft {
 /**
  * Builds the generation prompt. Pure function — no I/O.
  */
-function buildWritingStyleInstructions(ws: WritingStylePrefs, contentType: 'note' | 'article'): string {
+function buildWritingStyleInstructions(ws: ContentTypeStyle): string {
   const rules: string[] = [];
 
   // Length
-  const min = contentType === 'note' ? (ws.noteLengthMin ?? 150) : (ws.articleLengthMin ?? 800);
-  const max = contentType === 'note' ? (ws.noteLengthMax ?? 300) : (ws.articleLengthMax ?? 2000);
-  rules.push(`Target length: ${min}–${max} words`);
+  rules.push(`Target length: ${ws.lengthMin}–${ws.lengthMax} words`);
 
   // Vocabulary
   if (ws.vocabularyLevel) rules.push(`Vocabulary: ${ws.vocabularyLevel}`);
@@ -155,7 +126,7 @@ export function buildGenerationPrompt(input: GenerationInput): string {
     ? `\n\n${PLATFORM_FORMATTING[platform]}`
     : '';
 
-  const styleRules = writingStyle ? buildWritingStyleInstructions(writingStyle, contentType) : '';
+  const styleRules = writingStyle ? buildWritingStyleInstructions(writingStyle) : '';
 
   return `${personaPrompt}
 
