@@ -12,7 +12,7 @@ export async function loginUser(
   formData: FormData
 ): Promise<LoginState> {
   try {
-    await signIn('credentials', formData);
+    await signIn('credentials', { ...Object.fromEntries(formData), redirectTo: '/dashboard' });
     return null;
   } catch (err) {
     if (err instanceof AuthError) {
