@@ -308,8 +308,8 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
                 <span className="text-xs text-muted-foreground flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary">
                   <Clock className="w-3 h-3" />
                   {schedule.nextRunAt
-                    ? new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
-                    : 'Scheduled'}
+                    ? `Next run: ${new Date(schedule.nextRunAt).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
+                    : 'Automation on'}
                 </span>
               )}
               {phase === 'idle' && (
