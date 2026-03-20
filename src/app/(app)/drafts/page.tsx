@@ -1,14 +1,21 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { drafts, channels } from '@/db/schema';
 import { Button } from '@/components/ui/button';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { DraftsClientShell } from '@/components/drafts/DraftsClientShell';
 import type { DraftWithChannel } from '@/components/drafts/DraftCard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DraftsPage() {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   let rows: DraftWithChannel[] = [];
   let channelOptions: { id: string; name: string }[] = [];
   let fetchError = false;
@@ -41,7 +48,7 @@ export default async function DraftsPage() {
       })
       .from(drafts)
       .innerJoin(channels, eq(drafts.channelId, channels.id))
-      .where(eq(drafts.status, 'pending_review'))
+      .where(and(eq(drafts.status, 'pending_review'), eq(channels.userId, userId)))
       .orderBy(desc(drafts.createdAt));
 
     rows = result as DraftWithChannel[];

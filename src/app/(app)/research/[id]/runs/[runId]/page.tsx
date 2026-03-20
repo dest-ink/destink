@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { researchers, researchRuns, channels } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -14,12 +16,16 @@ interface RunDetailPageProps {
 }
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { id, runId } = await params;
 
   const [researcher] = await db
     .select({ id: researchers.id, name: researchers.name })
     .from(researchers)
-    .where(eq(researchers.id, id));
+    .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
   if (!researcher) notFound();
 
   const [run] = await db

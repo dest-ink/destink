@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { researchers, automationSchedules } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { ScheduleList } from '@/components/research/ScheduleList';
 
@@ -13,12 +15,16 @@ interface AutomationPageProps {
 }
 
 export default async function AutomationPage({ params }: AutomationPageProps) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { id } = await params;
 
   const [researcher] = await db
     .select()
     .from(researchers)
-    .where(eq(researchers.id, id));
+    .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
   if (!researcher) notFound();
 
   const schedules = await db

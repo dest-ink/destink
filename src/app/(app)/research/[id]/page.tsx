@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { researchers, researcherChannels, channels } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { ResearcherForm } from '@/components/research/ResearcherForm';
 import type { ResearchSourceConfig } from '@/db/schema';
@@ -15,12 +17,16 @@ interface ResearcherDetailPageProps {
 }
 
 export default async function ResearcherDetailPage({ params }: ResearcherDetailPageProps) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { id } = await params;
 
   const [researcher] = await db
     .select()
     .from(researchers)
-    .where(eq(researchers.id, id));
+    .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
   if (!researcher) notFound();
 
   const linkedChannelIds = (
@@ -33,6 +39,7 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
   const allChannels = await db
     .select({ id: channels.id, name: channels.name, platform: channels.platform })
     .from(channels)
+    .where(eq(channels.userId, userId))
     .orderBy(desc(channels.createdAt));
 
   return (

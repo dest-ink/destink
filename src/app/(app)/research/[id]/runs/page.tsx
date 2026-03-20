@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { researchers, researchRuns, channels } from '@/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, and } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { ResearchRunPanel } from '@/components/research/ResearchRunPanel';
 import { RunsList } from '@/components/research/RunsList';
@@ -14,12 +16,16 @@ interface RunsPageProps {
 }
 
 export default async function RunsPage({ params }: RunsPageProps) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { id } = await params;
 
   const [researcher] = await db
     .select({ id: researchers.id, name: researchers.name })
     .from(researchers)
-    .where(eq(researchers.id, id));
+    .where(and(eq(researchers.id, id), eq(researchers.userId, userId)));
   if (!researcher) notFound();
 
   const runs = await db

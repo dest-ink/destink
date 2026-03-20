@@ -1,19 +1,27 @@
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { aiAuditLog, channels } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import { AuditSummaryCards } from '@/components/audit/AuditSummaryCards';
 import { AuditTabs } from '@/components/audit/AuditTabs';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AuditPage() {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const [summary] = await db
     .select({
       totalCost: sql<string>`coalesce(sum(${aiAuditLog.costUsd}), '0')`,
       totalTokens: sql<number>`coalesce(sum(${aiAuditLog.promptTokens} + ${aiAuditLog.completionTokens}), 0)`,
       callCount: sql<number>`cast(count(*) as int)`,
     })
-    .from(aiAuditLog);
+    .from(aiAuditLog)
+    .innerJoin(channels, and(eq(aiAuditLog.channelId, channels.id), eq(channels.userId, userId)));
 
   const byChannelRaw = await db
     .select({
@@ -24,7 +32,7 @@ export default async function AuditPage() {
       callCount: sql<number>`cast(count(*) as int)`,
     })
     .from(aiAuditLog)
-    .leftJoin(channels, eq(aiAuditLog.channelId, channels.id))
+    .innerJoin(channels, and(eq(aiAuditLog.channelId, channels.id), eq(channels.userId, userId)))
     .groupBy(aiAuditLog.channelId, channels.name)
     .orderBy(sql`sum(${aiAuditLog.costUsd}) desc nulls last`);
 
@@ -36,6 +44,7 @@ export default async function AuditPage() {
       callCount: sql<number>`cast(count(*) as int)`,
     })
     .from(aiAuditLog)
+    .innerJoin(channels, and(eq(aiAuditLog.channelId, channels.id), eq(channels.userId, userId)))
     .groupBy(aiAuditLog.operation)
     .orderBy(sql`sum(${aiAuditLog.costUsd}) desc nulls last`);
 

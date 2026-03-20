@@ -1,6 +1,9 @@
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { publishQueue, drafts, channels } from '@/db/schema';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, and } from 'drizzle-orm';
 import { QueueTimeline } from '@/components/queue/QueueTimeline';
 import type { QueueItemData } from '@/components/queue/QueueItem';
 
@@ -29,6 +32,10 @@ const BUCKET_ORDER = ['Today', 'Tomorrow', 'This Week', 'Later', 'Past'];
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default async function QueuePage() {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   let rows: QueueItemData[] = [];
   let fetchError = false;
 
@@ -53,6 +60,7 @@ export default async function QueuePage() {
       .from(publishQueue)
       .innerJoin(drafts, eq(publishQueue.draftId, drafts.id))
       .innerJoin(channels, eq(publishQueue.channelId, channels.id))
+      .where(eq(channels.userId, userId))
       .orderBy(asc(publishQueue.scheduledFor));
 
     rows = result as QueueItemData[];

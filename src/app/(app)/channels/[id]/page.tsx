@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { channels, aiAuditLog, researchRuns } from '@/db/schema';
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql, desc, and } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChannelTabs } from '@/components/channels/ChannelTabs';
@@ -20,9 +22,13 @@ interface ChannelDetailPageProps {
 }
 
 export default async function ChannelDetailPage({ params }: ChannelDetailPageProps) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { id } = await params;
 
-  const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+  const [channel] = await db.select().from(channels).where(and(eq(channels.id, id), eq(channels.userId, userId)));
   if (!channel) notFound();
 
   const [costResult] = await db

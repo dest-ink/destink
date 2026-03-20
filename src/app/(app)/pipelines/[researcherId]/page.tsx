@@ -1,4 +1,6 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getUserId } from '@/lib/auth-utils';
 import { db } from '@/db/client';
 import { researchers, researcherChannels, channels, researchRuns, drafts, automationSchedules } from '@/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
@@ -11,10 +13,14 @@ interface Props {
 }
 
 export default async function PipelineDetailPage({ params }: Props) {
+  const session = await auth();
+  const userId = await getUserId(session);
+  if (!userId) redirect('/login');
+
   const { researcherId } = await params;
 
   // Fetch researcher
-  const [researcher] = await db.select().from(researchers).where(eq(researchers.id, researcherId));
+  const [researcher] = await db.select().from(researchers).where(and(eq(researchers.id, researcherId), eq(researchers.userId, userId)));
   if (!researcher) notFound();
 
   // Fetch linked channel
