@@ -304,13 +304,12 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Link
-                href={`/research/${researcher.id}/automation`}
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:border-primary/20 bg-card transition-all"
-              >
-                <Clock className="w-4 h-4" />
-                Schedule
-              </Link>
+              <Button asChild variant="outline">
+                <Link href={`/research/${researcher.id}/automation`}>
+                  <Clock className="w-4 h-4 mr-2" />
+                  Schedule
+                </Link>
+              </Button>
               {phase === 'idle' && (
                 <Button
                   onClick={handleRunResearch}
