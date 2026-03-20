@@ -7,12 +7,12 @@ export const GET = auth(function GET(req) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   return (async () => {
-    // Only show models from providers that are configured (have API keys)
+    // Show models from configured providers, including models that can fall back
     const configured = await getConfiguredProviders();
-    const configuredProviders = new Set(configured.map(p => p.id));
+    const configuredIds = new Set(configured.map(p => p.id));
 
     const models = CURRENT_MODELS
-      .filter(m => configuredProviders.has(m.provider))
+      .filter(m => configuredIds.has(m.provider) || (m.fallbackProvider && configuredIds.has(m.fallbackProvider)))
       .map(m => ({
         id: m.id,
         displayName: m.displayName,

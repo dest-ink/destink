@@ -1,5 +1,6 @@
 import { logAiCall, type AuditEntry } from './audit';
 import { resolveProvider } from './providers/registry';
+import { getModelDefinition } from './models';
 import type { AiCallOptions } from './providers/types';
 
 // Model IDs are defined in src/lib/ai/models.ts — the single source of truth.
@@ -19,7 +20,15 @@ export async function callClaude(options: CallModelOptions): Promise<string> {
   const { model, system, prompt, maxTokens, audit } = options;
 
   const provider = await resolveProvider(model);
-  const result = await provider.call({ model, system, prompt, maxTokens });
+
+  // If we're using a fallback provider, map the model ID
+  // (e.g., 'claude-opus-4-6' → 'anthropic/claude-opus-4-6' for OpenRouter)
+  const def = getModelDefinition(model);
+  const effectiveModel = (def?.provider !== provider.id && def?.fallbackModelId)
+    ? def.fallbackModelId
+    : model;
+
+  const result = await provider.call({ model: effectiveModel, system, prompt, maxTokens });
 
   // Log usage
   try {

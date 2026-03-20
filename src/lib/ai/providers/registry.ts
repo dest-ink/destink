@@ -94,6 +94,12 @@ export async function resolveProvider(modelId: string): Promise<AiProvider> {
   if (def?.provider) {
     const provider = await getOrCreate(def.provider);
     if (provider?.isConfigured()) return provider;
+    // Try fallback provider (e.g., OpenRouter can proxy Claude models)
+    if (def.fallbackProvider) {
+      const fallback = await getOrCreate(def.fallbackProvider);
+      if (fallback?.isConfigured()) return fallback;
+    }
+    // Generic OpenRouter fallback
     const or = await getOrCreate('openrouter');
     if (or?.isConfigured()) return or;
   }

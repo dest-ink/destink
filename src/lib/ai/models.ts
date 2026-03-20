@@ -14,7 +14,12 @@ export interface ModelDefinition {
   maxOutput: number;
   pricing: { inputPer1M: number; outputPer1M: number };
   tier: 'current' | 'legacy';
-  provider: 'anthropic' | 'openrouter';
+  /** Primary provider. If not configured, falls back to fallbackProvider. */
+  provider: string;
+  /** Optional fallback provider (e.g., 'openrouter' can proxy Claude models). */
+  fallbackProvider?: string;
+  /** Model ID to use with the fallback provider (e.g., 'anthropic/claude-opus-4-6'). */
+  fallbackModelId?: string;
 }
 
 // ─── Current Models ─────────────────────────────────────────────────────────
@@ -30,6 +35,8 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     pricing: { inputPer1M: 5, outputPer1M: 25 },
     tier: 'current',
     provider: 'anthropic',
+    fallbackProvider: 'openrouter',
+    fallbackModelId: 'anthropic/claude-opus-4-6',
   },
   {
     id: 'claude-sonnet-4-6',
@@ -40,6 +47,8 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     pricing: { inputPer1M: 3, outputPer1M: 15 },
     tier: 'current',
     provider: 'anthropic',
+    fallbackProvider: 'openrouter',
+    fallbackModelId: 'anthropic/claude-sonnet-4-6',
   },
   {
     id: 'claude-haiku-4-5',
@@ -50,6 +59,8 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     pricing: { inputPer1M: 1, outputPer1M: 5 },
     tier: 'current',
     provider: 'anthropic',
+    fallbackProvider: 'openrouter',
+    fallbackModelId: 'anthropic/claude-haiku-4-5',
   },
 
   // ── OpenRouter (OpenAI) ─────────────────────────────────────────────────
