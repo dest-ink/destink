@@ -23,15 +23,19 @@ export function ProfileClient() {
 
   useEffect(() => {
     fetch('/api/profile')
-      .then(r => r.json())
-      .then(data => {
-        if (data.id) {
-          setProfile(data);
-          setName(data.name ?? '');
-          setAvatarUrl(data.avatarUrl ?? '');
-        }
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
       })
-      .catch(() => toast.error('Failed to load profile'))
+      .then(data => {
+        setProfile(data);
+        setName(data.name ?? '');
+        setAvatarUrl(data.avatarUrl ?? '');
+      })
+      .catch(err => {
+        console.error('[Profile] load failed:', err);
+        toast.error('Failed to load profile');
+      })
       .finally(() => setLoading(false));
   }, []);
 

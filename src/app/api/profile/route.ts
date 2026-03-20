@@ -11,15 +11,28 @@ export const GET = auth(function GET(req) {
   return (async () => {
     try {
       const email = req.auth!.user?.email;
-      if (!email) return NextResponse.json({ error: 'No email in session' }, { status: 400 });
+      const userId = (req.auth as unknown as { token?: { sub?: string } })?.token?.sub;
 
-      const [user] = await db.select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
-        createdAt: users.createdAt,
-      }).from(users).where(eq(users.email, email));
+      let user;
+      if (email) {
+        [user] = await db.select({
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+          createdAt: users.createdAt,
+        }).from(users).where(eq(users.email, email));
+      } else if (userId) {
+        [user] = await db.select({
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+          createdAt: users.createdAt,
+        }).from(users).where(eq(users.id, userId));
+      } else {
+        return NextResponse.json({ error: 'Unable to identify user from session' }, { status: 400 });
+      }
 
       if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
       return NextResponse.json(user);
@@ -36,7 +49,7 @@ export const PATCH = auth(function PATCH(req) {
   return (async () => {
     try {
       const email = req.auth!.user?.email;
-      if (!email) return NextResponse.json({ error: 'No email in session' }, { status: 400 });
+      const userId = (req.auth as unknown as { token?: { sub?: string } })?.token?.sub;
 
       const body = await req.json();
       const updates: Record<string, unknown> = {};
@@ -47,9 +60,14 @@ export const PATCH = auth(function PATCH(req) {
         return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
       }
 
+      const whereClause = email ? eq(users.email, email) : userId ? eq(users.id, userId) : null;
+      if (!whereClause) {
+        return NextResponse.json({ error: 'Unable to identify user from session' }, { status: 400 });
+      }
+
       const [updated] = await db.update(users)
         .set(updates)
-        .where(eq(users.email, email))
+        .where(whereClause)
         .returning({
           id: users.id,
           email: users.email,
