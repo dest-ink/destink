@@ -292,6 +292,10 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
 
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div>
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-foreground tracking-tight">{researcher.name}</h1>
@@ -349,26 +353,6 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
           </div>
         </div>
 
-        {/* ── Pipeline Status ────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 p-4 rounded-xl bg-card border border-border shadow-sm">
-          {steps.map((step, i) => (
-            <div key={step.label} className="flex items-center gap-2">
-              {i > 0 && <span className="w-6 h-px bg-border" />}
-              <div className="flex items-center gap-1.5">
-                {step.done ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                ) : step.warning ? (
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
-                ) : (
-                  <Circle className="w-4 h-4 text-muted-foreground/30" />
-                )}
-                <span className={`text-xs font-medium ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {step.label}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
 
         {/* ── Channel Section ────────────────────────────────────────── */}
         {channel && (
