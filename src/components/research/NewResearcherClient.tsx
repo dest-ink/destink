@@ -51,22 +51,28 @@ export function NewResearcherClient({ allChannels, channelId }: NewResearcherCli
 
     setLoading(true);
     try {
-      // Use the onboarding intent parser to extract researcher config
-      const parseRes = await fetch('/api/onboard', {
+      // If channelId is provided, create researcher for existing channel (no new channel/voice)
+      // Otherwise, use the full onboarding flow
+      const url = channelId
+        ? `/api/channels/${channelId}/create-researcher`
+        : '/api/onboard';
+
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: prompt.trim() }),
       });
 
-      if (!parseRes.ok) {
-        const err = await parseRes.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
         toast.error((err as { error?: string }).error || 'Failed to generate researcher');
         return;
       }
 
-      const { result } = await parseRes.json();
+      const data = await res.json();
+      const researcherId = data.researcherId ?? data.result?.researcherId;
       toast.success('Researcher created');
-      router.push(`/pipelines/${result.researcherId}`);
+      router.push(`/pipelines/${researcherId}`);
       router.refresh();
     } catch {
       toast.error('Something went wrong');
