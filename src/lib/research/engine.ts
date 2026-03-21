@@ -159,6 +159,10 @@ export async function runResearchForResearcher(
       recentTitles,
     );
 
+    // Set the AI model on config so adapters (brainstorm) can use it
+    const topicRankingModel = await getModelForUseCase(researcher.userId, 'topicRanking');
+    config.aiModel = topicRankingModel;
+
     // Run all adapters with progress
     const allSources = await runResearch(config, undefined, onProgress);
 
@@ -169,7 +173,6 @@ export async function runResearchForResearcher(
       recentTitles,
       guidance,
     );
-    const topicRankingModel = await getModelForUseCase(researcher.userId, 'topicRanking');
     const raw = await callClaude({
       model: topicRankingModel,
       system: 'You are a content strategist. Return only valid JSON.',
@@ -292,7 +295,7 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
   // AI analysis: rank and filter sources into content opportunities
   const analysisPrompt = buildAnalysisPrompt(allSources, channel.personaPrompt ?? '', recentTitles);
   const raw = await callClaude({
-    model: CURRENT_MODELS[2].id, // Haiku — cost-effective for daemon ranking
+    model: CURRENT_MODELS[1].id, // Sonnet — daemon fallback for topic ranking
     system: 'You are a content strategist. Return only valid JSON.',
     prompt: analysisPrompt,
     maxTokens: 8192,
@@ -318,7 +321,7 @@ export async function runResearchForChannel(channelId: string): Promise<void> {
       channelId,
       sourcesSearched: allSources,
       topicsFound: topics,
-      aiModel: CURRENT_MODELS[2].id,
+      aiModel: CURRENT_MODELS[1].id,
       tokensUsed: 0, // actual token cost captured via ai_audit_log
     })
     .returning();

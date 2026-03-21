@@ -204,10 +204,11 @@ export interface ResearchConfig {
   maxDraftsPerRun?: number;
   scheduleHours?: number;
   shortFormPercent?: number;
-  // Optional brainstorm context (passed by engine.ts at runtime, not stored in DB)
+  // Optional runtime context (passed by engine.ts, not stored in DB)
   channelId?: string;
   voiceProfile?: VoiceProfile | null;
   recentTitles?: string[];
+  aiModel?: string;
 }
 
 export interface ScheduleConfig {

@@ -1,5 +1,4 @@
 import { callClaude } from '@/lib/ai/client';
-import { CURRENT_MODELS } from '@/lib/ai/models';
 import type { ResearchConfig, ResearchSource, VoiceProfile } from '@/db/schema';
 
 /**
@@ -11,7 +10,8 @@ export async function brainstormTopics(
   config: ResearchConfig,
   voiceProfile: VoiceProfile | null,
   recentTitles: string[],
-  channelId: string
+  channelId: string,
+  model?: string,
 ): Promise<ResearchSource[]> {
   const recentContext = recentTitles.length > 0
     ? `\n\nRecent posts (avoid repeating):\n${recentTitles.map(t => `- ${t}`).join('\n')}`
@@ -31,7 +31,7 @@ Return as JSON array:
 Return ONLY the JSON array, no explanation.`;
 
   const raw = await callClaude({
-    model: CURRENT_MODELS[2].id, // Haiku — fast brainstorming
+    model: model ?? 'claude-sonnet-4-6',
     system: 'You are a content strategist. Return only valid JSON.',
     prompt,
     maxTokens: 1024,
