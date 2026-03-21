@@ -75,6 +75,44 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     bestFor: ['High-volume tasks'],
   },
 
+  // ── Anthropic via OpenRouter ─────────────────────────────────────────────
+  {
+    id: 'anthropic/claude-opus-4-6',
+    displayName: 'Claude Opus 4.6 (OpenRouter)',
+    description: 'Anthropic\'s strongest model routed through OpenRouter. Same model, no Anthropic API key needed.',
+    contextWindow: 1_000_000,
+    maxOutput: 128_000,
+    pricing: { inputPer1M: 5, outputPer1M: 25 },
+    tier: 'current',
+    provider: 'openrouter',
+    tags: ['Writing', 'Reasoning', 'Coding', 'Agents'],
+    bestFor: ['Draft Generation', 'Voice Analysis'],
+  },
+  {
+    id: 'anthropic/claude-sonnet-4-6',
+    displayName: 'Claude Sonnet 4.6 (OpenRouter)',
+    description: 'Anthropic\'s best speed/intelligence balance routed through OpenRouter. No Anthropic API key needed.',
+    contextWindow: 1_000_000,
+    maxOutput: 64_000,
+    pricing: { inputPer1M: 3, outputPer1M: 15 },
+    tier: 'current',
+    provider: 'openrouter',
+    tags: ['Fast', 'Coding', 'Structured Output'],
+    bestFor: ['Topic Ranking', 'Draft Editing', 'Onboarding'],
+  },
+  {
+    id: 'anthropic/claude-haiku-4-5',
+    displayName: 'Claude Haiku 4.5 (OpenRouter)',
+    description: 'Fastest Anthropic model routed through OpenRouter. Cheap and fast for simple tasks.',
+    contextWindow: 200_000,
+    maxOutput: 64_000,
+    pricing: { inputPer1M: 1, outputPer1M: 5 },
+    tier: 'current',
+    provider: 'openrouter',
+    tags: ['Fast', 'Cheap', 'Classification'],
+    bestFor: ['High-volume tasks'],
+  },
+
   // ── OpenAI (via OpenRouter) ─────────────────────────────────────────────
   {
     id: 'openai/gpt-5.4-pro',
