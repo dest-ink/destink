@@ -12,6 +12,7 @@ export async function brainstormTopics(
   recentTitles: string[],
   channelId: string,
   model?: string,
+  guidance?: string,
 ): Promise<ResearchSource[]> {
   const recentContext = recentTitles.length > 0
     ? `\n\nRecent posts (avoid repeating):\n${recentTitles.map(t => `- ${t}`).join('\n')}`
@@ -21,9 +22,13 @@ export async function brainstormTopics(
     ? `\n\nWriter persona: ${voiceProfile.toneDescriptors.join(', ')}. Interested in: ${voiceProfile.recurringThemes.join(', ')}.`
     : '';
 
+  const guidanceContext = guidance?.trim()
+    ? `\n\nUSER DIRECTION (ALL topics MUST align with this direction):\n${guidance.trim()}`
+    : '';
+
   const prompt = `Generate 8 interesting topic ideas for a content creator in these areas: ${config.topics.join(', ')}.
 
-Keywords of interest: ${config.keywords.join(', ')}${personaContext}${recentContext}
+Keywords of interest: ${config.keywords.join(', ')}${personaContext}${guidanceContext}${recentContext}
 
 Return as JSON array:
 [{"title": "...", "angle": "...", "whyTimely": "..."}]

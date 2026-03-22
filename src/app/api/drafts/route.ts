@@ -4,6 +4,7 @@ import { drafts, channels } from '@/db/schema';
 import { and, eq, desc, inArray } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
 import { getModelForUseCase } from '@/lib/ai/model-settings';
+import { initPublisherRegistry, publisherRegistry } from '@/lib/publishing/publisher-registry';
 import { randomUUID } from 'crypto';
 import type { ResearchSource } from '@/db/schema';
 import { auth } from '@/auth';
@@ -99,6 +100,10 @@ export const POST = auth(function POST(req) {
         .limit(10);
 
       const draftId = randomUUID();
+
+      await initPublisherRegistry();
+      const provider = publisherRegistry.get(channel.platform);
+
       const generated = await generateDraft(
         {
           contentType,
@@ -108,6 +113,7 @@ export const POST = auth(function POST(req) {
           sources: sources ?? [],
           recentTitles: recentDrafts.map(d => d.title ?? '').filter(Boolean),
           regenerationNote,
+          formattingInstructions: provider?.formattingInstructions?.(contentType) ?? null,
         },
         channelId,
         draftId,

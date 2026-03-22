@@ -28,7 +28,7 @@ export class OpenRouterProvider implements AiProvider {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3021',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
         'X-Title': 'Destink',
       },
       body: JSON.stringify({

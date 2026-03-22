@@ -38,7 +38,7 @@ export function buildAnalysisPrompt(
     .join('\n\n');
 
   const guidanceSection = guidance?.trim()
-    ? `\n\nUSER GUIDANCE (prioritize this direction):\n${guidance.trim()}\n`
+    ? `\n\nUSER DIRECTION — MANDATORY FILTER:\n${guidance.trim()}\n\nEVERY topic you return MUST directly relate to this direction.\nDo NOT include topics that merely share a keyword or tangential theme.\nIf fewer than 10 topics qualify, return fewer. Quality over quantity.\n`
     : '';
 
   return `You are analyzing research for a content creator. Given their persona and these sources, rank the best content opportunities.
@@ -60,9 +60,12 @@ Return a JSON array of up to 10 topic recommendations. Each topic MUST cover a D
   "angle": "Specific angle this writer should take",
   "whyTimely": "Why this matters right now",
   "relevanceScore": 85,
+  "directionAlignment": 90,
   "contentType": "note",
   "sources": [{ "url": "...", "title": "...", "summary": "...", "source": "exa" }]
 }]
+
+directionAlignment (0-100): How closely this topic aligns with the USER DIRECTION above. If no direction was given, set to 100 for all topics.
 
 Sort by relevanceScore descending. Return ONLY the JSON array.`;
 }
@@ -159,9 +162,10 @@ export async function runResearchForResearcher(
       recentTitles,
     );
 
-    // Set the AI model on config so adapters (brainstorm) can use it
+    // Set the AI model and guidance on config so adapters (brainstorm) can use it
     const topicRankingModel = await getModelForUseCase(researcher.userId, 'topicRanking');
     config.aiModel = topicRankingModel;
+    config.guidance = guidance;
 
     // Run all adapters with progress
     const allSources = await runResearch(config, undefined, onProgress);
@@ -232,6 +236,7 @@ export async function runResearchForResearcher(
           researcher.maxDraftsPerRun,
           researcher.shortFormPercent,
           onProgress,
+          guidance,
         );
         // generateDraftsForRun already emits drafts-done via onProgress
       } catch (err) {

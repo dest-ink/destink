@@ -31,6 +31,7 @@ export async function searchReddit(config: ResearchConfig): Promise<ResearchSour
           // Reddit 429s without a meaningful User-Agent
           'User-Agent': 'destink-research-bot/0.1',
         },
+        signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) {
         console.warn(`[searchReddit] ${url} returned ${res.status}`);

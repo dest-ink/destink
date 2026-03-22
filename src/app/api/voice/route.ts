@@ -63,12 +63,17 @@ export const POST = auth(function POST(req) {
           return NextResponse.json({ error: 'wizardAnswers required for wizard method' }, { status: 400 });
         }
         const rawInput = buildPersonaFromWizard(wizardAnswers);
+
+        // Extract a structured voice profile from the wizard Q&A text
+        // (same as archive/samples methods do via analyzeVoice)
+        const extracted = await analyzeVoice([rawInput], channelId, profileId, userId);
+
         const [profile] = await db.insert(voiceProfiles).values({
           id: profileId,
           channelId,
           method: 'wizard',
           rawInput,
-          extractedProfile: null,
+          extractedProfile: extracted,
         }).returning();
 
         await assembleAndSavePersonaPrompt(channelId);

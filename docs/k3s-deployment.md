@@ -106,9 +106,6 @@ env:
   EXA_API_KEY: "..."
   REDDIT_CLIENT_ID: "..."
   REDDIT_CLIENT_SECRET: "..."
-  LINKEDIN_CLIENT_ID: "..."
-  LINKEDIN_CLIENT_SECRET: "..."
-  LINKEDIN_REDIRECT_URI: "https://your-domain.com/api/auth/callback/linkedin"
   NEXT_PUBLIC_APP_URL: "https://your-domain.com"
   AUTH_SECRET: "a-random-secret-string"
 ```
@@ -169,18 +166,18 @@ Check web logs to confirm Next.js started:
 kubectl -n destink logs deployment/destink-web
 ```
 
-Look for output like `ready started server on 0.0.0.0:3021`.
+Look for output like `ready started server on 0.0.0.0:3000`.
 
 Test the health endpoint with a port-forward:
 
 ```bash
-kubectl -n destink port-forward svc/destink-web 3021:80
+kubectl -n destink port-forward svc/destink-web 3000:80
 ```
 
 In a second terminal:
 
 ```bash
-curl http://localhost:3021/api/health
+curl http://localhost:3000/api/health
 ```
 
 Expected response: `{"status":"ok"}`. Press `Ctrl+C` to stop the port-forward.

@@ -23,7 +23,8 @@
 # misc
 .DS_Store
 *.pem
-.planning/
+docs/plans/
+docs/superpowers/
 
 # debug
 npm-debug.log*
@@ -33,6 +34,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+
+# local docker compose (copy from docker-compose.example.yml)
+docker-compose.yml
+docker-compose.override.yml
 
 # vercel
 .vercel

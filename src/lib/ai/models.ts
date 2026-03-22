@@ -42,7 +42,7 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     tier: 'current',
     provider: 'anthropic',
     fallbackProvider: 'openrouter',
-    fallbackModelId: 'anthropic/claude-opus-4-6',
+    fallbackModelId: 'anthropic/claude-opus-4.6',
     tags: ['Writing', 'Reasoning', 'Coding', 'Agents'],
     bestFor: ['Draft Generation', 'Voice Analysis'],
   },
@@ -56,7 +56,7 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     tier: 'current',
     provider: 'anthropic',
     fallbackProvider: 'openrouter',
-    fallbackModelId: 'anthropic/claude-sonnet-4-6',
+    fallbackModelId: 'anthropic/claude-sonnet-4.6',
     tags: ['Fast', 'Coding', 'Structured Output'],
     bestFor: ['Topic Ranking', 'Draft Editing', 'Onboarding'],
   },
@@ -70,14 +70,14 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     tier: 'current',
     provider: 'anthropic',
     fallbackProvider: 'openrouter',
-    fallbackModelId: 'anthropic/claude-haiku-4-5',
+    fallbackModelId: 'anthropic/claude-haiku-4.5',
     tags: ['Fast', 'Cheap', 'Classification'],
     bestFor: ['High-volume tasks'],
   },
 
   // ── Anthropic via OpenRouter ─────────────────────────────────────────────
   {
-    id: 'anthropic/claude-opus-4-6',
+    id: 'anthropic/claude-opus-4.6',
     displayName: 'Claude Opus 4.6 (OpenRouter)',
     description: 'Anthropic\'s strongest model routed through OpenRouter. Same model, no Anthropic API key needed.',
     contextWindow: 1_000_000,
@@ -89,7 +89,7 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     bestFor: ['Draft Generation', 'Voice Analysis'],
   },
   {
-    id: 'anthropic/claude-sonnet-4-6',
+    id: 'anthropic/claude-sonnet-4.6',
     displayName: 'Claude Sonnet 4.6 (OpenRouter)',
     description: 'Anthropic\'s best speed/intelligence balance routed through OpenRouter. No Anthropic API key needed.',
     contextWindow: 1_000_000,
@@ -101,7 +101,7 @@ export const CURRENT_MODELS: ModelDefinition[] = [
     bestFor: ['Topic Ranking', 'Draft Editing', 'Onboarding'],
   },
   {
-    id: 'anthropic/claude-haiku-4-5',
+    id: 'anthropic/claude-haiku-4.5',
     displayName: 'Claude Haiku 4.5 (OpenRouter)',
     description: 'Fastest Anthropic model routed through OpenRouter. Cheap and fast for simple tasks.',
     contextWindow: 200_000,
@@ -265,7 +265,7 @@ export const LEGACY_MODELS: ModelDefinition[] = [
     tier: 'legacy',
     provider: 'anthropic',
     fallbackProvider: 'openrouter',
-    fallbackModelId: 'anthropic/claude-sonnet-4-5',
+    fallbackModelId: 'anthropic/claude-sonnet-4.5',
     tags: ['Legacy'],
   },
   {
@@ -278,7 +278,7 @@ export const LEGACY_MODELS: ModelDefinition[] = [
     tier: 'legacy',
     provider: 'anthropic',
     fallbackProvider: 'openrouter',
-    fallbackModelId: 'anthropic/claude-opus-4-5',
+    fallbackModelId: 'anthropic/claude-opus-4.5',
     tags: ['Legacy'],
   },
 ];

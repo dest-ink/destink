@@ -209,6 +209,8 @@ export interface ResearchConfig {
   voiceProfile?: VoiceProfile | null;
   recentTitles?: string[];
   aiModel?: string;
+  /** User-provided direction/guidance for this research run */
+  guidance?: string;
 }
 
 export interface ScheduleConfig {
@@ -292,6 +294,8 @@ export interface TopicRecommendation {
   angle: string;
   whyTimely: string;
   relevanceScore: number;
+  /** How closely this topic aligns with user-provided direction (0-100). Absent on older runs. */
+  directionAlignment?: number;
   contentType: 'note' | 'article';
   sources: ResearchSource[];
 }

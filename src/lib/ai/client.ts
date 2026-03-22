@@ -22,7 +22,7 @@ export async function callClaude(options: CallModelOptions): Promise<string> {
   const provider = await resolveProvider(model);
 
   // If we're using a fallback provider, map the model ID
-  // (e.g., 'claude-opus-4-6' → 'anthropic/claude-opus-4-6' for OpenRouter)
+  // (e.g., 'claude-opus-4-6' → 'anthropic/claude-opus-4.6' for OpenRouter)
   const def = getModelDefinition(model);
   const effectiveModel = (def?.provider !== provider.id && def?.fallbackModelId)
     ? def.fallbackModelId

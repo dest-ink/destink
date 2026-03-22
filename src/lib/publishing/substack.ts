@@ -1,4 +1,4 @@
-import { SubstackClient } from 'substack-sdk';
+import { SubstackClient } from '@destink/substack-sdk';
 import type { drafts, channels } from '@/db/schema';
 import { decrypt } from '@/lib/crypto';
 

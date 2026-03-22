@@ -44,6 +44,17 @@ export const POST = auth(function POST(req, ctx) {
       );
     }
 
+    // Parse optional guidance from request body
+    let guidance: string | undefined;
+    try {
+      const body = await req.json();
+      if (body.guidance && typeof body.guidance === 'string') {
+        guidance = body.guidance.trim() || undefined;
+      }
+    } catch {
+      // No body or invalid JSON — guidance is optional
+    }
+
     const topics = (run.topicsFound as TopicRecommendation[]) ?? [];
 
     const encoder = new TextEncoder();
@@ -60,6 +71,7 @@ export const POST = auth(function POST(req, ctx) {
           researcher.maxDraftsPerRun,
           researcher.shortFormPercent,
           send,
+          guidance,
         )
           .then(() => {
             controller.close();

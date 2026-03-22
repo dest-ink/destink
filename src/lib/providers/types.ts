@@ -54,6 +54,13 @@ export interface PublisherProvider {
 
   // --- Optional methods ---
   getMetrics?(postId: string): Promise<Record<string, unknown> | null>;
+
+  /**
+   * Returns platform-specific formatting instructions for the AI draft generator.
+   * Called when no user-configured writing style is set, so the generator knows
+   * how to format content for this platform (e.g. plain text vs markdown).
+   */
+  formattingInstructions?(contentType: 'note' | 'article'): string | null;
 }
 
 // ─── ResearchAdapter ─────────────────────────────────────────────────────────

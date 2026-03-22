@@ -27,6 +27,11 @@ describe('buildSubstackFeedUrls', () => {
     expect(urls).toEqual(['https://lenny.substack.com/feed']);
   });
 
+  it('treats bare names without dots as Substack subdomains', () => {
+    const urls = buildSubstackFeedUrls({ ...baseConfig, substackFeeds: ['TheOnion'] });
+    expect(urls).toEqual(['https://TheOnion.substack.com/feed']);
+  });
+
   it('returns empty array for empty substackFeeds', () => {
     const noFeeds = { ...baseConfig, substackFeeds: [] };
     expect(buildSubstackFeedUrls(noFeeds)).toHaveLength(0);

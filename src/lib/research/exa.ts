@@ -38,14 +38,19 @@ export async function searchExa(config: ResearchConfig): Promise<ResearchSource[
 
   for (const query of queries.slice(0, 5)) {
     try {
-      const result = await client.search(query, {
-        type: 'auto',
-        numResults: 3,
-        contents: {
-          highlights: { maxCharacters: 4000 },
-        },
-        excludeDomains: config.excludedDomains ?? [],
-      });
+      const result = await Promise.race([
+        client.search(query, {
+          type: 'auto',
+          numResults: 3,
+          contents: {
+            highlights: { maxCharacters: 4000 },
+          },
+          excludeDomains: config.excludedDomains ?? [],
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Exa search timed out after 5s')), 5000),
+        ),
+      ]);
       for (const r of result.results) {
         if (seen.has(r.url)) continue;
         seen.add(r.url);

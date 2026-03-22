@@ -4,6 +4,7 @@ import { drafts, channels, researchRuns, draftPreferences } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { generateDraft } from '@/lib/generation/generator';
 import { getModelForUseCase } from '@/lib/ai/model-settings';
+import { initPublisherRegistry, publisherRegistry } from '@/lib/publishing/publisher-registry';
 import type { TopicRecommendation } from '@/db/schema';
 import type { OnProgress } from '@/lib/research/progress';
 
@@ -61,7 +62,8 @@ export async function generateDraftsForRun(
   topics: TopicRecommendation[],
   maxDraftsPerRun: number,
   shortFormPercent: number,
-  onProgress?: OnProgress
+  onProgress?: OnProgress,
+  guidance?: string
 ): Promise<DraftBatchResult> {
   // Load channel for persona prompt and platform
   const [channel] = await db
@@ -92,11 +94,20 @@ export async function generateDraftsForRun(
   // Also collect recent titles for context (voice consistency)
   const recentTitles = recentDrafts.map((d) => d.title ?? '').filter(Boolean);
 
+  // Filter out off-direction topics when guidance is present
+  const filteredTopics = guidance?.trim()
+    ? topics.filter((t) => t.directionAlignment == null || t.directionAlignment >= 60)
+    : topics;
+
   // Assign content types deterministically
-  const assignments = assignContentTypes(topics, maxDraftsPerRun, shortFormPercent);
+  const assignments = assignContentTypes(filteredTopics, maxDraftsPerRun, shortFormPercent);
   const total = assignments.length;
 
   const draftGenerationModel = await getModelForUseCase(channel.userId, 'draftGeneration');
+
+  // Get formatting instructions from the publisher provider
+  await initPublisherRegistry();
+  const provider = publisherRegistry.get(channel.platform);
 
   const generatedIds: string[] = [];
   let failedCount = 0;
@@ -124,10 +135,11 @@ export async function generateDraftsForRun(
           topicAngle: topic.angle,
           sources: topic.sources,
           recentTitles,
-          platform: channel.platform as 'linkedin' | 'substack',
           writingStyle: contentType === 'note'
             ? (stylePrefs?.noteStyle ?? undefined)
             : (stylePrefs?.articleStyle ?? undefined),
+          direction: guidance,
+          formattingInstructions: provider?.formattingInstructions?.(contentType) ?? null,
         },
         channelId,
         draftId,

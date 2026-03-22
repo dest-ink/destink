@@ -18,7 +18,9 @@ export function buildSubstackFeedUrls(config: ResearchConfig): string[] {
       }
       // Bare subdomain or domain — trim trailing slashes, then add scheme and /feed path
       const trimmed = feed.replace(/\/+$/, '');
-      const base = trimmed.endsWith('/feed') ? trimmed : `${trimmed}/feed`;
+      // If there's no dot in the name, assume it's a Substack subdomain
+      const domain = trimmed.includes('.') ? trimmed : `${trimmed}.substack.com`;
+      const base = domain.endsWith('/feed') ? domain : `${domain}/feed`;
       return `https://${base}`;
     });
 }

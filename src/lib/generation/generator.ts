@@ -12,8 +12,11 @@ export interface GenerationInput {
   sources: ResearchSource[];
   recentTitles: string[];
   regenerationNote?: string;
-  platform?: 'linkedin' | 'substack';
   writingStyle?: ContentTypeStyle | null;
+  /** User-provided direction/guidance for this research run */
+  direction?: string;
+  /** Platform-specific formatting instructions from the publisher provider */
+  formattingInstructions?: string | null;
 }
 
 export interface GeneratedDraft {
@@ -81,29 +84,8 @@ function buildWritingStyleInstructions(ws: ContentTypeStyle): string {
   return `\n\nWRITING STYLE RULES (follow ALL of these precisely):\n${rules.map(r => `- ${r}`).join('\n')}`;
 }
 
-const PLATFORM_FORMATTING: Record<string, string> = {
-  linkedin: `FORMATTING RULES (LinkedIn):
-- Use plain text only — NO markdown, NO HTML, NO hashtags at the start
-- Use line breaks for paragraph separation (\\n\\n)
-- Use unicode characters for emphasis: bold text can use strategic ALL CAPS for 1-2 key words
-- Use "→" arrows, "•" bullets, and "—" em dashes for structure
-- Start with a strong hook line, then a line break
-- Keep paragraphs to 2-3 sentences max for mobile readability
-- End with a clear CTA or question to drive engagement`,
-
-  substack: `FORMATTING RULES (Substack):
-- Use markdown formatting: **bold**, *italic*, ## headings, > blockquotes
-- Use ## for section headings (not #, which is the title)
-- Use --- for section breaks
-- Use bullet lists with - for enumeration
-- Use > for pull quotes or key insights
-- Use **bold** for key terms and emphasis
-- Structure with clear sections: intro, main argument sections, conclusion
-- Include transition sentences between sections`,
-};
-
 export function buildGenerationPrompt(input: GenerationInput): string {
-  const { contentType, personaPrompt, topicTitle, topicAngle, sources, recentTitles, regenerationNote, platform, writingStyle } = input;
+  const { contentType, personaPrompt, topicTitle, topicAngle, sources, recentTitles, regenerationNote, writingStyle, direction, formattingInstructions } = input;
 
   const sourceContext = sources.length > 0
     ? `\n\nSOURCE MATERIAL (use for facts and context, do not copy):\n${sources.map(s => `- ${s.title}: ${s.summary}`).join('\n')}`
@@ -117,6 +99,10 @@ export function buildGenerationPrompt(input: GenerationInput): string {
     ? `\n\nREVISION REQUEST: ${regenerationNote}`
     : '';
 
+  const directionContext = direction?.trim()
+    ? `\n\nUSER DIRECTION (this is the creative brief — the content MUST align with this direction):\n${direction.trim()}`
+    : '';
+
   // Use writing style length if available, otherwise fall back to defaults
   const lengthMin = writingStyle?.lengthMin ?? (contentType === 'note' ? 150 : 800);
   const lengthMax = writingStyle?.lengthMax ?? (contentType === 'note' ? 300 : 2000);
@@ -125,9 +111,9 @@ export function buildGenerationPrompt(input: GenerationInput): string {
 
   const styleRules = writingStyle ? buildWritingStyleInstructions(writingStyle) : '';
 
-  // Only use hardcoded platform formatting if no writing style is configured
-  const formattingRules = !writingStyle && platform && PLATFORM_FORMATTING[platform]
-    ? `\n\n${PLATFORM_FORMATTING[platform]}`
+  // Only use provider formatting instructions if no writing style is configured
+  const formattingRules = !writingStyle && formattingInstructions
+    ? `\n\n${formattingInstructions}`
     : '';
 
   return `${personaPrompt}
@@ -136,7 +122,7 @@ IMPORTANT: Your voice profile defines your STYLE of writing (tone, beliefs, humo
 
 TASK: Write a ${contentType} about "${topicTitle}".
 ANGLE: ${topicAngle}
-LENGTH: ${spec} THIS IS A HARD LIMIT — do NOT exceed ${lengthMax} words.${formattingRules}${styleRules}${sourceContext}${recentContext}${regenContext}
+LENGTH: ${spec} THIS IS A HARD LIMIT — do NOT exceed ${lengthMax} words.${directionContext}${formattingRules}${styleRules}${sourceContext}${recentContext}${regenContext}
 
 Return ONLY valid JSON:
 {

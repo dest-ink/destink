@@ -14,7 +14,7 @@ const brainstormAdapter: ResearchAdapter = {
     if (!channelId) {
       return Promise.resolve([]);
     }
-    return brainstormTopics(config, voiceProfile ?? null, recentTitles, channelId, config.aiModel);
+    return brainstormTopics(config, voiceProfile ?? null, recentTitles, channelId, config.aiModel, config.guidance);
   },
 };
 
