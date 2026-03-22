@@ -26,6 +26,13 @@ Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Drizzle ORM, Claude API (A
 - PostgreSQL 17
 - API keys: Anthropic (required), Exa (for research), Reddit and LinkedIn (optional)
 
+### Clone the repo
+
+```bash
+git clone https://github.com/dest-ink/destink.git
+cd destink
+```
+
 ### Environment
 
 ```bash
