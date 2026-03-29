@@ -26,6 +26,11 @@ export interface ConfigField {
   label: string;
   type: 'string' | 'secret' | 'url' | 'number';
   required: boolean;
+  helpText?: string;
+  helpDetail?: {
+    title: string;
+    steps: string[];
+  };
 }
 
 // ─── PublisherProvider ───────────────────────────────────────────────────────
@@ -37,6 +42,29 @@ export interface ConfigField {
  * The `platform` field must match the value stored in `channels.platform`
  * so the registry can look up the correct provider at publish time.
  */
+/**
+ * Optional OAuth configuration. When present, the UI shows a "Connect" button
+ * that initiates the OAuth flow instead of (or alongside) manual credential entry.
+ * The provider is responsible for defining the auth/callback URLs and required env vars.
+ */
+export interface OAuthConfig {
+  /** URL path to initiate the OAuth flow (e.g. "/api/linkedin/auth"). channelId will be appended as a query param. */
+  authPath: string;
+  /** URL path that checks if OAuth env vars are configured. Must return { available: boolean }. */
+  statusPath: string;
+  /** Button label (e.g. "Connect with LinkedIn") */
+  buttonLabel: string;
+  /** Help text shown below the button (e.g. "You'll be redirected to LinkedIn to authorize access.") */
+  helpText: string;
+  /** Short warning shown when OAuth is not configured. */
+  notConfiguredMessage: string;
+  /** Step-by-step setup guide shown when OAuth is not configured — helps the admin set it up. */
+  setupGuide?: {
+    title: string;
+    steps: string[];
+  };
+}
+
 export interface PublisherProvider {
   // --- Metadata ---
   name: string;
@@ -47,6 +75,8 @@ export interface PublisherProvider {
   /** Must equal PROVIDER_API_VERSION for the provider to be accepted by the registry validator. */
   apiVersion: number;
   configSchema: ConfigField[];
+  /** Optional OAuth configuration. When set, the UI offers OAuth as the primary credential method. */
+  oauth?: OAuthConfig;
 
   // --- Required methods ---
   publish(draft: DraftRow, channel: ChannelRow): Promise<unknown>;

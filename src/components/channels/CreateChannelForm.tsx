@@ -53,7 +53,7 @@ export function CreateChannelForm() {
           id="name"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="My LinkedIn Profile"
+          placeholder="My Channel"
           className="bg-card border-border"
         />
       </div>
@@ -73,13 +73,13 @@ export function CreateChannelForm() {
 
       <div className="space-y-2">
         <Label htmlFor="platformId" className="text-sm font-medium">
-          {platform === 'linkedin' ? 'LinkedIn handle (optional)' : 'Substack subdomain (optional)'}
+          Platform handle (optional)
         </Label>
         <Input
           id="platformId"
           value={platformId}
           onChange={e => setPlatformId(e.target.value)}
-          placeholder={platform === 'linkedin' ? 'yourname' : 'yourpub'}
+          placeholder="yourhandle"
           className="bg-card border-border font-mono text-sm"
         />
       </div>

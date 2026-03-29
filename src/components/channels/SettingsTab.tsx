@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HelpModal } from '@/components/ui/help-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -12,6 +13,11 @@ interface ConfigField {
   label: string;
   type: 'string' | 'secret' | 'url' | 'number';
   required: boolean;
+  helpText?: string;
+  helpDetail?: {
+    title: string;
+    steps: string[];
+  };
 }
 
 interface SettingsTabProps {
@@ -36,6 +42,16 @@ export function SettingsTab({ channelId, platform, channelData }: SettingsTabPro
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [helpDetail, setHelpDetail] = useState<{ title: string; steps: string[] } | null>(null);
+  const [providerOauth, setProviderOauth] = useState<{
+    authPath: string; statusPath: string; buttonLabel: string;
+    helpText: string; notConfiguredMessage: string;
+    setupGuide?: { title: string; steps: string[] };
+  } | null>(null);
+
+  // OAuth state
+  const [oauthAvailable, setOauthAvailable] = useState(false);
+  const [showManualCreds, setShowManualCreds] = useState(false);
 
   const isConfigured = Object.keys(savedValues).length > 0;
 
@@ -56,7 +72,15 @@ export function SettingsTab({ channelId, platform, channelData }: SettingsTabPro
     ]).then(([providerData, credData]) => {
       setSchema(providerData.configSchema ?? []);
       setProviderDescription(providerData.description ?? '');
+      setProviderOauth(providerData.oauth ?? null);
       setSavedValues(credData.values ?? {});
+
+      if (providerData.oauth?.statusPath) {
+        fetch(providerData.oauth.statusPath)
+          .then((r: Response) => r.json())
+          .then((d: { available?: boolean }) => { if (d.available) setOauthAvailable(true); })
+          .catch(() => {});
+      }
     }).catch(() => {
       toast.error('Failed to load provider configuration');
     }).finally(() => setLoading(false));
@@ -181,33 +205,107 @@ export function SettingsTab({ channelId, platform, channelData }: SettingsTabPro
         <p className="text-xs text-muted-foreground">{providerDescription}</p>
       </div>
 
-      <div className="space-y-4">
-        {sortedSchema.map(field => {
-          const isSecret = field.type === 'secret';
-          const inputType = isSecret ? 'password' : field.type === 'number' ? 'number' : 'text';
-
-          return (
-            <div key={field.key} className="space-y-1.5">
-              <Label htmlFor={`cred-${field.key}`} className="text-sm">{field.label}</Label>
-              <Input
-                id={`cred-${field.key}`}
-                type={inputType}
-                value={editValues[field.key] ?? ''}
-                onChange={e => setEditValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-              />
-            </div>
-          );
-        })}
-
-        <div className="flex gap-2 pt-2">
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? 'Saving...' : 'Save Credentials'}
+      {/* OAuth option (provider-driven) */}
+      {providerOauth && oauthAvailable && !showManualCreds && (
+        <div className="space-y-3">
+          <Button
+            asChild
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <a href={`${providerOauth.authPath}?channelId=${channelId}`}>
+              {providerOauth.buttonLabel}
+            </a>
           </Button>
-          <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
-            Cancel
-          </Button>
+          <p className="text-[11px] text-muted-foreground/70">
+            {providerOauth.helpText}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowManualCreds(true)}
+            className="text-[11px] text-primary hover:underline"
+          >
+            Enter credentials manually
+          </button>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={cancelEditing}>
+              Cancel
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Manual credential form */}
+      {(!providerOauth || !oauthAvailable || showManualCreds) && (
+        <div className="space-y-4">
+          {providerOauth && !oauthAvailable && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 space-y-1">
+              <p className="text-xs text-amber-200/80">{providerOauth.notConfiguredMessage}</p>
+              {providerOauth.setupGuide && (
+                <button
+                  type="button"
+                  onClick={() => setHelpDetail(providerOauth!.setupGuide!)}
+                  className="text-[11px] text-primary hover:underline"
+                >
+                  How to set this up
+                </button>
+              )}
+            </div>
+          )}
+          {oauthAvailable && showManualCreds && (
+            <button
+              type="button"
+              onClick={() => setShowManualCreds(false)}
+              className="text-[11px] text-primary hover:underline"
+            >
+              Connect with OAuth
+            </button>
+          )}
+          {sortedSchema.map(field => {
+            const isSecret = field.type === 'secret';
+            const inputType = isSecret ? 'password' : field.type === 'number' ? 'number' : 'text';
+
+            return (
+              <div key={field.key} className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={`cred-${field.key}`} className="text-sm">{field.label}</Label>
+                  {field.helpDetail && (
+                    <button
+                      type="button"
+                      onClick={() => setHelpDetail(field.helpDetail!)}
+                      className="text-[11px] text-primary hover:underline"
+                    >
+                      How to find this
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id={`cred-${field.key}`}
+                  type={inputType}
+                  value={editValues[field.key] ?? ''}
+                  onChange={e => setEditValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                />
+                {field.helpText && (
+                  <p className="text-[11px] text-muted-foreground/70">{field.helpText}</p>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? 'Saving...' : 'Save Credentials'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {helpDetail && (
+        <HelpModal title={helpDetail.title} steps={helpDetail.steps} onClose={() => setHelpDetail(null)} />
+      )}
     </div>
   );
 }

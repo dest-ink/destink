@@ -61,7 +61,7 @@ export async function setupFirstUser(
   }
 
   // Sign in and redirect
-  await signIn('credentials', { email, password, redirectTo: '/channels' });
+  await signIn('credentials', { email, password, redirectTo: '/get-started' });
 
   // signIn throws a redirect, so this line is unreachable
   return null;

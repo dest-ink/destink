@@ -70,8 +70,7 @@ export const GET = auth(function GET(req, ctx) {
 
 /**
  * PUT — encrypts and stores channel credentials.
- * Body shape depends on platform:
- *   substack: { publicationUrl, handle, substackSid, substackLli }
+ * Body shape depends on platform (see each provider's configSchema).
  */
 export const PUT = auth(function PUT(req, ctx) {
   if (!req.auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

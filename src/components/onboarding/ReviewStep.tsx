@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { HelpModal } from '@/components/ui/help-modal';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,11 @@ interface ConfigField {
   label: string;
   type: 'string' | 'secret' | 'url' | 'number';
   required: boolean;
+  helpText?: string;
+  helpDetail?: {
+    title: string;
+    steps: string[];
+  };
 }
 
 interface LogLine {
@@ -89,9 +95,41 @@ const FREQUENCY_LABELS: Record<string, string> = {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
+const REVIEW_PHASES: DashboardPhase[] = ['credentials', 'ready', 'researching', 'topics', 'generating', 'done'];
+// Phases that are safe to restore on refresh (not transient streaming phases)
+const RESTORABLE_PHASES: DashboardPhase[] = ['credentials', 'ready', 'topics', 'done'];
+
+function getInitialReviewPhase(): DashboardPhase {
+  if (typeof window === 'undefined') return 'ready';
+  const hash = window.location.hash.replace('#', '') as DashboardPhase;
+  if (RESTORABLE_PHASES.includes(hash)) return hash;
+  // Transient phases (researching, generating) fall back to ready
+  if (REVIEW_PHASES.includes(hash)) return 'ready';
+  return 'ready';
+}
+
 export function ReviewStep({ intent, result }: ReviewStepProps) {
   const router = useRouter();
-  const [phase, setPhase] = useState<DashboardPhase>('ready');
+  const [phase, setPhaseRaw] = useState<DashboardPhase>(getInitialReviewPhase);
+
+  // Wrap setPhase to sync hash
+  const setPhase = (p: DashboardPhase | ((prev: DashboardPhase) => DashboardPhase)) => {
+    setPhaseRaw(prev => {
+      const next = typeof p === 'function' ? p(prev) : p;
+      window.location.hash = next;
+      return next;
+    });
+  };
+
+  // Set hash on mount
+  useEffect(() => {
+    // The credential check may override, but set initial hash now
+    const hash = window.location.hash.replace('#', '');
+    if (!REVIEW_PHASES.includes(hash as DashboardPhase)) {
+      window.location.hash = 'ready';
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
   const [topicCount, setTopicCount] = useState(0);
@@ -105,6 +143,17 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
   const [credValues, setCredValues] = useState<Record<string, string>>({});
   const [credSaving, setCredSaving] = useState(false);
   const [credConfigured, setCredConfigured] = useState(false);
+  const [helpDetail, setHelpDetail] = useState<{ title: string; steps: string[] } | null>(null);
+  const [providerDisplayName, setProviderDisplayName] = useState('');
+  const [providerOauth, setProviderOauth] = useState<{
+    authPath: string; statusPath: string; buttonLabel: string;
+    helpText: string; notConfiguredMessage: string;
+    setupGuide?: { title: string; steps: string[] };
+  } | null>(null);
+
+  // OAuth state
+  const [oauthAvailable, setOauthAvailable] = useState(false);
+  const [showManualCreds, setShowManualCreds] = useState(false);
 
   // Sort schema: non-secret fields first
   const sortedSchema = useMemo(
@@ -128,13 +177,23 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
       fetch(`/api/channels/${result.channelId}/credentials`).then(r => r.json()),
     ]).then(([providerData, credData]) => {
       setCredSchema(providerData.configSchema ?? []);
+      setProviderDisplayName(providerData.displayName ?? result.platform);
+      setProviderOauth(providerData.oauth ?? null);
+
+      // Check OAuth availability if provider supports it
+      if (providerData.oauth?.statusPath) {
+        fetch(providerData.oauth.statusPath)
+          .then((r: Response) => r.json())
+          .then((data: { available?: boolean }) => { if (data.available) setOauthAvailable(true); })
+          .catch(() => {});
+      }
+
       if (credData.configured) {
         setCredConfigured(true);
       } else {
         setPhase('credentials');
       }
     }).catch(() => {
-      // If we can't load provider info, just skip credentials step
       setCredConfigured(false);
     });
   }, [result.channelId, result.platform]);
@@ -387,40 +446,110 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-5 space-y-4">
             <div>
               <h3 className="text-sm font-medium text-foreground">
-                Connect {result.platform === 'linkedin' ? 'LinkedIn' : 'Substack'}
+                Connect {providerDisplayName}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 These credentials are encrypted and only used to publish your approved drafts.
               </p>
             </div>
 
-            <div className="space-y-3">
-              {sortedSchema.map(field => (
-                <div key={field.key} className="space-y-1">
-                  <Label htmlFor={`cred-${field.key}`} className="text-xs">
-                    {field.label} {field.required && <span className="text-destructive">*</span>}
-                  </Label>
-                  <Input
-                    id={`cred-${field.key}`}
-                    type={field.type === 'secret' ? 'password' : field.type === 'number' ? 'number' : 'text'}
-                    placeholder={field.type === 'url' ? 'https://...' : ''}
-                    value={credValues[field.key] ?? ''}
-                    onChange={e => setCredValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className="bg-card border-border text-sm"
-                  />
+            {/* OAuth option (provider-driven) */}
+            {providerOauth && oauthAvailable && !showManualCreds && (
+              <div className="space-y-3">
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <a href={`${providerOauth.authPath}?channelId=${result.channelId}`}>
+                    {providerOauth.buttonLabel}
+                  </a>
+                </Button>
+                <p className="text-[11px] text-muted-foreground/70">
+                  {providerOauth.helpText}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowManualCreds(true)}
+                  className="text-[11px] text-primary hover:underline"
+                >
+                  Enter credentials manually
+                </button>
+              </div>
+            )}
+
+            {/* Manual credential form */}
+            {(!providerOauth || !oauthAvailable || showManualCreds) && (
+              <>
+                {providerOauth && !oauthAvailable && (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 space-y-1">
+                    <p className="text-xs text-amber-200/80">{providerOauth.notConfiguredMessage}</p>
+                    {providerOauth.setupGuide && (
+                      <button
+                        type="button"
+                        onClick={() => setHelpDetail(providerOauth!.setupGuide!)}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        How to set this up
+                      </button>
+                    )}
+                  </div>
+                )}
+                {oauthAvailable && showManualCreds && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualCreds(false)}
+                    className="text-[11px] text-primary hover:underline"
+                  >
+                    Connect with OAuth
+                  </button>
+                )}
+                <div className="space-y-3">
+                  {sortedSchema.map(field => (
+                    <div key={field.key} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`cred-${field.key}`} className="text-xs">
+                          {field.label} {field.required && <span className="text-destructive">*</span>}
+                        </Label>
+                        {field.helpDetail && (
+                          <button
+                            type="button"
+                            onClick={() => setHelpDetail(field.helpDetail!)}
+                            className="text-[11px] text-primary hover:underline"
+                          >
+                            How to find this
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        id={`cred-${field.key}`}
+                        type={field.type === 'secret' ? 'password' : field.type === 'number' ? 'number' : 'text'}
+                        placeholder={field.type === 'url' ? 'https://...' : ''}
+                        value={credValues[field.key] ?? ''}
+                        onChange={e => setCredValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        className="bg-card border-border text-sm"
+                      />
+                      {field.helpText && (
+                        <p className="text-[11px] text-muted-foreground/70">{field.helpText}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <Button
+                    onClick={handleSaveCredentials}
+                    disabled={credSaving}
+                    size="sm"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {credSaving ? 'Saving...' : 'Save & continue'}
+                  </Button>
+                </div>
+              </>
+            )}
 
             <div className="flex items-center gap-3 pt-1">
-              <Button
-                onClick={handleSaveCredentials}
-                disabled={credSaving}
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {credSaving ? 'Saving...' : 'Save & continue'}
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -634,6 +763,10 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
           </div>
         )}
       </div>
+
+      {helpDetail && (
+        <HelpModal title={helpDetail.title} steps={helpDetail.steps} onClose={() => setHelpDetail(null)} />
+      )}
     </div>
   );
 }

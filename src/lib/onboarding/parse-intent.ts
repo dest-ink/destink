@@ -31,7 +31,7 @@ The user will describe what they want to publish about, where, and optionally th
 Extract structured configuration from their natural language input.
 
 Rules:
-- If the user mentions "LinkedIn", set platform to "linkedin". If they mention "Substack" or "newsletter", set platform to "substack". Default to "linkedin" if unclear.
+- If the user mentions "LinkedIn", set platform to "linkedin". If they mention "Substack" or "newsletter", set platform to "substack".
 - For channelName, create a concise descriptive name like "LinkedIn — AI & Startups" or "Substack — Tech Leadership".
 - For platformId, extract a handle/subdomain if they mention one (e.g., "my handle is @johndoe" → "johndoe"). Otherwise null.
 - For voice.style, extract 2-4 adjectives describing their writing tone.

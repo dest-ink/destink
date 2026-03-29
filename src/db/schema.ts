@@ -85,8 +85,8 @@ export const drafts = pgTable('drafts', {
 
 export const publishQueue = pgTable('publish_queue', {
   id: uuid('id').primaryKey().defaultRandom(),
-  draftId: uuid('draft_id').references(() => drafts.id).notNull(),
-  channelId: uuid('channel_id').references(() => channels.id).notNull(),
+  draftId: uuid('draft_id').references(() => drafts.id, { onDelete: 'cascade' }).notNull(),
+  channelId: uuid('channel_id').references(() => channels.id, { onDelete: 'cascade' }).notNull(),
   scheduledFor: timestamptz('scheduled_for').notNull(),
   publishedAt: timestamptz('published_at'),
   platformResponse: jsonb('platform_response'),

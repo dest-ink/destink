@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
-import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical, User, ChevronUp } from 'lucide-react';
+import { LayoutDashboard, FileText, Clock, Settings, Sun, Moon, LogOut, Plus, Zap, Search, Hash, FlaskConical, User, ChevronUp, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface PipelineNav {
@@ -51,6 +51,7 @@ export function SideNav({ userEmail }: SideNavProps) {
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pipelines, setPipelines] = useState<PipelineNav[]>([]);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -96,15 +97,45 @@ export function SideNav({ userEmail }: SideNavProps) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
+  // Close mobile nav on route change
+  useEffect(() => { setMobileOpen(false); }, [path]);
+
+  function closeMobile() {
+    setMobileOpen(false);
+  }
+
   function toggleTheme() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   }
 
   return (
-    <nav className="w-56 shrink-0 border-r border-border flex flex-col bg-card/50 backdrop-blur-sm">
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-card border border-border shadow-md"
+        aria-label="Open navigation"
+      >
+        <Menu className="w-5 h-5 text-foreground" />
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 md:hidden"
+          onClick={closeMobile}
+        />
+      )}
+
+    <nav className={`
+      w-56 shrink-0 border-r border-border flex flex-col bg-card/50 backdrop-blur-sm
+      fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out
+      ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+      md:static md:translate-x-0 md:transition-none
+    `}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-border">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+      <div className="px-5 py-5 border-b border-border flex items-center justify-between">
+        <Link href="/dashboard" onClick={closeMobile} className="flex items-center gap-2.5">
           <Image
             src="/destink-icon.svg"
             alt="Destink logo"
@@ -115,6 +146,13 @@ export function SideNav({ userEmail }: SideNavProps) {
             Destink
           </span>
         </Link>
+        <button
+          onClick={closeMobile}
+          className="md:hidden p-1 rounded-md hover:bg-accent transition-colors"
+          aria-label="Close navigation"
+        >
+          <X className="w-5 h-5 text-muted-foreground" />
+        </button>
       </div>
 
       {/* New button + dropdown */}
@@ -139,7 +177,7 @@ export function SideNav({ userEmail }: SideNavProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setNewMenuOpen(false)}
+                  onClick={() => { setNewMenuOpen(false); closeMobile(); }}
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-foreground hover:bg-accent transition-colors duration-150"
                 >
                   <item.icon className="w-4 h-4 text-primary" />
@@ -156,7 +194,7 @@ export function SideNav({ userEmail }: SideNavProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setNewMenuOpen(false)}
+                  onClick={() => { setNewMenuOpen(false); closeMobile(); }}
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150"
                 >
                   <item.icon className="w-4 h-4" />
@@ -173,6 +211,7 @@ export function SideNav({ userEmail }: SideNavProps) {
         {/* Dashboard */}
         <Link
           href="/dashboard"
+          onClick={closeMobile}
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
             path === '/dashboard'
               ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px] shadow-xs'
@@ -202,6 +241,7 @@ export function SideNav({ userEmail }: SideNavProps) {
                   <Link
                     key={id}
                     href={href}
+                    onClick={closeMobile}
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                       active
                         ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px]'
@@ -237,6 +277,7 @@ export function SideNav({ userEmail }: SideNavProps) {
               <Link
                 key={l.href}
                 href={l.href}
+                onClick={closeMobile}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   active
                     ? 'bg-primary/10 text-primary border-l-[3px] border-primary pl-[9px] shadow-xs'
@@ -260,7 +301,7 @@ export function SideNav({ userEmail }: SideNavProps) {
               {/* User profile */}
               <Link
                 href="/profile"
-                onClick={() => setUserMenuOpen(false)}
+                onClick={() => { setUserMenuOpen(false); closeMobile(); }}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-foreground hover:bg-accent transition-colors"
               >
                 <User className="w-4 h-4 text-muted-foreground" />
@@ -312,5 +353,6 @@ export function SideNav({ userEmail }: SideNavProps) {
         </button>
       </div>
     </nav>
+    </>
   );
 }

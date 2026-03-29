@@ -34,7 +34,7 @@ export const GET = auth(function GET(req, ctx) {
 
       // Build a suggested prompt based on channel info
       const parts: string[] = [];
-      parts.push(`I publish on ${channel.platform === 'linkedin' ? 'LinkedIn' : 'Substack'}`);
+      parts.push(`I publish on ${channel.platform}`);
 
       if (channel.name) {
         parts.push(`for my channel "${channel.name}"`);

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { HelpModal } from '@/components/ui/help-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +71,11 @@ interface ConfigField {
   label: string;
   type: 'string' | 'secret' | 'url' | 'number';
   required: boolean;
+  helpText?: string;
+  helpDetail?: {
+    title: string;
+    steps: string[];
+  };
 }
 
 interface LogLine {
@@ -104,7 +110,18 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
   const [credValues, setCredValues] = useState<Record<string, string>>({});
   const [credSaving, setCredSaving] = useState(false);
   const [showCredForm, setShowCredForm] = useState(false);
+  const [helpDetail, setHelpDetail] = useState<{ title: string; steps: string[] } | null>(null);
   const [hasCredentials, setHasCredentials] = useState(channel?.hasCredentials ?? false);
+  const [providerDisplayName, setProviderDisplayName] = useState('');
+  const [providerOauth, setProviderOauth] = useState<{
+    authPath: string; statusPath: string; buttonLabel: string;
+    helpText: string; notConfiguredMessage: string;
+    setupGuide?: { title: string; steps: string[] };
+  } | null>(null);
+
+  // OAuth state
+  const [oauthAvailable, setOauthAvailable] = useState(false);
+  const [showManualCreds, setShowManualCreds] = useState(false);
 
   const sortedSchema = useMemo(
     () => [...credSchema].sort((a, b) => (a.type === 'secret' ? 1 : 0) - (b.type === 'secret' ? 1 : 0)),
@@ -119,7 +136,18 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
     if (!channel) return;
     fetch(`/api/providers/${channel.platform}`)
       .then(r => r.json())
-      .then(data => setCredSchema(data.configSchema ?? []))
+      .then(data => {
+        setCredSchema(data.configSchema ?? []);
+        setProviderDisplayName(data.displayName ?? channel.platform);
+        setProviderOauth(data.oauth ?? null);
+
+        if (data.oauth?.statusPath) {
+          fetch(data.oauth.statusPath)
+            .then((r: Response) => r.json())
+            .then((d: { available?: boolean }) => { if (d.available) setOauthAvailable(true); })
+            .catch(() => {});
+        }
+      })
       .catch(() => {});
   }, [channel]);
 
@@ -373,7 +401,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
             <KeyRound className="w-5 h-5 text-amber-500 shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Publishing credentials missing</p>
-              <p className="text-xs text-muted-foreground">Add your {channel.platform === 'linkedin' ? 'LinkedIn' : 'Substack'} credentials to publish approved drafts.</p>
+              <p className="text-xs text-muted-foreground">Add your {providerDisplayName} credentials to publish approved drafts.</p>
             </div>
             <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </button>
@@ -455,31 +483,99 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">
-                Connect {channel.platform === 'linkedin' ? 'LinkedIn' : 'Substack'}
+                Connect {providerDisplayName}
               </h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowCredForm(false)} className="text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => { setShowCredForm(false); setShowManualCreds(false); }} className="text-xs text-muted-foreground">
                 Cancel
               </Button>
             </div>
-            <div className="space-y-3">
-              {sortedSchema.map(field => (
-                <div key={field.key} className="space-y-1">
-                  <Label htmlFor={`cred-${field.key}`} className="text-xs">
-                    {field.label} {field.required && <span className="text-destructive">*</span>}
-                  </Label>
-                  <Input
-                    id={`cred-${field.key}`}
-                    type={field.type === 'secret' ? 'password' : field.type === 'number' ? 'number' : 'text'}
-                    value={credValues[field.key] ?? ''}
-                    onChange={e => setCredValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className="bg-background border-border text-sm"
-                  />
+
+            {/* OAuth option (provider-driven) */}
+            {providerOauth && oauthAvailable && !showManualCreds && (
+              <div className="space-y-3">
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <a href={`${providerOauth.authPath}?channelId=${channel.id}`}>
+                    {providerOauth.buttonLabel}
+                  </a>
+                </Button>
+                <p className="text-[11px] text-muted-foreground/70">
+                  {providerOauth.helpText}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowManualCreds(true)}
+                  className="text-[11px] text-primary hover:underline"
+                >
+                  Enter credentials manually
+                </button>
+              </div>
+            )}
+
+            {/* Manual credential form */}
+            {(!providerOauth || !oauthAvailable || showManualCreds) && (
+              <>
+                {providerOauth && !oauthAvailable && (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 space-y-1">
+                    <p className="text-xs text-amber-200/80">{providerOauth.notConfiguredMessage}</p>
+                    {providerOauth.setupGuide && (
+                      <button
+                        type="button"
+                        onClick={() => setHelpDetail(providerOauth!.setupGuide!)}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        How to set this up
+                      </button>
+                    )}
+                  </div>
+                )}
+                {oauthAvailable && showManualCreds && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualCreds(false)}
+                    className="text-[11px] text-primary hover:underline"
+                  >
+                    Connect with OAuth
+                  </button>
+                )}
+                <div className="space-y-3">
+                  {sortedSchema.map(field => (
+                    <div key={field.key} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`cred-${field.key}`} className="text-xs">
+                          {field.label} {field.required && <span className="text-destructive">*</span>}
+                        </Label>
+                        {field.helpDetail && (
+                          <button
+                            type="button"
+                            onClick={() => setHelpDetail(field.helpDetail!)}
+                            className="text-[11px] text-primary hover:underline"
+                          >
+                            How to find this
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        id={`cred-${field.key}`}
+                        type={field.type === 'secret' ? 'password' : field.type === 'number' ? 'number' : 'text'}
+                        value={credValues[field.key] ?? ''}
+                        onChange={e => setCredValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        className="bg-background border-border text-sm"
+                      />
+                      {field.helpText && (
+                        <p className="text-[11px] text-muted-foreground/70">{field.helpText}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <Button onClick={handleSaveCredentials} disabled={credSaving} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {credSaving ? 'Saving...' : 'Save credentials'}
-            </Button>
+                <Button onClick={handleSaveCredentials} disabled={credSaving} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  {credSaving ? 'Saving...' : 'Save credentials'}
+                </Button>
+              </>
+            )}
           </div>
         )}
 
@@ -717,6 +813,10 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {helpDetail && (
+        <HelpModal title={helpDetail.title} steps={helpDetail.steps} onClose={() => setHelpDetail(null)} />
+      )}
     </div>
   );
 }

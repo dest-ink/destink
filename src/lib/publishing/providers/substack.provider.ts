@@ -29,10 +29,34 @@ const substackProvider: PublisherProvider = {
   description: 'Publish notes to your Substack publication',
   apiVersion: PROVIDER_API_VERSION,
   configSchema: [
-    { key: 'publicationUrl', label: 'Publication URL', type: 'url', required: true },
-    { key: 'handle', label: 'Substack Handle', type: 'string', required: true },
-    { key: 'substackSid', label: 'substack.sid Cookie', type: 'secret', required: true },
-    { key: 'substackLli', label: 'substack.lli Cookie', type: 'secret', required: true },
+    { key: 'publicationUrl', label: 'Publication URL', type: 'url', required: true, helpText: 'e.g. https://yourname.substack.com' },
+    { key: 'handle', label: 'Substack Handle', type: 'string', required: true, helpText: 'The subdomain part of your URL (e.g. "yourname")' },
+    {
+      key: 'substackSid', label: 'substack.sid Cookie', type: 'secret', required: true,
+      helpDetail: {
+        title: 'How to find your substack.sid cookie',
+        steps: [
+          'Open substack.com in your browser and make sure you\'re logged in.',
+          'Open DevTools: press F12, or right-click anywhere and choose "Inspect".',
+          'Click the "Application" tab at the top of DevTools (you may need to click ">>" to see it).',
+          'In the left sidebar, expand "Cookies" and click on "https://substack.com".',
+          'Find the row named "substack.sid" in the table.',
+          'Double-click the value in the "Value" column to select it, then copy it.',
+          'Paste the value here.',
+        ],
+      },
+    },
+    {
+      key: 'substackLli', label: 'substack.lli Cookie', type: 'secret', required: true,
+      helpDetail: {
+        title: 'How to find your substack.lli cookie',
+        steps: [
+          'Follow the same steps as above — you should already have DevTools open to the Cookies panel.',
+          'Find the row named "substack.lli" in the same table.',
+          'Double-click the value to select it, then copy and paste it here.',
+        ],
+      },
+    },
   ],
   publish: (draft, channel) => publishToSubstack(draft, channel),
   formatDraft: (draft, _channel) => formatForSubstack(draft),
