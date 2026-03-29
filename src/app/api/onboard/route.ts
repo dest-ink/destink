@@ -27,11 +27,12 @@ export const POST = auth(function POST(req) {
       const userId = await getUserId(req.auth);
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-      const intent = await parseOnboardingIntent(body.input.trim(), userId);
-      const result = await provisionFromIntent(intent, userId);
+      const trimmedInput = body.input.trim();
+      const intent = await parseOnboardingIntent(trimmedInput, userId);
+      const result = await provisionFromIntent(intent, userId, trimmedInput);
       return NextResponse.json({ intent, result }, { status: 201 });
     } catch (err) {
-      const { message, status } = apiError('set up your content machine', err);
+      const { message, status } = apiError('set up your pipeline', err);
       return NextResponse.json({ error: message }, { status });
     }
   })();

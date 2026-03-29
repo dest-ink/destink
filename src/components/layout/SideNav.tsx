@@ -23,7 +23,7 @@ interface PipelineNav {
 
 const newMenuItems = {
   workflows: [
-    { href: '/get-started', label: 'Content Machine', icon: Zap, description: 'AI-powered setup' },
+    { href: '/get-started', label: 'Pipeline', icon: Zap, description: 'AI-powered setup' },
     { href: '/dashboard', label: 'Research Run', icon: Search, description: 'Run now' },
   ],
   manual: [
@@ -105,15 +105,20 @@ export function SideNav({ userEmail }: SideNavProps) {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <Image src="/destink-logo.svg" alt="Destink logo" width={26} height={26} />
-          <span className="font-mono text-sm font-bold tracking-[0.2em] uppercase text-primary">
+          <Image
+            src="/destink-icon.svg"
+            alt="Destink logo"
+            width={28}
+            height={28}
+          />
+          <span className="font-display text-[17px] font-semibold tracking-tight text-foreground">
             Destink
           </span>
         </Link>
       </div>
 
       {/* New button + dropdown */}
-      <div className="px-3 pt-4 pb-2" ref={menuRef}>
+      <div className="px-3 pt-4 pb-2 relative" ref={menuRef}>
         <button
           onClick={() => setNewMenuOpen(!newMenuOpen)}
           className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200"
@@ -127,7 +132,7 @@ export function SideNav({ userEmail }: SideNavProps) {
 
         {/* Dropdown */}
         {newMenuOpen && (
-          <div className="mt-2 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+          <div className="absolute left-3 right-3 mt-2 rounded-lg border border-border bg-popover shadow-lg overflow-hidden z-50">
             <div className="p-1.5">
               <p className="px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Workflows</p>
               {newMenuItems.workflows.map(item => (

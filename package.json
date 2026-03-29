@@ -9,7 +9,7 @@
   },
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env -- sh -c 'next dev --port ${PORT:-3000}'",
     "dev:daemon": "tsx --env-file=.env src/daemon/index.ts",
     "job:publish": "tsx --env-file=.env src/jobs/publish.ts",
     "job:daily-summary": "tsx --env-file=.env src/jobs/daily-summary.ts",
@@ -75,6 +75,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
+    "dotenv-cli": "^8.0.0",
     "vitest": "^4.0.18"
   }
 }

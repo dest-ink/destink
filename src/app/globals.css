@@ -88,8 +88,9 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-plus-jakarta-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-space-grotesk);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
@@ -106,6 +107,13 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display font for headings, nav links, and buttons */
+h1, h2, h3, h4, h5, h6,
+nav a,
+button {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Smooth transitions for interactive elements */

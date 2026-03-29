@@ -25,6 +25,7 @@
 *.pem
 docs/plans/
 docs/superpowers/
+.superset/
 
 # debug
 npm-debug.log*

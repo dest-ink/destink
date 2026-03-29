@@ -30,7 +30,7 @@ export interface ProvisionResult {
   voiceProfileId: string;
 }
 
-export async function provisionFromIntent(intent: OnboardingIntent, userId: string): Promise<ProvisionResult> {
+export async function provisionFromIntent(intent: OnboardingIntent, userId: string, rawInput?: string): Promise<ProvisionResult> {
   const voiceRawInput = [
     `Describe your writing style in 3 words: ${intent.voice.style.join(', ')}`,
     intent.voice.influences.length > 0
@@ -51,6 +51,7 @@ export async function provisionFromIntent(intent: OnboardingIntent, userId: stri
       name: intent.channelName,
       platform: intent.platform,
       platformId: intent.platformId,
+      onboardingInput: rawInput ?? null,
     }).returning();
 
     const [voiceProfile] = await tx.insert(voiceProfiles).values({

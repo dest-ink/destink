@@ -204,8 +204,8 @@ export function DashboardClient() {
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {pipelines.length === 0
-              ? 'Create your first content machine to get started.'
-              : `${pipelines.length} content machine${pipelines.length !== 1 ? 's' : ''}`}
+              ? 'Create your first pipeline to get started.'
+              : `${pipelines.length} pipeline${pipelines.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -215,13 +215,13 @@ export function DashboardClient() {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Zap className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">No content machines yet</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-2">No pipelines yet</h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
               Create your first one — describe your topic, platform, and style, and AI will set everything up in seconds.
             </p>
             <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8">
               <Link href="/get-started">
-                Create content machine →
+                Create pipeline →
               </Link>
             </Button>
           </div>

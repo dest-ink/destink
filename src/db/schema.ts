@@ -42,6 +42,7 @@ export const channels = pgTable('channels', {
   researchConfig: jsonb('research_config').$type<ResearchConfig>(),
   scheduleConfig: jsonb('schedule_config').$type<ScheduleConfig>(),
   credentials: text('credentials'),
+  onboardingInput: text('onboarding_input'),
   createdAt: timestamptz('created_at').defaultNow().notNull(),
   updatedAt: timestamptz('updated_at').defaultNow().notNull(),
 });

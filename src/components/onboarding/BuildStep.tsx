@@ -31,7 +31,7 @@ export function BuildStep({ voiceSummary }: BuildStepProps) {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-1">
           <h2 className="text-xl font-semibold text-foreground">
-            Setting up your content machine...
+            Setting up your pipeline...
           </h2>
         </div>
 

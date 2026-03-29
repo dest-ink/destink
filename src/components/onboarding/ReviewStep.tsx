@@ -367,7 +367,7 @@ export function ReviewStep({ intent, result }: ReviewStepProps) {
                   ? 'Researching...'
                   : phase === 'generating'
                     ? 'Writing your drafts...'
-                    : 'Your content machine is ready.'}
+                    : 'Your pipeline is ready.'}
           </h2>
           <p className="text-sm text-muted-foreground">
             {phase === 'done'

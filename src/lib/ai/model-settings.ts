@@ -34,7 +34,7 @@ export const USE_CASE_LABELS: Record<AiUseCase, { label: string; description: st
   },
   onboarding: {
     label: 'Onboarding',
-    description: 'Parses natural language to set up new content machines',
+    description: 'Parses natural language to set up new pipelines',
   },
   draftEditing: {
     label: 'Draft Editing',
