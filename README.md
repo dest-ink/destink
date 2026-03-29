@@ -20,20 +20,14 @@ Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Drizzle ORM, Claude API (A
 
 ## Getting started
 
-### Clone the repo
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/dest-ink/destink.git
 cd destink
 ```
 
-### Prerequisites
-
-- Node.js 22+
-- PostgreSQL 17
-- API keys: Anthropic (required), Exa (for research), Reddit and LinkedIn (optional)
-
-### Environment
+### 2. Configure environment
 
 ```bash
 cp .env.example .env
@@ -49,35 +43,9 @@ openssl rand -hex 32
 openssl rand -base64 33
 ```
 
-Fill in your API keys and secrets in `.env`.
+Fill in your API keys and secrets in `.env`. At minimum you need an Anthropic API key. Exa is required for research; Reddit and LinkedIn API keys are optional.
 
-### Local development
-
-Copy the Docker Compose example and start the database:
-
-```bash
-cp docker-compose.example.yml docker-compose.yml
-docker compose up -d postgres
-docker compose up migrate
-```
-
-Install dependencies and start the app:
-
-```bash
-pnpm install
-pnpm db:migrate
-pnpm dev:all
-```
-
-This starts the Next.js dev server on `http://localhost:3000` and the background daemon for queue processing.
-
-On first launch, the app will automatically redirect you to a setup page where you can create your account.
-
-`docker-compose.yml` is gitignored so you can customize ports and services for your local environment without creating diffs.
-
-## Docker Compose
-
-To run the full stack in containers:
+### 3. Run with Docker Compose
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
@@ -86,7 +54,9 @@ docker compose up -d
 
 This starts PostgreSQL, runs migrations, and launches the web app and daemon. The app is available at `http://localhost:3000`.
 
-You still need a `.env` file with your API keys — Docker Compose reads it automatically.
+On first launch, the app will automatically redirect you to a setup page where you can create your account.
+
+`docker-compose.yml` is gitignored so you can customize ports and services without creating diffs.
 
 ## Kubernetes (Helm)
 
@@ -145,6 +115,11 @@ curl http://localhost:3000/api/health
 The chart includes bundled PostgreSQL (disable with `postgresql.enabled: false` and set `externalDatabase.url`), optional TLS via cert-manager, and CronJobs for scheduled research and publishing. See [docs/k3s-deployment.md](docs/k3s-deployment.md) for the full guide including TLS setup, upgrades, and troubleshooting.
 
 ## Contributing
+
+### Prerequisites
+
+- Node.js 22+
+- PostgreSQL 17
 
 ### Setup
 
