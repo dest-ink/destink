@@ -42,21 +42,15 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 - ✓ Research page (list, create/edit, channel multi-select) — v1.1
 - ✓ Live SSE progress streaming during research runs — v1.1
 - ✓ Channel page cleanup (removed per-channel research config tab) — v1.1
+- ✓ Config field cleanup (maxDraftsPerRun/shortFormPercent promoted, scheduleHours removed) — v1.2
+- ✓ Batch draft generation engine with auto-draft and manual trigger — v1.2
+- ✓ Draft generation UI (Generate Drafts button, progress log, badges) — v1.2
+- ✓ Automation scheduling (cron-based schedules with auto-draft toggle) — v1.2
+- ✓ Automation worker (daemon runs scheduled research + draft generation) — v1.2
 
 ### Active
 
-## Current Milestone: v1.2 Content Pipeline Automation
-
-**Goal:** Wire up the full research-to-publish pipeline — research runs automatically generate drafts, users approve them, then schedule or publish immediately. Manual and automated workflows both supported.
-
-**Target features:**
-- Research runs auto-generate drafts (using maxDraftsPerRun and contentTypeMix settings) for linked channels only
-- Manual "generate drafts" button on research run detail page
-- Automation scheduling (cron-based: "run research every night at 2am" with optional auto-draft generation)
-- Separation of automation config from research config
-- All generated drafts go to approval queue — user must approve before publishing
-- Post-approval: schedule for later or publish immediately
-- Clean up unused/confusing config fields (notePercent label, scheduleHours)
+(No active milestone — run `/gsd:new-milestone` to start next cycle)
 
 ### Out of Scope
 
@@ -70,7 +64,7 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 
 ## Context
 
-**Current state:** v1.1 shipped. 9 phases (21 plans) complete.
+**Current state:** v1.2 shipped. 13 phases (29 plans) complete across 3 milestones.
 
 **Tech stack:** Next.js 16, TypeScript, Drizzle ORM, PostgreSQL, Tailwind CSS 4, Radix UI, Auth.js v5, next-themes. AI via Anthropic Claude API. Infrastructure: Docker Compose, Helm chart for k3s.
 
@@ -105,4 +99,4 @@ Automated, high-quality content that sounds like the creator wrote it — from r
 | Next.js standalone output for Docker | Minimal ~150MB production image vs ~1GB with full node_modules | ✓ Good |
 
 ---
-*Last updated: 2026-03-01 after v1.2 Content Pipeline Automation started*
+*Last updated: 2026-03-30 after v1.2 Content Pipeline Automation milestone completed*
