@@ -64,7 +64,7 @@ export function ProfileClient() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="px-4 py-6 md:p-8">
         <div className="h-8 w-32 bg-secondary rounded-lg animate-pulse mb-6" />
         <div className="h-48 bg-card border border-border rounded-xl animate-pulse" />
       </div>
@@ -73,7 +73,7 @@ export function ProfileClient() {
 
   if (!profile) {
     return (
-      <div className="p-8">
+      <div className="px-4 py-6 md:p-8">
         <p className="text-sm text-muted-foreground">Unable to load profile.</p>
       </div>
     );
@@ -87,7 +87,7 @@ export function ProfileClient() {
     .join('');
 
   return (
-    <div className="p-8">
+    <div className="px-4 py-6 md:p-8">
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">Profile</h1>

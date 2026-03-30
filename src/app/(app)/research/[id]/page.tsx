@@ -45,20 +45,18 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="px-6 py-5 border-b border-border shrink-0">
+      <div className="px-4 py-5 md:px-6 border-b border-border shrink-0">
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground -ml-2 mb-2">
           <Link href="/settings">&larr; Back to Settings</Link>
         </Button>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-foreground">{researcher.name}</h1>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/research/${id}/runs`}>View Runs</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/research/${id}/automation`}>Automation</Link>
-            </Button>
-          </div>
+        <h1 className="text-xl font-semibold text-foreground mb-3">{researcher.name}</h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/research/${id}/runs`}>View Runs</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/research/${id}/automation`}>Automation</Link>
+          </Button>
           <DeleteResourceButton
             resourceName={researcher.name}
             deleteUrl={`/api/researchers/${researcher.id}`}
@@ -68,7 +66,7 @@ export default async function ResearcherDetailPage({ params }: ResearcherDetailP
         </div>
       </div>
 
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 px-4 py-6 md:p-6 overflow-y-auto">
         {/* Edit form */}
         <ResearcherForm
           researcher={{

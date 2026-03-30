@@ -128,10 +128,10 @@ export function SideNav({ userEmail }: SideNavProps) {
       )}
 
     <nav className={`
-      w-56 shrink-0 border-r border-border flex flex-col bg-card/50 backdrop-blur-sm
+      w-56 shrink-0 border-r border-border flex flex-col bg-card
       fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out
       ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-      md:static md:translate-x-0 md:transition-none
+      md:static md:translate-x-0 md:transition-none md:bg-card/50 md:backdrop-blur-sm
     `}>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border flex items-center justify-between">

@@ -331,7 +331,7 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="w-full px-6 py-8 space-y-6">
+      <div className="w-full px-4 py-6 md:px-6 md:py-8 space-y-6">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div>
@@ -339,26 +339,27 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <h1 className="text-2xl font-semibold text-foreground tracking-tight">{researcher.name}</h1>
               {channel && (
                 <p className="text-sm text-muted-foreground mt-0.5 capitalize">{channel.platform} · {channel.name}</p>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Button asChild variant="outline" size="sm">
                 <Link href={`/research/${researcher.id}/automation`}>
-                  <Clock className="w-4 h-4 mr-2" />
+                  <Clock className="w-4 h-4 mr-1.5" />
                   Schedule
                 </Link>
               </Button>
               {phase === 'idle' && (
                 <Button
+                  size="sm"
                   onClick={() => { setResearchGuidance(''); setShowRunPrompt(true); }}
                   className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
                 >
-                  <Play className="w-4 h-4 mr-2" />
+                  <Play className="w-4 h-4 mr-1.5" />
                   Run research
                 </Button>
               )}
@@ -370,10 +371,11 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
               )}
               {phase === 'topics' && (
                 <Button
+                  size="sm"
                   onClick={handleGenerateDrafts}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  <FileText className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4 mr-1.5" />
                   Generate drafts
                 </Button>
               )}
@@ -743,24 +745,22 @@ export function PipelineDetail({ researcher, channel, schedule, runs, drafts: ch
                   <Link
                     key={run.id}
                     href={`/research/${researcher.id}/runs/${run.id}`}
-                    className="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-card text-sm hover:border-primary/20 transition-colors group"
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 rounded-lg border border-border bg-card text-sm hover:border-primary/20 transition-colors group"
                   >
-                    <div className="flex items-center gap-4">
-                      <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                        {new Date(run.runAt).toLocaleDateString('en-US', {
-                          month: 'numeric', day: 'numeric', year: 'numeric',
-                        })}{' '}
-                        {new Date(run.runAt).toLocaleTimeString('en-US', {
-                          hour: '2-digit', minute: '2-digit',
-                        })}
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {new Date(run.runAt).toLocaleDateString('en-US', {
+                        month: 'numeric', day: 'numeric', year: 'numeric',
+                      })}{' '}
+                      {new Date(run.runAt).toLocaleTimeString('en-US', {
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                    {channel && (
+                      <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 truncate max-w-[8rem]">
+                        {channel.name}
                       </span>
-                      {channel && (
-                        <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                          {channel.name}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
+                    )}
+                    <div className="flex items-center gap-3 ml-auto">
                       <span className="text-xs text-muted-foreground">{run.sourceCount} sources</span>
                       <span className="text-xs text-muted-foreground">{run.topicCount} topics</span>
                       {draftCount > 0 && (

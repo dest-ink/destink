@@ -72,7 +72,7 @@ export function SettingsClient({ initialChannels, initialResearchers }: Settings
   };
 
   return (
-    <div className="p-8">
+    <div className="px-4 py-6 md:p-8">
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">Settings</h1>

@@ -50,7 +50,7 @@ export function RunsList({ runs, researcherId }: RunsListProps) {
             href={`/research/${researcherId}/runs/${run.id}`}
             className="block border border-border bg-card rounded-lg p-4 hover:border-primary/40 hover:bg-card/80 transition-all duration-200"
           >
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xs font-mono text-muted-foreground shrink-0">
                   {new Date(run.runAt).toLocaleDateString()}{' '}
@@ -64,7 +64,7 @@ export function RunsList({ runs, researcherId }: RunsListProps) {
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <span className="text-xs text-muted-foreground">
                   {run.sourceCount} source{run.sourceCount !== 1 ? 's' : ''}
                 </span>
@@ -79,7 +79,7 @@ export function RunsList({ runs, researcherId }: RunsListProps) {
                     {run.draftsGenerated.length} draft{run.draftsGenerated.length !== 1 ? 's' : ''}
                   </Badge>
                 )}
-                <span className="text-muted-foreground/40">&rarr;</span>
+                <span className="text-muted-foreground/40 hidden sm:inline">&rarr;</span>
               </div>
             </div>
           </Link>

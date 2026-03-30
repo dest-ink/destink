@@ -182,7 +182,7 @@ export function DashboardClient() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="px-4 py-6 md:p-8">
         <div>
           <div className="h-8 w-48 bg-secondary rounded-lg animate-pulse mb-2" />
           <div className="h-4 w-64 bg-secondary/60 rounded animate-pulse mb-8" />
@@ -197,7 +197,7 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="p-8">
+    <div className="px-4 py-6 md:p-8">
       <div>
         {/* Header */}
         <div className="mb-8">
